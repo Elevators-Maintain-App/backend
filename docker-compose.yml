@@ -37,20 +37,6 @@ services:
     networks:
       - app-network
 
-  pgadmin:
-    image: dpage/pgadmin4
-    container_name: pgadmin
-    restart: always
-    depends_on:
-      - db
-    ports:
-      - "5050:80"
-    environment:
-      - PGADMIN_DEFAULT_EMAIL=admin@admin.com
-      - PGADMIN_DEFAULT_PASSWORD=admin
-    networks:
-      - app-network
-
 networks:
   app-network:
     driver: bridge
