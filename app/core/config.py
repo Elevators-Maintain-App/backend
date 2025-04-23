@@ -33,8 +33,8 @@ class Settings(BaseSettings):
             username=info.data.get("db_user"),
             password=info.data.get("db_password"),
             host=info.data.get("db_host"),
-            port=info.data.get("db_port"),
-            path=f"/{info.data.get('db_name') or ''}",
+            port=int(info.data.get("db_port")),
+            path=f"{info.data.get('db_name') or ''}",
         )
     
     # JWT settings
