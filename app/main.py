@@ -2,9 +2,24 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes.user_routes import router as user_router
-from app.api.routes.item_routes import router as item_router
-from app.api.routes.auth import router as auth_router
+from app.api.routes import (
+    user_router,
+    item_router,
+    auth_router,
+    clientes_router,
+    tipos_documento_router,
+    estados_orden_router,
+    prioridades_router,
+    tipos_evidencia_router,
+    tipos_orden_router,
+    tipos_unidad_router,
+    proyectos_router,
+    supervisores_router,
+    tecnicos_router,
+    ordenes_trabajo_router,
+    checklists_router,
+    unidades_router
+)
 from app.core.config import settings
 from app.db.session import engine, Base
 
@@ -43,15 +58,28 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Register API routes
-app.include_router(auth_router, prefix="/api/auth", tags=["auth"])
-app.include_router(user_router, prefix="/api/users", tags=["users"])
-app.include_router(item_router, prefix="/api/items", tags=["items"])
-
 @app.get("/", tags=["health"])
 async def health_check():
     """Health check endpoint"""
     return {"status": "ok", "message": "API is running"}
+
+# Register API routes
+app.include_router(auth_router, prefix="/api/auth", tags=["auth"])
+app.include_router(clientes_router, prefix="/api/clientes", tags=["Clientes"])
+app.include_router(proyectos_router, prefix="/api/proyectos", tags=["Proyectos"])
+app.include_router(supervisores_router, prefix="/api/supervisores", tags=["Supervisores"])
+app.include_router(tecnicos_router, prefix="/api/tecnicos", tags=["Técnicos"])
+app.include_router(ordenes_trabajo_router, prefix="/api/ordenes-trabajo", tags=["Ordenes de Trabajo"])
+app.include_router(checklists_router, prefix="/api/checklists", tags=["Checklists"])
+app.include_router(unidades_router, prefix="/api/unidades", tags=["Unidades"])
+app.include_router(tipos_documento_router, prefix="/api/tipos-documento", tags=["Enums"])
+app.include_router(estados_orden_router, prefix="/api/estados-orden", tags=["Enums"])
+app.include_router(prioridades_router, prefix="/api/prioridades", tags=["Enums"])
+app.include_router(tipos_evidencia_router, prefix="/api/tipos-evidencia", tags=["Enums"])
+app.include_router(tipos_orden_router, prefix="/api/tipos-orden", tags=["Enums"])
+app.include_router(tipos_unidad_router, prefix="/api/tipos-unidad", tags=["Enums"])
+app.include_router(user_router, prefix="/api/users", tags=["users"])
+app.include_router(item_router, prefix="/api/items", tags=["items"])
 
 if __name__ == "__main__":
     import uvicorn
