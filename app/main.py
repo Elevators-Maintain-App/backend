@@ -61,7 +61,7 @@ app.add_middleware(
 @app.get("/", tags=["health"])
 async def health_check():
     """Health check endpoint"""
-    return {"status": "ok", "message": "API is running"}
+    return {"status": "Ok", "message": "API is running"}
 
 # Register API routes
 app.include_router(auth_router, prefix="/api/auth", tags=["auth"])
