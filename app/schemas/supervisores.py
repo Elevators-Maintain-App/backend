@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Optional, List
 from uuid import UUID
 from pydantic import BaseModel
+from decimal import Decimal
 
 class SupervisorBase(BaseModel):
     nombre: Optional[str] = None
@@ -32,7 +33,7 @@ class OrdenDashboardOut(BaseModel):
     estado_orden: Optional[str]
     descripcion: Optional[str]
     observaciones: Optional[str]
-    valor: Optional[str]
+    valor: Optional[Decimal]
 
 # Nuevo esquema: DashboardSupervisorOut
 class DashboardSupervisorOut(BaseModel):

@@ -149,12 +149,14 @@ class CRUDBaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType])
         result = await db.execute(stmt)
         return result.scalars().all()
 
-    async def get_multi_by_fields(self, db: AsyncSession, field: str, values: List[Any]) -> List[ModelType]:
-        """
-        Devuelve todos los registros que coincidan con cualquier valor de una lista (IN).
-        """
-        if not values:
-            return []
-        stmt = select(self.model).where(getattr(self.model, field).in_(values))
+    async def get_multi_by_field(
+        self,
+        db: AsyncSession,
+        field: str,
+        value: Any,
+        skip: int = 0,
+        limit: int = 100
+    ) -> List[ModelType]:
+        stmt = select(self.model).where(getattr(self.model, field) == value).offset(skip).limit(limit)
         result = await db.execute(stmt)
         return result.scalars().all()
