@@ -9,7 +9,7 @@ from app.db.session import get_db
 from app.schemas.unidades import UnidadCreate, UnidadUpdate, UnidadInDBBase
 from app.services.unidades import UnidadService
 
-router = APIRouter(prefix="/unidades", tags=["Unidades"])
+router = APIRouter()
 
 @router.get("/", response_model=List[UnidadInDBBase])
 async def get_unidades(db: AsyncSession = Depends(get_db)):

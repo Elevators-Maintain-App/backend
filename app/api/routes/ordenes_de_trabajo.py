@@ -9,7 +9,7 @@ from app.db.session import get_db
 from app.schemas.ordenes_de_trabajo import OrdenDeTrabajoCreate, OrdenDeTrabajoUpdate, OrdenDeTrabajoInDBBase
 from app.services.ordenes_de_trabajo import OrdenDeTrabajoService
 
-router = APIRouter(prefix="/ordenes-trabajo", tags=["Ordenes de Trabajo"])
+router = APIRouter()
 
 @router.get("/", response_model=List[OrdenDeTrabajoInDBBase])
 async def get_ordenes_trabajo(db: AsyncSession = Depends(get_db)):

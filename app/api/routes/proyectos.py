@@ -9,7 +9,7 @@ from app.db.session import get_db
 from app.schemas.proyectos import ProyectoCreate, ProyectoUpdate, ProyectoInDBBase
 from app.services.proyectos import ProyectoService
 
-router = APIRouter(prefix="/proyectos", tags=["Proyectos"])
+router = APIRouter()
 
 @router.get("/", response_model=List[ProyectoInDBBase])
 async def get_proyectos(db: AsyncSession = Depends(get_db)):

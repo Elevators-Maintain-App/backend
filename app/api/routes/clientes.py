@@ -12,7 +12,7 @@ from app.schemas.unidades import UnidadInDBBase
 from app.schemas.ordenes_de_trabajo import OrdenDeTrabajoInDBBase
 from app.services.clientes import ClienteService
 
-router = APIRouter(prefix="/clientes", tags=["Clientes"])
+router = APIRouter()
 
 # Rutas CRUD normales
 @router.get("/", response_model=List[ClienteInDBBase])

@@ -9,7 +9,7 @@ from app.db.session import get_db
 from app.schemas.hojas_de_vida import HojaDeVidaCreate, HojaDeVidaUpdate, HojaDeVidaInDBBase
 from app.services.hojas_de_vida import HojaDeVidaService
 
-router = APIRouter(prefix="/hojas-vida", tags=["Hojas de Vida"])
+router = APIRouter()
 
 @router.get("/", response_model=List[HojaDeVidaInDBBase])
 async def get_hojas_de_vida(db: AsyncSession = Depends(get_db)):

@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.session import get_db
 from app.services.dashboard import DashboardService
 
-router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
+router = APIRouter()
 
 @router.get("/ordenes-trabajo/resumen", description="Resumen de órdenes de trabajo: abiertas, cerradas, pendientes.")
 async def get_resumen_ordenes_trabajo(db: AsyncSession = Depends(get_db)):

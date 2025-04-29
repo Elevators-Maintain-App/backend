@@ -18,7 +18,11 @@ from app.api.routes import (
     tecnicos_router,
     ordenes_trabajo_router,
     checklists_router,
-    unidades_router
+    unidades_router,
+    admin_dashboard,
+    dashboard,
+    hojas_de_vida,
+    zonas_geograficas
 )
 from app.core.config import settings
 from app.db.session import engine, Base
@@ -72,6 +76,10 @@ app.include_router(tecnicos_router, prefix="/api/tecnicos", tags=["Técnicos"])
 app.include_router(ordenes_trabajo_router, prefix="/api/ordenes-trabajo", tags=["Ordenes de Trabajo"])
 app.include_router(checklists_router, prefix="/api/checklists", tags=["Checklists"])
 app.include_router(unidades_router, prefix="/api/unidades", tags=["Unidades"])
+app.include_router(admin_dashboard, prefix="/api/dashboard", tags=["Admin Dashboard"])
+app.include_router(dashboard, prefix="/api/dashboard", tags=["Dashboard"])
+app.include_router(hojas_de_vida, prefix="/api/hojas-vida", tags=["Hojas de Vida"])
+app.include_router(zonas_geograficas, prefix="/api/zonas-geograficas", tags=["Zonas Geograficas"])
 app.include_router(tipos_documento_router, prefix="/api/tipos-documento", tags=["Enums"])
 app.include_router(estados_orden_router, prefix="/api/estados-orden", tags=["Enums"])
 app.include_router(prioridades_router, prefix="/api/prioridades", tags=["Enums"])

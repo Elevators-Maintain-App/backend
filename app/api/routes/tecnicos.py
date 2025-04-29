@@ -11,7 +11,7 @@ from app.schemas.ordenes_de_trabajo import OrdenDeTrabajoInDBBase
 from app.schemas.checklists import ChecklistInDBBase
 from app.services.tecnicos import TecnicoService
 
-router = APIRouter(prefix="/tecnicos", tags=["Técnicos"])
+router = APIRouter()
 
 # Rutas CRUD normales
 @router.get("/", response_model=List[TecnicoInDBBase])

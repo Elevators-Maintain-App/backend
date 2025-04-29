@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.session import get_db
 from app.services.admin_dashboard import AdminDashboardService
 
-router = APIRouter(prefix="/dashboard", tags=["Admin Dashboard"])
+router = APIRouter()
 
 @router.get("/usuarios", description="Listar todos los usuarios registrados en el sistema.")
 async def get_usuarios(db: AsyncSession = Depends(get_db)):

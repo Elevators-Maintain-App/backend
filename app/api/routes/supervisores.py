@@ -10,7 +10,7 @@ from app.schemas.supervisores import SupervisorCreate, SupervisorUpdate, Supervi
 from app.schemas.ordenes_de_trabajo import OrdenDeTrabajoInDBBase
 from app.services.supervisores import SupervisorService
 
-router = APIRouter(prefix="/supervisores", tags=["Supervisores"])
+router = APIRouter()
 
 # Rutas CRUD normales
 @router.get("/", response_model=List[SupervisorInDBBase])

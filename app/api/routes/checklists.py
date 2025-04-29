@@ -9,7 +9,7 @@ from app.db.session import get_db
 from app.schemas.checklists import ChecklistCreate, ChecklistUpdate, ChecklistInDBBase
 from app.services.checklists import ChecklistService
 
-router = APIRouter(prefix="/checklists", tags=["Checklists"])
+router = APIRouter()
 
 @router.get("/", response_model=List[ChecklistInDBBase])
 async def get_checklists(db: AsyncSession = Depends(get_db)):
