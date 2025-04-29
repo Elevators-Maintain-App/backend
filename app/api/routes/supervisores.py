@@ -1,12 +1,12 @@
 # app/api/routes/supervisores.py
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 from uuid import UUID
 
 from app.db.session import get_db
-from app.schemas.supervisores import SupervisorCreate, SupervisorUpdate, SupervisorInDBBase
+from app.schemas.supervisores import SupervisorCreate, SupervisorUpdate, SupervisorInDBBase, DashboardSupervisorOut
 from app.schemas.ordenes_de_trabajo import OrdenDeTrabajoInDBBase
 from app.services.supervisores import SupervisorService
 
@@ -41,6 +41,12 @@ async def delete_supervisor(supervisor_id: UUID, db: AsyncSession = Depends(get_
 # Rutas Especiales 
 
 @router.get("/{supervisor_id}/ordenes-trabajo", response_model=List[OrdenDeTrabajoInDBBase], description="Listar todas las órdenes de trabajo supervisadas por un supervisor.")
-async def get_ordenes_supervisor(supervisor_id: UUID, db: AsyncSession = Depends(get_db)):
+async def get_ordenes_supervisor(supervisor_id: UUID, skip: int = Query(0, ge=0), limit: int = Query(10, gt=0), db: AsyncSession = Depends(get_db)):
     service = SupervisorService(db)
-    return await service.get_ordenes_trabajo(supervisor_id)
+    return await service.get_ordenes_trabajo(supervisor_id, skip=skip, limit=limit)
+
+# NUEVA RUTA: Dashboard supervisor
+@router.get("/{supervisor_id}/dashboard", response_model=DashboardSupervisorOut, description="Dashboard de supervisor con KPIs y órdenes recientes.")
+async def get_dashboard_supervisor(supervisor_id: UUID, db: AsyncSession = Depends(get_db)):
+    service = SupervisorService(db)
+    return await service.get_dashboard(supervisor_id)
