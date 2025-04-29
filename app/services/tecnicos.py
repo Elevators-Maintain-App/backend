@@ -44,14 +44,6 @@ class TecnicoService:
                 detail="Ya existe un técnico con este nombre."
             )
 
-        # Validar unicidad de email
-        existing_email = await tecnico_crud.get_by_field(self.db, field="email", value=tecnico_in.email)
-        if existing_email:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="Ya existe un técnico con este correo electrónico."
-            )
-
         return await tecnico_crud.create(self.db, obj_in=tecnico_in)
 
     async def update(self, tecnico_id: UUID, tecnico_in: TecnicoUpdate) -> TecnicoInDBBase:
