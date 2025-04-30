@@ -2,6 +2,7 @@
 
 from typing import List
 from uuid import UUID
+from decimal import Decimal
 
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -71,6 +72,8 @@ class SupervisorService:
         pendientes = (await self.db.execute(pendientes_stmt)).scalar()
         finalizadas = (await self.db.execute(finalizadas_stmt)).scalar()
         en_progreso = (await self.db.execute(en_progreso_stmt)).scalar()
+        porcentaje_finalizadas = round(Decimal(finalizadas) / total_mes, 2) if total_mes > 0 else Decimal(0)
+        finalizadas_info = f"{finalizadas}/{total_mes}"
 
         # Obtener últimas 10 órdenes recientes no finalizadas
         ordenes_recientes_stmt = select(OrdenDeTrabajo).where(
@@ -104,5 +107,7 @@ class SupervisorService:
             ordenes_pendientes=pendientes or 0,
             ordenes_finalizadas=finalizadas or 0,
             ordenes_en_progreso=en_progreso or 0,
-            ordenes_recientes=ordenes_recientes
+            ordenes_recientes=ordenes_recientes,
+            porcentaje_ordenes_finalizadas_mes=porcentaje_finalizadas,
+            ordenes_finalizadas_info=finalizadas_info
         )

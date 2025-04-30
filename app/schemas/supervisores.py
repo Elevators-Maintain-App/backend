@@ -42,3 +42,5 @@ class DashboardSupervisorOut(BaseModel):
     ordenes_finalizadas: int
     ordenes_en_progreso: int
     ordenes_recientes: List[OrdenDashboardOut]
+    porcentaje_ordenes_finalizadas_mes: Decimal
+    ordenes_finalizadas_info: str
