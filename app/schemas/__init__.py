@@ -6,10 +6,9 @@ from app.schemas.evidencias_multimedia import EvidenciaMultimediaBase, Evidencia
 from app.schemas.hojas_de_vida import HojaDeVidaBase, HojaDeVidaCreate, HojaDeVidaUpdate, HojaDeVidaInDBBase
 from app.schemas.ordenes_de_trabajo import OrdenDeTrabajoBase, OrdenDeTrabajoCreate, OrdenDeTrabajoUpdate, OrdenDeTrabajoInDBBase
 from app.schemas.proyectos import ProyectoBase, ProyectoCreate, ProyectoUpdate, ProyectoInDBBase
-from app.schemas.supervisores import SupervisorBase, SupervisorCreate, SupervisorUpdate, SupervisorInDBBase
-from app.schemas.tecnicos import TecnicoBase, TecnicoCreate, TecnicoUpdate, TecnicoInDBBase
 from app.schemas.unidades import UnidadBase, UnidadCreate, UnidadUpdate, UnidadInDBBase
 from app.schemas.zonas_geograficas import ZonaGeograficaBase, ZonaGeograficaCreate, ZonaGeograficaUpdate, ZonaGeograficaInDBBase
+from app.schemas.usuarios import UsuarioBase, UsuarioCreate, UsuarioUpdate, UsuarioInDBBase
 
 from app.schemas.estados_orden import EstadoOrdenBase, EstadoOrdenCreate, EstadoOrdenUpdate, EstadoOrdenInDBBase
 from app.schemas.prioridades import PrioridadBase, PrioridadCreate, PrioridadUpdate, PrioridadInDBBase
@@ -25,8 +24,6 @@ __all__ = [
     "HojaDeVidaBase", "HojaDeVidaCreate", "HojaDeVidaUpdate", "HojaDeVidaInDBBase",
     "OrdenDeTrabajoBase", "OrdenDeTrabajoCreate", "OrdenDeTrabajoUpdate", "OrdenDeTrabajoInDBBase",
     "ProyectoBase", "ProyectoCreate", "ProyectoUpdate", "ProyectoInDBBase",
-    "SupervisorBase", "SupervisorCreate", "SupervisorUpdate", "SupervisorInDBBase",
-    "TecnicoBase", "TecnicoCreate", "TecnicoUpdate", "TecnicoInDBBase",
     "UnidadBase", "UnidadCreate", "UnidadUpdate", "UnidadInDBBase",
     "ZonaGeograficaBase", "ZonaGeograficaCreate", "ZonaGeograficaUpdate", "ZonaGeograficaInDBBase",
     "EstadoOrdenBase", "EstadoOrdenCreate", "EstadoOrdenUpdate", "EstadoOrdenInDBBase",
@@ -34,5 +31,6 @@ __all__ = [
     "TipoDocumentoBase", "TipoDocumentoCreate", "TipoDocumentoUpdate", "TipoDocumentoInDBBase",
     "TipoEvidenciaBase", "TipoEvidenciaCreate", "TipoEvidenciaUpdate", "TipoEvidenciaInDBBase",
     "TipoOrdenBase", "TipoOrdenCreate", "TipoOrdenUpdate", "TipoOrdenInDBBase",
-    "TipoUnidadBase", "TipoUnidadCreate", "TipoUnidadUpdate", "TipoUnidadInDBBase"
+    "TipoUnidadBase", "TipoUnidadCreate", "TipoUnidadUpdate", "TipoUnidadInDBBase",
+    "UsuarioBase", "UsuarioCreate", "UsuarioUpdate", "UsuarioInDBBase"
 ]

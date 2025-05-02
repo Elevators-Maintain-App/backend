@@ -8,6 +8,7 @@ from app.services.dashboard import DashboardService
 
 router = APIRouter()
 
+
 @router.get("/ordenes-trabajo/resumen", description="Resumen de órdenes de trabajo: abiertas, cerradas, pendientes.")
 async def get_resumen_ordenes_trabajo(db: AsyncSession = Depends(get_db)):
     service = DashboardService(db)

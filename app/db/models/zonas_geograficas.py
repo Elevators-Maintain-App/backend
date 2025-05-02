@@ -16,4 +16,4 @@ class ZonaGeografica(Base):
 
     # Relaciones
     proyectos = relationship("Proyecto", back_populates="zona_geografica", cascade="all, delete-orphan")
-    tecnicos = relationship("Tecnico", back_populates="zona_geografica", cascade="all, delete-orphan")
+    usuarios = relationship("Usuario", back_populates="zona_geografica", cascade="all, delete-orphan")

@@ -1,10 +1,7 @@
-# app/services/admin_dashboard.py
-
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 
-from app.db.models.tecnicos import Tecnico
-from app.db.models.supervisores import Supervisor
+from app.db.models.usuarios import Usuario
 from app.db.models.clientes import Cliente
 
 class AdminDashboardService:
@@ -13,10 +10,14 @@ class AdminDashboardService:
 
     async def get_usuarios(self):
         """
-        Devuelve una lista de todos los usuarios del sistema.
+        Devuelve una lista de todos los usuarios del sistema (técnicos y supervisores) y clientes.
         """
-        tecnicos_result = await self.db.execute(select(Tecnico))
-        supervisores_result = await self.db.execute(select(Supervisor))
+        tecnicos_result = await self.db.execute(
+            select(Usuario).where(Usuario.role == "tecnico")
+        )
+        supervisores_result = await self.db.execute(
+            select(Usuario).where(Usuario.role == "supervisor")
+        )
         clientes_result = await self.db.execute(select(Cliente))
 
         return {
@@ -29,8 +30,12 @@ class AdminDashboardService:
         """
         Devuelve estadísticas básicas de usuarios: cantidad de técnicos, supervisores y clientes.
         """
-        tecnicos_count = await self.db.execute(select(func.count(Tecnico.id)))
-        supervisores_count = await self.db.execute(select(func.count(Supervisor.id)))
+        tecnicos_count = await self.db.execute(
+            select(func.count()).where(Usuario.role == "tecnico")
+        )
+        supervisores_count = await self.db.execute(
+            select(func.count()).where(Usuario.role == "supervisor")
+        )
         clientes_count = await self.db.execute(select(func.count(Cliente.id)))
 
         return {

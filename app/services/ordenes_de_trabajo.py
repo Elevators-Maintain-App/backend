@@ -8,11 +8,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.repositories.ordenes_de_trabajo import orden_de_trabajo_crud
 from app.db.repositories.unidades import unidad_crud
-from app.db.repositories.tecnicos import tecnico_crud
-from app.db.repositories.supervisores import supervisor_crud
 from app.db.repositories.tipos_orden import tipo_orden_crud
 from app.db.repositories.estados_orden import estado_orden_crud
 from app.db.repositories.prioridades import prioridad_crud
+from app.db.repositories.usuarios import usuario_crud
 from app.schemas.ordenes_de_trabajo import OrdenDeTrabajoCreate, OrdenDeTrabajoUpdate, OrdenDeTrabajoInDBBase
 
 class OrdenDeTrabajoService:
@@ -35,15 +34,15 @@ class OrdenDeTrabajoService:
             raise HTTPException(status_code=400, detail="La unidad especificada no existe.")
 
         # Validar existencia de técnico
-        tecnico = await tecnico_crud.get(self.db, orden_in.tecnico_id)
-        if not tecnico:
+        tecnico = await usuario_crud.get(self.db, orden_in.tecnico_id)
+        if not tecnico or tecnico.role != "tecnico":
             raise HTTPException(status_code=400, detail="El técnico especificado no existe.")
 
         # Validar existencia de supervisor
-        supervisor = await supervisor_crud.get(self.db, orden_in.supervisor_id)
-        if not supervisor:
+        supervisor = await usuario_crud.get(self.db, orden_in.supervisor_id)
+        if not supervisor or supervisor.role != "supervisor":
             raise HTTPException(status_code=400, detail="El supervisor especificado no existe.")
-
+        
         # Validar existencia de tipo de orden
         tipo_orden = await tipo_orden_crud.get(self.db, orden_in.tipo_orden_id)
         if not tipo_orden:

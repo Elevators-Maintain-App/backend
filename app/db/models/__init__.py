@@ -4,10 +4,9 @@ from .evidencias_multimedia import EvidenciaMultimedia
 from .hojas_de_vida import HojaDeVida
 from .ordenes_de_trabajo import OrdenDeTrabajo
 from .proyectos import Proyecto
-from .supervisores import Supervisor
-from .tecnicos import Tecnico
 from .unidades import Unidad
 from .zonas_geograficas import ZonaGeografica
+from .usuarios import Usuario
 
 from .enums import (
     TipoUnidad,
@@ -15,7 +14,7 @@ from .enums import (
     EstadoOrden,
     Prioridad,
     TipoEvidencia,
-    TipoDocumento,
+    TipoDocumento
 )
 
 __all__ = [
@@ -25,8 +24,6 @@ __all__ = [
     "HojaDeVida",
     "OrdenDeTrabajo",
     "Proyecto",
-    "Supervisor",
-    "Tecnico",
     "Unidad",
     "ZonaGeografica",
     "TipoUnidad",
@@ -35,4 +32,5 @@ __all__ = [
     "Prioridad",
     "TipoEvidencia",
     "TipoDocumento",
+    "Usuario",
 ]
