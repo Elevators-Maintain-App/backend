@@ -65,14 +65,14 @@ class SupervisorService:
             func.date_part('year', OrdenDeTrabajo.created_at) == func.date_part('year', func.now())
         )
         pendientes_stmt = total_mes_stmt.where(OrdenDeTrabajo.estado_id == 1)  # ID de estado pendiente
-        finalizadas_stmt = total_mes_stmt.where(OrdenDeTrabajo.estado_id == 3)  # ID de estado finalizada
-        en_progreso_stmt = total_mes_stmt.where(OrdenDeTrabajo.estado_id == 2)  # ID de estado en progreso
+        finalizadas_stmt = total_mes_stmt.where(OrdenDeTrabajo.estado_id == 5)  # ID de estado finalizada
+        en_progreso_stmt = total_mes_stmt.where(OrdenDeTrabajo.estado_id == 3)  # ID de estado en progreso
 
         total_mes = (await self.db.execute(total_mes_stmt)).scalar()
         pendientes = (await self.db.execute(pendientes_stmt)).scalar()
         finalizadas = (await self.db.execute(finalizadas_stmt)).scalar()
         en_progreso = (await self.db.execute(en_progreso_stmt)).scalar()
-        porcentaje_finalizadas = round(Decimal(finalizadas) / total_mes, 2) if total_mes > 0 else Decimal(0)
+        porcentaje_finalizadas = round(float(finalizadas) / total_mes, 2) if total_mes > 0 else 0.0
         finalizadas_info = f"{finalizadas}/{total_mes}"
 
         # Obtener últimas 10 órdenes recientes no finalizadas
