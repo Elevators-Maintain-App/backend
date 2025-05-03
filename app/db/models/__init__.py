@@ -7,6 +7,7 @@ from .proyectos import Proyecto
 from .unidades import Unidad
 from .zonas_geograficas import ZonaGeografica
 from .usuarios import Usuario
+from .compania import Compania
 
 from .enums import (
     TipoUnidad,
@@ -33,4 +34,5 @@ __all__ = [
     "TipoEvidencia",
     "TipoDocumento",
     "Usuario",
+    "Compania",
 ]

@@ -19,7 +19,8 @@ from app.api.routes import (
     dashboard,
     hojas_de_vida,
     zonas_geograficas,
-    usuarios_router
+    usuarios_router,
+    compania_router
 )
 from app.core.config import settings
 from app.db.session import engine, Base
@@ -81,6 +82,7 @@ app.include_router(prioridades_router, prefix="/api/prioridades", tags=["Enums"]
 app.include_router(tipos_evidencia_router, prefix="/api/tipos-evidencia", tags=["Enums"])
 app.include_router(tipos_orden_router, prefix="/api/tipos-orden", tags=["Enums"])
 app.include_router(tipos_unidad_router, prefix="/api/tipos-unidad", tags=["Enums"])
+app.include_router(compania_router, prefix="/api/companias", tags=["companias"])
 
 if __name__ == "__main__":
     import uvicorn
