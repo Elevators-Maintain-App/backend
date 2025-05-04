@@ -10,12 +10,19 @@ SERVICE_NAME="vertione-backend"
 # Construir y subir imagen
 gcloud builds submit --tag $REGION-docker.pkg.dev/$PROJECT_ID/$REPO/$IMAGE_NAME
 
-# Desplegar en Cloud Run usando Secret Manager para DATABASE_URL
+# Desplegar en Cloud Run con secretos montados correctamente
 gcloud run deploy $SERVICE_NAME \
   --image $REGION-docker.pkg.dev/$PROJECT_ID/$REPO/$IMAGE_NAME \
   --platform managed \
   --region $REGION \
   --allow-unauthenticated \
   --port 8000 \
-  --set-secrets DATABASE_URL=database-url-vertione:latest \
-  --set-env-vars SECRET_KEY="your-secret-key-change-in-prod",ALGORITHM="HS256",ACCESS_TOKEN_EXPIRE_MINUTES="30",ENVIRONMENT="production"
+  --update-secrets=\
+DATABASE_URL=database-url-vertione:latest,\
+/secrets/firebase/firebase-service-account.json=firebase-service-account-vertione:latest \
+  --set-env-vars=\
+FIREBASE_CREDENTIALS_PATH="/secrets/firebase/firebase-service-account.json",\
+SECRET_KEY="your-secret-key",\
+ALGORITHM="HS256",\
+ACCESS_TOKEN_EXPIRE_MINUTES="30",\
+ENVIRONMENT="production"
