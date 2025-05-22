@@ -8,8 +8,27 @@ from uuid import UUID
 from app.db.session import get_db
 from app.schemas.ordenes_de_trabajo import OrdenDeTrabajoCreate, OrdenDeTrabajoUpdate, OrdenDeTrabajoInDBBase
 from app.services.ordenes_de_trabajo import OrdenDeTrabajoService
+from app.auth.firebase import get_current_firebase_user
 
 router = APIRouter()
+
+@router.get("/supervisor", response_model=List[OrdenDeTrabajoInDBBase])
+async def listar_ordenes_supervisor(user=Depends(get_current_firebase_user), db=Depends(get_db)):
+    service = OrdenDeTrabajoService(db)
+    return await service.listar_por_supervisor(user.uid)
+
+@router.post("/supervisor", response_model=OrdenDeTrabajoInDBBase, status_code=201)
+async def crear_orden_supervisor(
+    orden_in: OrdenDeTrabajoCreate,
+    user=Depends(get_current_firebase_user),
+    db=Depends(get_db)
+):
+    service = OrdenDeTrabajoService(db)
+    return await service.crear_para_supervisor(
+        orden_in,
+        supervisor_uid=user.uid,
+        company_id=user.company_id
+    )
 
 @router.get("/", response_model=List[OrdenDeTrabajoInDBBase])
 async def get_ordenes_trabajo(db: AsyncSession = Depends(get_db)):
@@ -35,3 +54,4 @@ async def update_orden_trabajo(orden_id: UUID, orden_in: OrdenDeTrabajoUpdate, d
 async def delete_orden_trabajo(orden_id: UUID, db: AsyncSession = Depends(get_db)):
     service = OrdenDeTrabajoService(db)
     await service.delete(orden_id)
+

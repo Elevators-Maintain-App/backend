@@ -40,6 +40,9 @@ class CompaniaWithRelations(Compania):
         "from_attributes": True
     }
 
+class CompaniaCountOut(BaseModel):
+    count: int
+
 # Forward references
 from app.schemas.tipo_documento import TipoDocumento  # noqa: E402
 CompaniaWithRelations.model_rebuild() 

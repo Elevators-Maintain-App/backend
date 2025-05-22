@@ -4,7 +4,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.auth import firebase_admin
 
 from app.api.routes import (
-    clientes_router,
     tipos_documento_router,
     estados_orden_router,
     prioridades_router,
@@ -67,7 +66,6 @@ async def health_check():
 
 # Register API routes
 app.include_router(usuarios_router, prefix="/api/usuarios", tags=["Usuarios"])
-app.include_router(clientes_router, prefix="/api/clientes", tags=["Clientes"])
 app.include_router(proyectos_router, prefix="/api/proyectos", tags=["Proyectos"])
 app.include_router(ordenes_trabajo_router, prefix="/api/ordenes-trabajo", tags=["Ordenes de Trabajo"])
 app.include_router(checklists_router, prefix="/api/checklists", tags=["Checklists"])

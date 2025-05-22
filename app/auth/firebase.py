@@ -1,16 +1,28 @@
 # app/auth/firebase.py
 
 from fastapi import Request, HTTPException, status, Depends
-from firebase_admin import auth as firebase_auth
+from firebase_admin import auth as firebase_auth, firestore
 from sqlalchemy.ext.asyncio import AsyncSession
+from pydantic import BaseModel
 
 from app.db.session import get_db
 from app.db.repositories.usuarios import usuario_crud
 from app.db.models.usuarios import Usuario
 
+
+# Cliente de Firestore
+db_firestore = firestore.client()
+
+class FirebaseUser(BaseModel):
+    uid: str
+    display_name: str
+    email: str
+    company_id: str
+    role: str
+
 async def get_current_firebase_user(
-    request: Request, db: AsyncSession = Depends(get_db)
-) -> Usuario:
+    request: Request
+) -> FirebaseUser:
     """
     Verifica el token Firebase y devuelve el usuario autenticado desde la base de datos.
     """
@@ -26,11 +38,19 @@ async def get_current_firebase_user(
     except Exception:
         raise HTTPException(status_code=401, detail="Token inválido")
 
-    user = await usuario_crud.get(db, uid)
-    if not user:
-        raise HTTPException(status_code=404, detail="Usuario no registrado en el sistema")
+    # Leer de Firestore
+    doc = db_firestore.collection("users").document(uid).get()
+    if not doc.exists:
+        raise HTTPException(404, "Usuario no encontrado en Firestore")
 
-    return user
+    data = doc.to_dict()
+    return FirebaseUser(
+        uid=uid,
+        display_name=data.get("display_name", ""),
+        email=data.get("email", ""),
+        company_id=data.get("company_id", ""),
+        role=data.get("rol", "")  
+    )
 
 def require_role(*allowed_roles: str):
     """

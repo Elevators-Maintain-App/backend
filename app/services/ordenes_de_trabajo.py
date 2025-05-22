@@ -1,10 +1,11 @@
 # app/services/ordenes_de_trabajo.py
 
 from typing import List
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 from app.db.repositories.ordenes_de_trabajo import orden_de_trabajo_crud
 from app.db.repositories.unidades import unidad_crud
@@ -13,6 +14,7 @@ from app.db.repositories.estados_orden import estado_orden_crud
 from app.db.repositories.prioridades import prioridad_crud
 from app.db.repositories.usuarios import usuario_crud
 from app.schemas.ordenes_de_trabajo import OrdenDeTrabajoCreate, OrdenDeTrabajoUpdate, OrdenDeTrabajoInDBBase
+from app.db.models.ordenes_de_trabajo import OrdenDeTrabajo
 
 class OrdenDeTrabajoService:
     def __init__(self, db: AsyncSession):
@@ -73,3 +75,20 @@ class OrdenDeTrabajoService:
             raise HTTPException(status_code=404, detail="Orden de trabajo no encontrada")
 
         await orden_de_trabajo_crud.remove(self.db, orden_id)
+
+    async def listar_por_supervisor(self, supervisor_uid: str):
+        q = select(OrdenDeTrabajo).where(OrdenDeTrabajo.supervisor_id == supervisor_uid)
+        res = await self.db.execute(q.order_by(OrdenDeTrabajo.fecha))
+        return res.scalars().all()
+
+    async def crear_para_supervisor(self, orden_in, supervisor_uid: str, company_id: str):
+        nueva = OrdenDeTrabajo(
+            id=uuid4(),
+            **orden_in.dict(),
+            company_id=company_id,
+            supervisor_id=supervisor_uid
+        )
+        self.db.add(nueva)
+        await self.db.commit()
+        await self.db.refresh(nueva)
+        return nueva

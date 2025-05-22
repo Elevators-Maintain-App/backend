@@ -20,4 +20,3 @@ class Cliente(Base):
 
     # Relaciones
     tipo_documento = relationship("TipoDocumento")
-    proyectos = relationship("Proyecto", back_populates="cliente", cascade="all, delete-orphan")

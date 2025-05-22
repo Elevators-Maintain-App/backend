@@ -36,3 +36,14 @@ class UsuarioOut(UsuarioBase):
 class UsuarioInDBBase(UsuarioOut):
     class Config:
         from_attributes = True
+
+class UserOut(BaseModel):
+    uid: str
+    email: Optional[str]
+    display_name: Optional[str]
+    company_id: Optional[str]
+    role: Optional[str]
+    photo_url: Optional[str]
+
+class CountOut(BaseModel):
+    count: int

@@ -1,8 +1,7 @@
 # app/services/unidades.py
 
 from typing import List
-from uuid import UUID
-
+from uuid import uuid4, UUID
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,38 +14,41 @@ class UnidadService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_all(self) -> List[UnidadInDBBase]:
-        return await unidad_crud.get_multi(self.db)
+    async def get_by_company(self, company_id: UUID) -> List[UnidadInDBBase]:
+        return await unidad_crud.get_multi_by_field(
+            self.db,
+            field="company_id",
+            value=company_id
+        )
 
-    async def get_by_id(self, unidad_id: UUID) -> UnidadInDBBase:
+    async def get_by_id_and_company(self, unidad_id: UUID, company_id: UUID) -> UnidadInDBBase:
         unidad = await unidad_crud.get(self.db, unidad_id)
-        if not unidad:
-            raise HTTPException(status_code=404, detail="Unidad no encontrada")
+        if not unidad or unidad.company_id != company_id:
+            raise HTTPException(status_code=404, detail="Unidad no encontrada o fuera de tu compañía")
         return unidad
 
-    async def create(self, unidad_in: UnidadCreate) -> UnidadInDBBase:
-        # Validar existencia de proyecto
+    async def create(self, unidad_in: UnidadCreate, company_id: UUID) -> UnidadInDBBase:
+        # validar proyecto y que pertenezca a la compañía
         proyecto = await proyecto_crud.get(self.db, unidad_in.proyecto_id)
-        if not proyecto:
-            raise HTTPException(status_code=400, detail="El proyecto especificado no existe.")
+        if not proyecto or proyecto.company_id != company_id:
+            raise HTTPException(status_code=400, detail="Proyecto no existe o fuera de tu compañía")
+        # validar tipo de unidad
+        tipo = await tipo_unidad_crud.get(self.db, unidad_in.tipo_unidad_id)
+        if not tipo:
+            raise HTTPException(status_code=400, detail="Tipo de unidad no existe")
 
-        # Validar existencia de tipo de unidad
-        tipo_unidad = await tipo_unidad_crud.get(self.db, unidad_in.tipo_unidad_id)
-        if not tipo_unidad:
-            raise HTTPException(status_code=400, detail="El tipo de unidad especificado no existe.")
+        obj = unidad_in.dict()
+        obj["company_id"] = company_id
+        return await unidad_crud.create(self.db, obj_in=obj)
 
-        return await unidad_crud.create(self.db, obj_in=unidad_in)
+    async def update(self, unidad_id: UUID, unidad_in: UnidadUpdate, company_id: UUID) -> UnidadInDBBase:
+        unidad = await unidad_crud.get(self.db, unidad_id)
+        if not unidad or unidad.company_id != company_id:
+            raise HTTPException(status_code=404, detail="Unidad no encontrada o fuera de tu compañía")
+        return await unidad_crud.update(self.db, db_obj=unidad, obj_in=unidad_in)
 
-    async def update(self, unidad_id: UUID, unidad_in: UnidadUpdate) -> UnidadInDBBase:
-        unidad_db = await unidad_crud.get(self.db, unidad_id)
-        if not unidad_db:
-            raise HTTPException(status_code=404, detail="Unidad no encontrada")
-
-        return await unidad_crud.update(self.db, db_obj=unidad_db, obj_in=unidad_in)
-
-    async def delete(self, unidad_id: UUID) -> None:
-        unidad_db = await unidad_crud.get(self.db, unidad_id)
-        if not unidad_db:
-            raise HTTPException(status_code=404, detail="Unidad no encontrada")
-
+    async def delete(self, unidad_id: UUID, company_id: UUID) -> None:
+        unidad = await unidad_crud.get(self.db, unidad_id)
+        if not unidad or unidad.company_id != company_id:
+            raise HTTPException(status_code=404, detail="Unidad no encontrada o fuera de tu compañía")
         await unidad_crud.remove(self.db, unidad_id)

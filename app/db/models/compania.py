@@ -19,3 +19,21 @@ class Compania(Base):
 
     # Relaciones
     tipo_documento = relationship("TipoDocumento") 
+
+    ordenes_de_trabajo = relationship(
+        "OrdenDeTrabajo",
+        back_populates="compania",
+        cascade="all, delete-orphan"
+    )
+
+    proyectos = relationship(
+        "Proyecto",
+        back_populates="compania",
+        cascade="all, delete-orphan"
+    )
+
+    unidades = relationship(
+        "Unidad",
+        back_populates="compania",
+        cascade="all, delete-orphan"
+    )

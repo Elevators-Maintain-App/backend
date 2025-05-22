@@ -11,7 +11,7 @@ class UnidadBase(BaseModel):
     tipo_unidad_id: int
 
 class UnidadCreate(UnidadBase):
-    pass
+    pass  # company_id viene del token
 
 class UnidadUpdate(BaseModel):
     kpi_funcionamiento: Optional[str] = None
@@ -20,6 +20,7 @@ class UnidadUpdate(BaseModel):
 
 class UnidadInDBBase(UnidadBase):
     id: UUID
+    company_id: UUID
     created_at: datetime
     updated_at: datetime
 

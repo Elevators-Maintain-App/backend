@@ -21,17 +21,5 @@ class Usuario(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
-    # Relaciones inversas
-    ordenes_asignadas = relationship(
-        "OrdenDeTrabajo",
-        foreign_keys="OrdenDeTrabajo.tecnico_id",
-        back_populates="tecnico"
-    )
-
-    ordenes_supervisadas = relationship(
-        "OrdenDeTrabajo",
-        foreign_keys="OrdenDeTrabajo.supervisor_id",
-        back_populates="supervisor"
-    )
 
     zona_geografica = relationship("ZonaGeografica", back_populates="usuarios")
