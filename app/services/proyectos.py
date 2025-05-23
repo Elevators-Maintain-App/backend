@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models.proyectos import Proyecto
 from app.db.repositories.proyectos import proyecto_crud
 from app.db.repositories.zonas_geograficas import zona_geografica_crud
-from app.schemas.proyectos import ProyectoCreate, ProyectoUpdate, ProyectoInDBBase
+from app.schemas.proyectos import ProyectoCreate, ProyectoUpdate, ProyectoInDBBase, ProyectoCreateInDB
 
 class ProyectoService:
     def __init__(self, db: AsyncSession):
@@ -56,12 +56,14 @@ class ProyectoService:
                 )
 
         # 2) Validar unicidad de nombre por compañía
-        existing = await proyecto_crud.get_by_fields(
+        existing = await proyecto_crud.get_multi_by_filters(
             self.db,
             filters=[
                 Proyecto.company_id == company_id,
-                Proyecto.nombre == proyecto_in.nombre
-            ]
+                Proyecto.nombre       == proyecto_in.nombre
+            ],
+            skip=0,
+            limit=1
         )
         if existing:
             raise HTTPException(
@@ -70,9 +72,11 @@ class ProyectoService:
             )
 
         # 3) Crear proyecto incluyendo company_id
-        obj_data = proyecto_in.dict()
-        obj_data["company_id"] = company_id
-        return await proyecto_crud.create(self.db, obj_in=obj_data)
+        proyecto_payload = ProyectoCreateInDB(
+        **proyecto_in.dict(exclude_unset=True),
+        company_id=company_id
+        )
+        return await proyecto_crud.create(self.db, obj_in=proyecto_payload)
 
     async def update(
         self,

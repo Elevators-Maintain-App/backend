@@ -32,5 +32,29 @@ class ProyectoInDBBase(ProyectoBase):
 class CountOut(BaseModel):
     count: int
 
-class ProyectoCreateAdmin(ProyectoBase):
+class ProyectoCreateInDB(ProyectoCreate):
     company_id: UUID
+
+class ProyectoDetailOut(BaseModel):
+    id: UUID
+    nombre: str
+    direccion: str | None
+    zona_geografica: str | None
+    cliente: str
+    compania: str
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class ProyectoListOut(BaseModel):
+    id: UUID
+    nombre: str
+    direccion: str | None
+    zona_geografica: str | None
+    cliente: str
+    compania: str
+
+    class Config:
+        from_attributes = True

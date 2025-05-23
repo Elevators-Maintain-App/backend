@@ -11,7 +11,7 @@ from app.services.zonas_geograficas import ZonaGeograficaService
 
 router = APIRouter()
 
-# CRUD routes
+# CRUD zonas geograficas
 
 @router.get("/", response_model=List[ZonaGeograficaInDBBase])
 async def get_zonas_geograficas(db: AsyncSession = Depends(get_db)):

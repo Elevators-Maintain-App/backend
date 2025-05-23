@@ -96,14 +96,6 @@ class CRUDBaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType])
         result = await db.execute(select(self.model).offset(skip).limit(limit))
         return result.scalars().all()
 
-    # async def create(self, db: AsyncSession, obj_in: CreateSchemaType) -> ModelType:
-    #     obj_in_data = jsonable_encoder(obj_in)
-    #     db_obj = self.model(**obj_in_data)
-    #     db.add(db_obj)
-    #     await db.commit()
-    #     await db.refresh(db_obj)
-    #     return db_obj
-
     async def create(self, db: AsyncSession, obj_in: CreateSchemaType) -> ModelType:
         obj_in_data = obj_in.dict(exclude_unset=True)
         db_obj = self.model(**obj_in_data)
@@ -158,5 +150,20 @@ class CRUDBaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType])
         limit: int = 100
     ) -> List[ModelType]:
         stmt = select(self.model).where(getattr(self.model, field) == value).offset(skip).limit(limit)
+        result = await db.execute(stmt)
+        return result.scalars().all()
+    
+    async def get_multi_by_filters(
+        self,
+        db: AsyncSession,
+        filters: List[Any],
+        skip: int = 0,
+        limit: int = 100
+    ) -> List[ModelType]:
+        """
+        Devuelve todos los registros que cumplan todas las condiciones de `filters`.
+        Cada elemento de `filters` es un criterio SQLAlchemy (e.g. Model.field == value).
+        """
+        stmt = select(self.model).where(*filters).offset(skip).limit(limit)
         result = await db.execute(stmt)
         return result.scalars().all()

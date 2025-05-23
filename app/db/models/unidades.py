@@ -10,6 +10,7 @@ class Unidad(Base):
     __tablename__ = 'unidades'
 
     id                 = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    nombre = Column(String, nullable=False, unique=False)
     kpi_funcionamiento = Column(String, nullable=True)
     proyecto_id        = Column(UUID(as_uuid=True), ForeignKey('proyectos.id'), nullable=False)
     tipo_unidad_id     = Column(Integer, ForeignKey('tipos_unidad.id'), nullable=False)
