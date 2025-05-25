@@ -11,6 +11,7 @@ class OrdenDeTrabajo(Base):
     __tablename__ = 'ordenes_de_trabajo'
 
     id             = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    referencia     = Column(String, nullable=True, unique=True)
     descripcion    = Column(Text, nullable=True)
     observaciones  = Column(Text, nullable=True)
     valor          = Column(DECIMAL, nullable=True)

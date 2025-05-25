@@ -124,7 +124,7 @@ async def count_company_users(
     status_code=status.HTTP_200_OK
 )
 async def list_company_users(
-    user=Depends(require_role("admin"))
+    user=Depends(require_role("admin", "superVisor"))
 ):
     """
     (admin) Lista todos los usuarios de la misma compañía.
