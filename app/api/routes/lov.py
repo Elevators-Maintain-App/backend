@@ -10,16 +10,14 @@ router = APIRouter()
 
 @router.get("/roles", response_model=List[LovElemento])
 async def get_roles():
-    """Get all available roles (public endpoint)"""
     service = RolService()
-    return await service.get_roles()
+    return await service.get_roles("superAdmin")
 
 @router.get("/companias", 
            response_model=List[LovElemento],)
 async def get_companias(
     db: AsyncSession = Depends(get_db),
 ):
-    """Get all companies (requires authentication)"""
     service = CompaniaService(db)
     companias = await service.get_companias()
     return [LovElemento(id=compania.id, name=compania.nombre) for compania in companias]
