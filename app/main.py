@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.auth import firebase_admin
 
 from app.api.routes import (
@@ -19,7 +20,8 @@ from app.api.routes import (
     hojas_de_vida,
     zonas_geograficas,
     usuarios_router,
-    compania_router
+    compania_router,
+    lov_router
 )
 from app.core.config import settings
 from app.db.session import engine, Base
@@ -38,7 +40,7 @@ async def lifespan(app: FastAPI):
     # Shutdown: Cleanup resources
     print("Application shutdown complete")
 
-# Create FastAPI application
+# Create FastAPI application with JWT security
 app = FastAPI(
     title=settings.app_name,
     description="FastAPI application with layered architecture",
@@ -58,6 +60,31 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Add security scheme for JWT tokens in Swagger
+from fastapi.openapi.utils import get_openapi
+
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    openapi_schema = get_openapi(
+        title=settings.app_name,
+        version="0.1.0",
+        description="FastAPI application with JWT authentication",
+        routes=app.routes,
+    )
+    openapi_schema["components"]["securitySchemes"] = {
+        "BearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+            "description": "Enter your JWT token"
+        }
+    }
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+app.openapi = custom_openapi
 
 @app.get("/", tags=["health"])
 async def health_check():
@@ -81,7 +108,7 @@ app.include_router(tipos_evidencia_router, prefix="/api/tipos-evidencia", tags=[
 app.include_router(tipos_orden_router, prefix="/api/tipos-orden", tags=["Enums"])
 app.include_router(tipos_unidad_router, prefix="/api/tipos-unidad", tags=["Enums"])
 app.include_router(compania_router, prefix="/api/companias", tags=["companias"])
-
+app.include_router(lov_router, prefix="/api/lov", tags=["lov"])
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("app.main:app", host=settings.host, port=settings.port, reload=True) 

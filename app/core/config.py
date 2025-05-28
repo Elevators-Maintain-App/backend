@@ -14,11 +14,11 @@ class Settings(BaseSettings):
     port: int = 8000
     
     # Database settings
-    db_user: str = "postgres"
-    db_password: str = "password"
-    db_host: str = "localhost"
-    db_port: str = "5432"  # PostgreSQL port debe ser string para PostgresDsn.build
-    db_name: str = "app_db"
+    db_user: str
+    db_password: str
+    db_host: str
+    db_port: str
+    db_name: str
     database_url: Optional[PostgresDsn] = None
     
     @field_validator("database_url", mode="before")
