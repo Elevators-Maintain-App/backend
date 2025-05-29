@@ -4,7 +4,7 @@ from app.schemas.comunes import LovElemento
 
 class RolService:
     @staticmethod
-    async def get_roles(current_role: str) -> List[LovElemento]:
+    async def get_roles(current_role: str | None = None) -> List[LovElemento]:
         """Get all available roles"""
         roles = []
         if current_role == "superAdmin":

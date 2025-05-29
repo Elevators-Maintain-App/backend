@@ -1,0 +1,21 @@
+name: Setup VertiOne Auth
+description: Autenticar en Google Cloud Platform
+inputs:
+  gpc_credentials:
+    description: VertiOne credentials JSON
+    required: true
+  gpc_project_id:
+    description: VertiOne project ID
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: 🔐 Auth
+      uses: google-github-actions/auth@v1
+      with:
+        credentials_json: "${{ inputs.gpc_credentials }}"
+
+    - name: 🔧 Setup gcloud CLI
+      uses: google-github-actions/setup-gcloud@v2
+      with:
+        project_id: ${{ inputs.gpc_project_id }}

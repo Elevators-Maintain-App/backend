@@ -1,0 +1,32 @@
+name: CI - CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    name: 🐳 Build & Push Docker
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: ⬇️ Checkout código
+        uses: actions/checkout@v3
+
+      - name: 🔐 Configurar GCP
+        uses: ./.github/actions/action.yml
+        with:
+          gpc_credentials: ${{ secrets.VERTIONE_APPLICATION_CREDENTIALS }}
+          gpc_project_id: ${{ secrets.VERTIONE_PROJECT_ID }}
+
+      - name: 🐳 Construir y subir imagen Docker
+        env:
+          GOOGLE_PROJECT: ${{ secrets.VERTIONE_PROJECT_ID }}
+        run: |
+          gcloud auth configure-docker us-central1-docker.pkg.dev
+          IMAGE=us-central1-docker.pkg.dev/${{ secrets.VERTIONE_PROJECT_ID }}/artifact-registry-vertione/api
+          docker build -t $IMAGE app/
+          docker push $IMAGE
