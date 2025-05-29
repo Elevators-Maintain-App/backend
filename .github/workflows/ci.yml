@@ -28,5 +28,5 @@ jobs:
         run: |
           gcloud auth configure-docker us-central1-docker.pkg.dev
           IMAGE=us-central1-docker.pkg.dev/${{ secrets.VERTIONE_PROJECT_ID }}/artifact-registry-vertione/api
-          docker build -t $IMAGE app/
+          docker build -t $IMAGE .
           docker push $IMAGE
