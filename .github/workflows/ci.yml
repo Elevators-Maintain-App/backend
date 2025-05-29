@@ -17,7 +17,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: 🔐 Configurar GCP
-        uses: ./.github/actions/action.yml
+        uses: ./.github/actions/setup-gcp
         with:
           gpc_credentials: ${{ secrets.VERTIONE_APPLICATION_CREDENTIALS }}
           gpc_project_id: ${{ secrets.VERTIONE_PROJECT_ID }}
