@@ -56,5 +56,5 @@ jobs:
             --platform=managed \
             --region=us-central1 \
             --allow-unauthenticated \
-            --set-env-vars=DATABASE_URL=${{ secrets.DATABASE_URL }} \
-            --set-env-vars=CLOUD_PROJECT_ID=${{ secrets.CLOUD_PROJECT_ID }}
+            --clear-env-vars \
+            --set-env-vars=DATABASE_URL=${{ secrets.DATABASE_URL }}, CLOUD_PROJECT_ID=${{ secrets.CLOUD_PROJECT_ID }}
