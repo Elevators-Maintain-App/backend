@@ -4,15 +4,16 @@ import firebase_admin
 from firebase_admin import credentials
 import os
 from pathlib import Path
+import base64
 
-firebase_json = os.getenv("FIREBASE_SERVICE_ACCOUNT_JSON")
+firebase_json_b64 = os.getenv("FIREBASE_SERVICE_ACCOUNT_B64")
 
 default_path = Path("firebase-service-account.json")
 
-if firebase_json and not default_path.exists():
+if firebase_json_b64 and not default_path.exists():    
     with open(default_path, "w") as f:
-        f.write(firebase_json)
-        
+        f.write(base64.b64decode(firebase_json_b64))
+
 firebase_cred_path = os.getenv("FIREBASE_CREDENTIALS_PATH", default_path)
 
 if not firebase_admin._apps:
