@@ -56,5 +56,5 @@ jobs:
             --platform=managed \
             --region=us-central1 \
             --allow-unauthenticated \
-            --port=8000 \
+            --max-instances=2 \
             --set-env-vars=DATABASE_URL=${{ secrets.DATABASE_URL }},CLOUD_PROJECT_ID=${{ secrets.CLOUD_PROJECT_ID }}
