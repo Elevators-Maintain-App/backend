@@ -50,6 +50,7 @@ app = FastAPI(
     redoc_url="/redoc",
     openapi_url="/openapi.json",
     debug=settings.debug
+    
 )
 
 # Setup CORS middleware
