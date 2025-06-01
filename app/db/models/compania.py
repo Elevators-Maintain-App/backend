@@ -37,3 +37,9 @@ class Compania(Base):
         back_populates="compania",
         cascade="all, delete-orphan"
     )
+
+    niveles_tecnicos = relationship(
+        "NivelTecnico",
+        back_populates="compania",
+        cascade="all, delete-orphan"
+    )

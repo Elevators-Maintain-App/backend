@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from alembic import context
 
 # Import app models
-from app.db.models import Base
+from app.db.session import Base
 from app.core.config import settings
 
 # this is the Alembic Config object, which provides

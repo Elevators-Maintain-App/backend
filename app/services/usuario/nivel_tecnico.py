@@ -7,7 +7,7 @@ class NivelTecnicoService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_all(self) -> List[NivelTecnico]:
+    async def get_niveles_tecnicos(self) -> List[NivelTecnico]:
         """Get all available levels"""
 
         return await nivel_tecnico_crud.get_multi(self.db)

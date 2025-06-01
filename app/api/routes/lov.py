@@ -29,6 +29,6 @@ async def get_nivel_tecnico(
     db: AsyncSession = Depends(get_db),
 ):
     service = NivelTecnicoService(db)
-    niveles_tecnicos = await service.get_all()
+    niveles_tecnicos = await service.get_niveles_tecnicos()
     return [LovElemento(id=nivel_tecnico.id, name=nivel_tecnico.nombre) for nivel_tecnico in niveles_tecnicos]
 
