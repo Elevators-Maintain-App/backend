@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 from app.db.session import get_db
 from app.schemas.usuarios import UsuarioCreate, UsuarioUpdate, UsuarioOut, UserOut, CountOut
-from app.services.usuarios import UsuarioService
+from app.services.usuario.usuarios import UsuarioService
 from app.auth.firebase import require_role, db_firestore
 from app.auth.firebase import get_current_firebase_user
 from uuid import UUID

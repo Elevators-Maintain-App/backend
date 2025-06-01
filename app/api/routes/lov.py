@@ -3,8 +3,9 @@ from typing import List
 from app.schemas.comunes import LovElemento
 from app.db.session import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.services.rol import RolService
+from app.services.usuario.rol import RolService
 from app.services.compania import CompaniaService
+from app.services.usuario.nivel_tecnico import NivelTecnicoService
 
 router = APIRouter()
 
@@ -21,4 +22,13 @@ async def get_companias(
     service = CompaniaService(db)
     companias = await service.get_companias()
     return [LovElemento(id=compania.id, name=compania.nombre) for compania in companias]
+
+@router.get("/niveles-tecnicos", 
+           response_model=List[LovElemento],)
+async def get_nivel_tecnico(
+    db: AsyncSession = Depends(get_db),
+):
+    service = NivelTecnicoService(db)
+    niveles_tecnicos = await service.get_all()
+    return [LovElemento(id=nivel_tecnico.id, name=nivel_tecnico.nombre) for nivel_tecnico in niveles_tecnicos]
 
