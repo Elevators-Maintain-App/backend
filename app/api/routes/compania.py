@@ -8,7 +8,7 @@ from sqlalchemy import select,  func
 
 from app.db.session import get_db
 from app.services.compania import CompaniaService
-from app.schemas.compania import CompaniaCreate, CompaniaUpdate, Compania, CompaniaWithRelations, CompaniaCountOut
+from app.schemas.compania import CompaniaCreate, CompaniaUpdate, Compania
 from app.auth.firebase import require_role, db_firestore
 from app.schemas.usuarios import UserOut
 from app.db.models.compania import Compania as CompaniaModel
@@ -33,7 +33,7 @@ async def get_companias(
 
 @router.get(
     "/count",
-    response_model=CompaniaCountOut,
+    response_model=Compania,
     status_code=status.HTTP_200_OK
 )
 async def count_companias(
@@ -94,7 +94,7 @@ async def create_compania(
 
 @router.get(
     "/{compania_id}",
-    response_model=CompaniaWithRelations
+    response_model=Compania
 )
 async def get_compania(
     compania_id: UUID4 = Path(..., description="ID de la compañía"),

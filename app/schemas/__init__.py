@@ -17,6 +17,7 @@ from app.schemas.tipos_evidencia import TipoEvidenciaBase, TipoEvidenciaCreate, 
 from app.schemas.tipos_orden import TipoOrdenBase, TipoOrdenCreate, TipoOrdenUpdate, TipoOrdenInDBBase
 from app.schemas.tipos_unidad import TipoUnidadBase, TipoUnidadCreate, TipoUnidadUpdate, TipoUnidadInDBBase
 from app.schemas.comunes import LovElemento
+from app.schemas.nivel_tecnico_schema import NivelTecnicoCreate, NivelTecnicoUpdate
 
 __all__ = [
     "ChecklistBase", "ChecklistCreate", "ChecklistUpdate", "ChecklistInDBBase",
@@ -34,5 +35,5 @@ __all__ = [
     "TipoOrdenBase", "TipoOrdenCreate", "TipoOrdenUpdate", "TipoOrdenInDBBase",
     "TipoUnidadBase", "TipoUnidadCreate", "TipoUnidadUpdate", "TipoUnidadInDBBase",
     "UsuarioBase", "UsuarioCreate", "UsuarioUpdate", "UsuarioInDBBase",
-    "LovElemento"
+    "LovElemento", "NivelTecnicoCreate", "NivelTecnicoUpdate"
 ]
