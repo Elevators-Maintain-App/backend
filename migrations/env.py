@@ -12,6 +12,62 @@ from alembic import context
 from app.db.session import Base
 from app.core.config import settings
 
+# Import all models so Alembic can detect them
+from app.db.models.compania import Compania
+from app.db.models.clientes import Cliente
+from app.db.models.enums.tipos_documento import TipoDocumento
+from app.db.models.enums.tipos_unidad import TipoUnidad
+from app.db.models.enums.tipos_orden import TipoOrden
+from app.db.models.enums.estados_orden import EstadoOrden
+from app.db.models.enums.prioridades import Prioridad
+from app.db.models.enums.tipos_evidencia import TipoEvidencia
+
+# Import other models if they exist
+try:
+    from app.db.models.ordenes_de_trabajo import OrdenDeTrabajo
+except ImportError:
+    pass
+
+try:
+    from app.db.models.proyectos import Proyecto
+except ImportError:
+    pass
+
+try:
+    from app.db.models.unidades import Unidad
+except ImportError:
+    pass
+
+try:
+    from app.db.models.nivel_tecnico import NivelTecnico
+except ImportError:
+    pass
+
+try:
+    from app.db.models.usuarios import Usuario
+except ImportError:
+    pass
+
+try:
+    from app.db.models.zonas_geograficas import ZonaGeografica
+except ImportError:
+    pass
+
+try:
+    from app.db.models.evidencias_multimedia import EvidenciaMultimedia
+except ImportError:
+    pass
+
+try:
+    from app.db.models.checklists import Checklist
+except ImportError:
+    pass
+
+try:
+    from app.db.models.hojas_de_vida import HojaDeVida
+except ImportError:
+    pass
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
