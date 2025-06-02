@@ -56,4 +56,4 @@ jobs:
             --region=us-central1 \
             --allow-unauthenticated \
             --max-instances=2 \
-            --set-env-vars="DATABASE_URL=${{ secrets.DATABASE_URL }},CLOUD_PROJECT_ID=${{ secrets.CLOUD_PROJECT_ID }},FIREBASE_SERVICE_ACCOUNT_B64=${{ secrets.FIREBASE_CREDENTIALS }}"
+            --set-env-vars="DATABASE_URL=${{ secrets.DATABASE_URL }},CLOUD_PROJECT_ID=${{ secrets.CLOUD_PROJECT_ID }},FIREBASE_SERVICE_ACCOUNT_B64=${{ secrets.FIREBASE_CREDENTIALS }}",ENVIRONMENT=production

@@ -28,7 +28,7 @@ class Settings(BaseSettings):
         environment = data.get("environment")
         data_base_url = data.get("database_url")
         
-        logging.debug(f"🔍 Environment: {environment}")
+        print(f"🔍 Environment: {environment}")
         
         if environment == 'development':
             db_user = data.get('db_user')   
