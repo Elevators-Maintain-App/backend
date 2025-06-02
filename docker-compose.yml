@@ -23,7 +23,7 @@ services:
     container_name: postgres_db
     restart: always
     volumes:
-      - postgres_data:/var/lib/postgresql/data/
+      - vertione_data:/var/lib/postgresql/data/
     env_file:
       - .env
     environment:
@@ -40,4 +40,4 @@ networks:
     driver: bridge
 
 volumes:
-  postgres_data:
+  vertione_data:

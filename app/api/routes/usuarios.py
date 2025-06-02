@@ -53,6 +53,7 @@ async def list_all_users(
             company_id=data.get("company_id"),
             role=data.get("rol"),
             photo_url=data.get("photo_url"),
+            company_name=data.get("company_name"),
         ))
     return salida
 
