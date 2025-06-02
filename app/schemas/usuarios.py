@@ -44,6 +44,7 @@ class UserOut(BaseModel):
     company_id: Optional[str]
     role: Optional[str]
     photo_url: Optional[str]
+    company_name: Optional[str]
 
 class CountOut(BaseModel):
     count: int
