@@ -15,6 +15,36 @@ from app.db.models.compania import Compania as CompaniaModel
 
 router = APIRouter()
 
+# """
+# Usuarios
+@router.get("/{uid}", response_model=UsuarioOut)
+async def obtener_usuario(uid: str = Path(...), db: AsyncSession = Depends(get_db)):
+    service = UsuarioService(db)
+    return await service.get_by_uid(uid)
+
+
+
+@router.post("/", response_model=str, status_code=status.HTTP_201_CREATED)
+async def crear_usuario(
+    usuario_in: UsuarioCreate,
+    db: AsyncSession = Depends(get_db),
+    usuario_actual=Depends(require_role("superAdmin", "admin", "supervisor")),
+):
+    service = UsuarioService(db)
+    return await service.create(usuario_actual, usuario_in)
+
+@router.put("/{uid}", response_model=UsuarioOut)
+async def actualizar_usuario(uid: str, usuario_in: UsuarioUpdate, db: AsyncSession = Depends(get_db)):
+    service = UsuarioService(db)
+    return await service.update(uid, usuario_in)
+
+@router.delete("/{uid}", response_model=UsuarioOut)
+async def eliminar_usuario(uid: str, db: AsyncSession = Depends(get_db)):
+    service = UsuarioService(db)
+    return await service.delete(uid)
+
+# """
+
 # Rutas para SuperAdmin
 @router.get(
     "/count",
@@ -244,22 +274,4 @@ async def listar_usuarios(db: AsyncSession = Depends(get_db)):
     service = UsuarioService(db)
     return await service.get_all()
 
-@router.get("/{uid}", response_model=UsuarioOut)
-async def obtener_usuario(uid: str = Path(...), db: AsyncSession = Depends(get_db)):
-    service = UsuarioService(db)
-    return await service.get_by_uid(uid)
 
-@router.post("/", response_model=UsuarioOut, status_code=status.HTTP_201_CREATED)
-async def crear_usuario(usuario_in: UsuarioCreate, db: AsyncSession = Depends(get_db)):
-    service = UsuarioService(db)
-    return await service.create(usuario_in)
-
-@router.put("/{uid}", response_model=UsuarioOut)
-async def actualizar_usuario(uid: str, usuario_in: UsuarioUpdate, db: AsyncSession = Depends(get_db)):
-    service = UsuarioService(db)
-    return await service.update(uid, usuario_in)
-
-@router.delete("/{uid}", response_model=UsuarioOut)
-async def eliminar_usuario(uid: str, db: AsyncSession = Depends(get_db)):
-    service = UsuarioService(db)
-    return await service.delete(uid)

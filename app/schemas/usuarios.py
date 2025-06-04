@@ -3,25 +3,35 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 from datetime import datetime
+from app.db.models.usuarios import Rol
 
 class UsuarioBase(BaseModel):
-    email: EmailStr
-    full_name: Optional[str] = None
-    role: str  # "tecnico", "supervisor", "admin", etc.
+    company_id: str
+    display_name: str
+    document_id: str
+    document_type_id: str
+    email: str
+    phone_number: str
+    rol: Rol
     nivel: Optional[str] = None
     zona_geografica_id: Optional[str] = None
+    photo_url: Optional[str] = None
     is_active: Optional[bool] = True
+
 
 # Para creación desde el frontend o sincronización con Firebase
 class UsuarioCreate(UsuarioBase):
-    uid: str  # Firebase UID obligatorio
+    ...
 
-# Para actualizaciones parciales desde el backend
 class UsuarioUpdate(BaseModel):
-    full_name: Optional[str] = None
-    role: Optional[str] = None
-    nivel: Optional[str] = None
-    zona_geografica_id: Optional[str] = None
+    company_id: Optional[str] = None
+    display_name: Optional[str] = None
+    document_id: Optional[str] = None
+    document_type_id: Optional[str] = None
+    email: Optional[str] = None
+    phone_number: Optional[str] = None
+    photo_url: Optional[str] = None
+    rol: Optional[str] = None
     is_active: Optional[bool] = None
 
 # Para respuestas generales

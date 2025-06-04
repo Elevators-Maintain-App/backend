@@ -20,7 +20,7 @@ class UsuarioService:
     async def get_by_uid(self, uid: str) -> Usuario:
         return await usuario_crud.get_by_field(self.db, "uid", uid)
 
-    async def create(self, usuario_in: UsuarioCreate) -> Usuario:
+    async def create(self, usuario_actual: Usuario, usuario_in: UsuarioCreate) -> Usuario:
         usuario = await usuario_crud.get_by_field(self.db, "uid", usuario_in.uid)
         if usuario:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El usuario ya existe")
