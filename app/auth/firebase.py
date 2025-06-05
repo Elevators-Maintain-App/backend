@@ -5,10 +5,11 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from firebase_admin import auth as firebase_auth, firestore
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
-
+from typing import Optional
 from app.db.session import get_db
 from app.db.repositories.usuarios import usuario_crud
 from app.db.models.usuarios import Usuario
+from app.db.models.usuarios import Rol
 
 # Security scheme
 security = HTTPBearer(
@@ -19,12 +20,22 @@ security = HTTPBearer(
 # Cliente de Firestore
 db_firestore = firestore.client()
 
-class FirebaseUser(BaseModel):
-    uid: str
+class UsuarioFirebaseBase(BaseModel):
+    company_id: str 
     display_name: str
+    document_id: str
+    document_type: str
+    document_type_name: str
     email: str
-    company_id: str
-    role: str
+    photo_url: Optional[str] = None
+    rol: Rol
+
+class FirebaseUser(UsuarioFirebaseBase):
+    uid: str
+    created_time: str
+
+class UsuarioFirebaseDto(UsuarioFirebaseBase):
+    ...
 
 async def get_current_firebase_user(
     credentials: HTTPAuthorizationCredentials = Depends(security)

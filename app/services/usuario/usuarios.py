@@ -9,6 +9,9 @@ from sqlalchemy import select
 from app.db.models.usuarios import Usuario
 from app.schemas.usuarios import UsuarioCreate, UsuarioUpdate
 from app.db.repositories.usuarios import usuario_crud
+from app.services.compania import CompaniaService
+from app.db.repositories.tipos_documento import tipo_documento_crud
+from app.services.usuario.user_cases import FabricaDeUsuarios
 
 class UsuarioService:
     def __init__(self, db: AsyncSession):
@@ -24,7 +27,30 @@ class UsuarioService:
         usuario = await usuario_crud.get_by_field(self.db, "uid", usuario_in.uid)
         if usuario:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El usuario ya existe")
-        return await usuario_crud.create(self.db, obj_in=usuario_in)
+        
+    
+        compania = await CompaniaService(self.db).get_compania(usuario_in.company_id)        
+        tipo_documento = await tipo_documento_crud.get(self.db, usuario_in.tipo_documento_id)
+
+        fabrica_de_usuarios = FabricaDeUsuarios.get_user_case(usuario_in.rol)
+        usuario_firebase = fabrica_de_usuarios.obtener_firebase_usuario({
+            "usuario_actual": usuario_actual,
+            "usuario_nuevo": usuario_in,
+            "compania": compania,
+            "tipo_documento": tipo_documento
+        })
+
+        usuario_a_guardar = fabrica_de_usuarios.obtener_usuario_a_guardar({
+            "usuario_actual": usuario_actual,
+            "usuario_nuevo": usuario_in,
+            "firebase_uid": usuario_firebase.uid
+        })
+
+        usuario_guardado = await usuario_crud.create(self.db, obj_in=usuario_a_guardar)
+
+        return usuario_guardado
+        
+        
 
     async def update(self, uid: str, usuario_in: UsuarioUpdate) -> Usuario:
         usuario = await self.get_by_uid(uid)
