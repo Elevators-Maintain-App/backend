@@ -4,8 +4,9 @@ from dotenv import load_dotenv
 load_dotenv(override=True)
 
 from fastapi.middleware.cors import CORSMiddleware
-from app.auth import firebase_admin
-from app.auth.firebase import get_current_firebase_user, require_role
+
+# Initialize Firebase before importing routes that use Firebase services
+from app.config import firebase_config
 
 from app.api.routes import (
     tipos_documento_router,

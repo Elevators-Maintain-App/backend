@@ -1,7 +1,7 @@
 # app/api/routes/compania.py
 
 from fastapi import APIRouter, Depends, Path, Query, status, HTTPException
-from typing import List, Dict
+from typing import List, Dict, Optional
 from pydantic import UUID4
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select,  func
@@ -9,9 +9,10 @@ from sqlalchemy import select,  func
 from app.db.session import get_db
 from app.services.compania import CompaniaService
 from app.schemas.compania import CompaniaCreate, CompaniaUpdate, Compania
-from app.auth.firebase import require_role, db_firestore
-from app.schemas.usuarios import UserOut
+from app.auth.firebase import require_role, get_firestore_client
+from app.schemas.usuarios import UserOut, UsuarioResponse
 from app.db.models.compania import Compania as CompaniaModel
+from app.db.repositories import compania_crud
 
 router = APIRouter()
 
@@ -68,7 +69,7 @@ async def count_users_per_company(
     # En este caso saltamos el repositorio SQL y leemos directamente Firestore:
     counts: Dict[str,int] = {}
     # Alternativa: puedes recoger todos los IDs desde Firestore mismo:
-    users = db_firestore.collection("users").stream()
+    users = get_firestore_client().collection("users").stream()
     for doc in users:
         cid = doc.to_dict().get("company_id")
         if not cid:
@@ -184,32 +185,115 @@ async def read_companias_by_tipo_documento(
         limit=limit
     )
 
-@router.get(
-    "/{compania_id}/users",
-    response_model=List[UserOut],
-    status_code=status.HTTP_200_OK
-)
-async def list_users_by_company(
-    compania_id: UUID4 = Path(..., description="ID de la compañía"),
-    user=Depends(require_role("superAdmin")),
+@router.get("/{compania_id}/users", response_model=List[UsuarioResponse], dependencies=[Depends(require_role("superAdmin"))])
+async def get_users_by_company(
+    compania_id: int,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    db: AsyncSession = Depends(get_db)
 ):
     """
-    (superAdmin) Lista todos los usuarios que pertenecen a esta compañía (según Firestore).
+    Obtener usuarios de una compañía específica desde Firebase.
+    Solo superAdmin puede acceder.
     """
-    # Consulta en Firestore la colección "users" con company_id igual a este ID
-    users_ref = db_firestore.collection("users").where("company_id", "==", str(compania_id))
-    docs = users_ref.stream()
-    salida = []
-    for doc in docs:
-        data = doc.to_dict()
-        salida.append(UserOut(
-            uid=doc.id,
-            email=data.get("email"),
-            display_name=data.get("display_name"),
-            company_id=data.get("company_id"),
-            role=data.get("role"),
-        ))
-    return salida
+    # Verificar que la compañía existe
+    compania = await compania_crud.get_by_id(db, compania_id)
+    if not compania:
+        raise HTTPException(status_code=404, detail="Compañía no encontrada")
+    
+    try:
+        # Obtener usuarios de Firebase filtrados por company_id
+        users = get_firestore_client().collection("users").stream()
+        usuarios_response = []
+        count = 0
+        skipped = 0
+        
+        for user_doc in users:
+            user_data = user_doc.to_dict()
+            
+            # Filtrar por company_id
+            if user_data.get("company_id") == str(compania_id):
+                # Aplicar skip
+                if skipped < skip:
+                    skipped += 1
+                    continue
+                
+                # Aplicar limit
+                if count >= limit:
+                    break
+                
+                usuarios_response.append(UsuarioResponse(
+                    uid=user_doc.id,
+                    email=user_data.get("email", ""),
+                    display_name=user_data.get("display_name", ""),
+                    document_id=user_data.get("document_id", ""),
+                    document_type=user_data.get("document_type", ""),
+                    document_type_name=user_data.get("document_type_name", ""),
+                    company_id=user_data.get("company_id", ""),
+                    company_name=user_data.get("company_name", ""),
+                    photo_url=user_data.get("photo_url"),
+                    rol=user_data.get("rol", ""),
+                    is_active=user_data.get("is_active", True),
+                    created_at=user_data.get("created_at"),
+                    updated_at=user_data.get("updated_at")
+                ))
+                count += 1
+        
+        return usuarios_response
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al obtener usuarios: {str(e)}"
+        )
+
+@router.delete("/{compania_id}/users", response_model=dict, dependencies=[Depends(require_role("superAdmin"))])
+async def delete_users_by_company(
+    compania_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Eliminar todos los usuarios de una compañía específica desde Firebase.
+    Solo superAdmin puede acceder.
+    """
+    # Verificar que la compañía existe
+    compania = await compania_crud.get_by_id(db, compania_id)
+    if not compania:
+        raise HTTPException(status_code=404, detail="Compañía no encontrada")
+    
+    try:
+        # Obtener usuarios de Firebase filtrados por company_id
+        users_ref = get_firestore_client().collection("users").where("company_id", "==", str(compania_id))
+        users_query = users_ref.stream()
+        
+        deleted_count = 0
+        errors = []
+        
+        for user_doc in users_query:
+            try:
+                # Eliminar el documento del usuario
+                user_doc.reference.delete()
+                deleted_count += 1
+            except Exception as delete_error:
+                errors.append(f"Error al eliminar usuario {user_doc.id}: {str(delete_error)}")
+        
+        response = {
+            "message": f"Eliminación completada para compañía {compania_id}",
+            "deleted_users": deleted_count,
+            "company_id": compania_id,
+            "company_name": compania.nombre
+        }
+        
+        if errors:
+            response["errors"] = errors
+            
+        return response
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al eliminar usuarios: {str(e)}"
+        )
 
 
 
