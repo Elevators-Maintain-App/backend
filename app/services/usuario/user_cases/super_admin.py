@@ -5,7 +5,7 @@ from app.db.models.compania import Compania
 from app.db.models import TipoDocumento
 from app.db.models.usuarios import Usuario
 from app.schemas.usuarios import UsuarioCreate
-from app.auth.firebase import UsuarioFirebaseDto
+from app.auth.firebase import FirebaseUser
 from .utils import mapear_usuario_dto_a_usuario_firebase, mapear_usuario_dto_a_usuario
 from app.services.usuario.interfaces import UsuarioCaseInterface
 
@@ -26,7 +26,7 @@ class CrearUsuarioParams:
     firebase_uid: str
 
 class SuperAdminCase(UsuarioCaseInterface):
-    def obtener_firebase_usuario(self, params: CrearFirebaseUsuarioParams) -> UsuarioFirebaseDto:
+    def obtener_firebase_usuario(self, params: CrearFirebaseUsuarioParams) -> FirebaseUser:
         usuario_actual: Usuario = params.usuario_actual
         usuario_nuevo: UsuarioCreate = params.usuario_nuevo
         compania: Compania = params.compania

@@ -25,7 +25,7 @@ from app.schemas.ordenes_de_trabajo import (
     OrdenDeTrabajoSummarySupervisorOut,
     OrdenDeTrabajoWeeklyComplianceOut,
 )
-from app.auth.firebase import db_firestore
+from app.auth.firebase import get_firestore_client
 from app.db.models.compania import Compania
 from datetime import datetime, timedelta, date
 from fastapi.concurrency import run_in_threadpool
@@ -106,9 +106,9 @@ class OrdenDeTrabajoService:
         prioridad = await prioridad_crud.get(self.db, o.prioridad_id)
         unidad = await self.db.get(Unidad, o.unidad_id)
         # Firestore
-        sup = await run_in_threadpool(lambda: db_firestore.collection("users").document(o.supervisor_id).get())
-        tec = await run_in_threadpool(lambda: db_firestore.collection("users").document(o.tecnico_id).get())
-        cliente = await run_in_threadpool(lambda: db_firestore.collection("users").document(o.tecnico_id).get())
+        sup = await run_in_threadpool(lambda: get_firestore_client().collection("users").document(o.supervisor_id).get())
+        tec = await run_in_threadpool(lambda: get_firestore_client().collection("users").document(o.tecnico_id).get())
+        cliente = await run_in_threadpool(lambda: get_firestore_client().collection("users").document(o.tecnico_id).get())
         sup_name = sup.to_dict().get("display_name","—") if sup.exists else "—"
         tec_name = tec.to_dict().get("display_name","—") if tec.exists else "—"
         cli_name = cliente.to_dict().get("display_name","—") if cliente.exists else "—"

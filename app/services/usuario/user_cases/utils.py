@@ -1,11 +1,11 @@
-from app.auth.firebase import UsuarioFirebaseDto
+from app.auth.firebase import FirebaseUser
 from app.schemas.usuarios import UsuarioCreate
 from app.db.models.compania import Compania
 from app.db.models.enums.tipos_documento import TipoDocumento
 from app.db.models.usuarios import Usuario
 
-def mapear_usuario_dto_a_usuario_firebase(usuario_nuevo: UsuarioCreate, compania: Compania, tipo_documento: TipoDocumento) -> UsuarioFirebaseDto:
-    usuario_firebase = UsuarioFirebaseDto(
+def mapear_usuario_dto_a_usuario_firebase(usuario_nuevo: UsuarioCreate, compania: Compania, tipo_documento: TipoDocumento) -> FirebaseUser:
+    usuario_firebase = FirebaseUser(
             company_id=compania.id,
             company_name=compania.nombre,
             display_name=usuario_nuevo.display_name,

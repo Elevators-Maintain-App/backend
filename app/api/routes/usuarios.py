@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
 
 from app.db.session import get_db
-from app.schemas.usuarios import UsuarioCreate, UsuarioUpdate, UsuarioOut, UserOut, CountOut, UsuarioResponse, UsuarioListResponse
+from app.schemas.usuarios import UsuarioCreate, UsuarioUpdate, UsuarioOut, UserOut, CountOut, UsuarioListResponse
 from app.services.usuario.usuarios import UsuarioService
 from app.auth.firebase import require_role, get_firestore_client
 from app.auth.firebase import get_current_firebase_user
@@ -326,7 +326,7 @@ async def get_usuarios(
             if count >= limit:
                 break
             
-            usuarios.append(UsuarioResponse(
+            usuarios.append(UsuarioOut(
                 uid=doc.id,
                 email=user_data.get("email", ""),
                 display_name=user_data.get("display_name", ""),
@@ -401,7 +401,7 @@ async def get_usuarios_by_role(
             if count >= limit:
                 break
             
-            usuarios.append(UsuarioResponse(
+            usuarios.append(UsuarioOut(
                 uid=doc.id,
                 email=user_data.get("email", ""),
                 display_name=user_data.get("display_name", ""),
@@ -476,7 +476,7 @@ async def get_usuarios_by_company(
             if count >= limit:
                 break
             
-            usuarios.append(UsuarioResponse(
+            usuarios.append(UsuarioOut(
                 uid=doc.id,
                 email=user_data.get("email", ""),
                 display_name=user_data.get("display_name", ""),
@@ -506,7 +506,7 @@ async def get_usuarios_by_company(
             detail=f"Error al obtener usuarios por compañía: {str(e)}"
         )
 
-@router.get("/{uid}", response_model=UsuarioResponse, dependencies=[Depends(require_role("superAdmin", "operativo", "cliente"))])
+@router.get("/{uid}", response_model=UsuarioOut, dependencies=[Depends(require_role("superAdmin", "operativo", "cliente"))])
 async def get_usuario(
     uid: str,
     db: AsyncSession = Depends(get_db)
@@ -523,7 +523,7 @@ async def get_usuario(
         
         user_data = doc.to_dict()
         
-        return UsuarioResponse(
+        return UsuarioOut(
             uid=doc.id,
             email=user_data.get("email", ""),
             display_name=user_data.get("display_name", ""),

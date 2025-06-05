@@ -5,14 +5,14 @@ from typing import List, Dict, Optional
 from pydantic import UUID4
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select,  func
+from datetime import datetime
 
 from app.db.session import get_db
 from app.services.compania import CompaniaService
 from app.schemas.compania import CompaniaCreate, CompaniaUpdate, Compania
 from app.auth.firebase import require_role, get_firestore_client
-from app.schemas.usuarios import UserOut, UsuarioResponse
+from app.schemas.usuarios import UsuarioOut
 from app.db.models.compania import Compania as CompaniaModel
-from app.db.repositories import compania_crud
 
 router = APIRouter()
 
@@ -185,7 +185,7 @@ async def read_companias_by_tipo_documento(
         limit=limit
     )
 
-@router.get("/{compania_id}/users", response_model=List[UsuarioResponse], dependencies=[Depends(require_role("superAdmin"))])
+@router.get("/{compania_id}/users", response_model=List[UsuarioOut], dependencies=[Depends(require_role("superAdmin"))])
 async def get_users_by_company(
     compania_id: int,
     skip: int = Query(0, ge=0),
@@ -197,7 +197,8 @@ async def get_users_by_company(
     Solo superAdmin puede acceder.
     """
     # Verificar que la compañía existe
-    compania = await compania_crud.get_by_id(db, compania_id)
+    service = CompaniaService(db)
+    compania = await service.get_compania(compania_id)
     if not compania:
         raise HTTPException(status_code=404, detail="Compañía no encontrada")
     
@@ -222,20 +223,21 @@ async def get_users_by_company(
                 if count >= limit:
                     break
                 
-                usuarios_response.append(UsuarioResponse(
+                usuarios_response.append(UsuarioOut(
                     uid=user_doc.id,
-                    email=user_data.get("email", ""),
+                    company_id=user_data.get("company_id", ""),
                     display_name=user_data.get("display_name", ""),
                     document_id=user_data.get("document_id", ""),
-                    document_type=user_data.get("document_type", ""),
-                    document_type_name=user_data.get("document_type_name", ""),
-                    company_id=user_data.get("company_id", ""),
-                    company_name=user_data.get("company_name", ""),
-                    photo_url=user_data.get("photo_url"),
+                    document_type_id=user_data.get("document_type", ""),
+                    email=user_data.get("email", ""),
+                    phone_number=user_data.get("phone_number", ""),
                     rol=user_data.get("rol", ""),
+                    nivel=user_data.get("nivel"),
+                    zona_geografica_id=user_data.get("zona_geografica_id"),
+                    photo_url=user_data.get("photo_url"),
                     is_active=user_data.get("is_active", True),
-                    created_at=user_data.get("created_at"),
-                    updated_at=user_data.get("updated_at")
+                    created_at=user_data.get("created_at", datetime.now()),
+                    updated_at=user_data.get("updated_at", datetime.now())
                 ))
                 count += 1
         
