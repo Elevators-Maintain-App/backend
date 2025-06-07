@@ -5,7 +5,7 @@ from sqlalchemy import update as sql_update, delete as sql_delete
 from pydantic import BaseModel
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
-
+from fastapi import HTTPException
 from app.db.session import Base
 
 ModelType = TypeVar("ModelType", bound=Base)
@@ -97,12 +97,16 @@ class CRUDBaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType])
         return result.scalars().all()
 
     async def create(self, db: AsyncSession, obj_in: CreateSchemaType) -> ModelType:
-        obj_in_data = obj_in.dict(exclude_unset=True)
-        db_obj = self.model(**obj_in_data)
-        db.add(db_obj)
-        await db.commit()
-        await db.refresh(db_obj)
-        return db_obj
+        try:            
+            obj_in_data = obj_in.model_dump(exclude_unset=True)
+            db_obj = self.model(**obj_in_data)
+            db.add(db_obj)
+            await db.commit()
+            await db.refresh(db_obj)
+            return db_obj
+        except Exception as e:
+            print("**** error al crear usuario", e)
+            raise HTTPException(status_code=500, detail="Error al crear usuario")
 
 
     async def update(self, db: AsyncSession, db_obj: ModelType, obj_in: Union[UpdateSchemaType, Dict[str, Any]]) -> ModelType:

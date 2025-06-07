@@ -24,12 +24,13 @@ async def obtener_usuario(uid: str = Path(...), db: AsyncSession = Depends(get_d
 
 
 
-@router.post("/", response_model=str, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=UsuarioOut, status_code=status.HTTP_201_CREATED)
 async def crear_usuario(
     usuario_in: UsuarioCreate,
     db: AsyncSession = Depends(get_db),
     usuario_actual=Depends(require_role("superAdmin", "admin", "supervisor")),
 ):
+    
     service = UsuarioService(db)
     return await service.create(usuario_actual, usuario_in)
 

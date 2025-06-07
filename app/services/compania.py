@@ -45,7 +45,6 @@ class CompaniaService:
         """
         Crea una nueva compañía
         """
-        print(">> creando compañia:", compania_in, flush=True)
         # Verificar si ya existe una compañía con ese documento
         existing_compania = await self.repository.get_by_documento(compania_in.documento)
         if existing_compania:

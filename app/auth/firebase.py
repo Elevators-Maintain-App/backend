@@ -5,12 +5,13 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from firebase_admin import auth as firebase_auth, firestore
 from pydantic import BaseModel
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 from app.db.session import get_db
 from app.db.repositories.usuarios import usuario_crud
 from app.db.models.usuarios import Usuario
 from app.db.models.usuarios import Rol
+from uuid import UUID
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -44,7 +45,7 @@ def get_firestore_client():
     return _db_firestore
 
 class UsuarioFirebaseCreate(BaseModel):
-    company_id: str 
+    company_id: UUID 
     company_name: str
     display_name: str
     document_id: str
@@ -82,33 +83,33 @@ async def crear_usuario_firebase(usuario_dto: UsuarioFirebaseCreate, password: O
         HTTPException: For validation or permission errors
     """
     try:
-        user_creation_request = firebase_auth.CreateRequest(
-            email=usuario_dto.email,
-            display_name=usuario_dto.display_name,
-            photo_url=usuario_dto.photo_url,
-            email_verified=False,
-            disabled=False
-        )        
+        kwargs = {
+            "email": usuario_dto.email,
+            "display_name": usuario_dto.display_name,
+            "photo_url": usuario_dto.photo_url,
+            "email_verified": False,
+            "disabled": False,
+        }
         if password:
-            user_creation_request.password = password
+            kwargs["password"] = password
 
-        firebase_user = firebase_auth.create_user(user_creation_request)
+        firebase_user = firebase_auth.create_user(**kwargs)
         
         usuario_firestore_data = {
-            "company_id": usuario_dto.company_id,
+            "uid": firebase_user.uid,
+            "company_id": str(usuario_dto.company_id),  # Convert UUID to string
             "company_name": usuario_dto.company_name,
             "display_name": usuario_dto.display_name,
-            "document_id": usuario_dto.document_id,
+            "document_id": str(usuario_dto.document_id),
             "document_type": usuario_dto.document_type,
             "document_type_name": usuario_dto.document_type_name,
             "email": usuario_dto.email,
             "photo_url": usuario_dto.photo_url,
             "rol": usuario_dto.rol.value if hasattr(usuario_dto.rol, 'value') else str(usuario_dto.rol),
-            "created_at": firestore.SERVER_TIMESTAMP,
-            "updated_at": firestore.SERVER_TIMESTAMP,
+            "created_at": datetime.now(timezone.utc),
+            "updated_at": datetime.now(timezone.utc),
             "is_active": True
         }
-
         
         get_firestore_client().collection("users").document(firebase_user.uid).set(usuario_firestore_data)
         
@@ -116,7 +117,7 @@ async def crear_usuario_firebase(usuario_dto: UsuarioFirebaseCreate, password: O
             uid=firebase_user.uid,
             email=firebase_user.email,
             display_name=firebase_user.display_name,
-            created_time=datetime.fromisoformat(firebase_user.user_metadata.creation_timestamp.replace('Z', '+00:00')),
+            created_time=datetime.now(timezone.utc),
             company_id=usuario_dto.company_id,
             company_name=usuario_dto.company_name,
             document_id=usuario_dto.document_id,
@@ -126,16 +127,11 @@ async def crear_usuario_firebase(usuario_dto: UsuarioFirebaseCreate, password: O
             rol=usuario_dto.rol,
         )
         
-    except firebase_auth.EmailAlreadyExistsError:
+    except firebase_auth.EmailAlreadyExistsError as e:
         raise FirebaseUserCreationError(
             message=f"El usuario con el email {usuario_dto.email} ya existe",
             error_code="EMAIL_ALREADY_EXISTS"
-        )
-    except firebase_auth.InvalidEmailError:
-        raise FirebaseUserCreationError(
-            message=f"El formato del email {usuario_dto.email} no es válido",
-            error_code="INVALID_EMAIL"
-        )
+        )    
     except Exception as e:
         if 'firebase_user' in locals():
             try:
@@ -231,7 +227,7 @@ async def get_current_firebase_user(
             uid=uid,
             display_name=data.get("display_name", ""),
             email=data.get("email", ""),
-            company_id=data.get("company_id", ""),
+            company_id=UUID(data.get("company_id", "")),  # Convert string back to UUID
             company_name=data.get("company_name", ""),
             document_id=data.get("document_id", ""),
             document_type=data.get("document_type", ""),
@@ -253,7 +249,7 @@ def require_role(*allowed_roles: str):
     async def role_dependency(
         current_user: FirebaseUser = Depends(get_current_firebase_user)
     ) -> FirebaseUser:
-        if current_user.rol not in allowed_roles:
+        if current_user.rol.value not in allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"Permisos insuficientes. Requiere rol: {allowed_roles}"

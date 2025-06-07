@@ -6,7 +6,7 @@ from app.db.models import TipoDocumento
 from app.db.models.usuarios import Usuario
 from app.schemas.usuarios import UsuarioCreate
 from app.auth.firebase import FirebaseUser
-from .utils import mapear_usuario_dto_a_usuario_firebase, mapear_usuario_dto_a_usuario
+from .utils import mapear_usuario_dto_a_usuario_firebase, mapear_usuario_dto_a_usuario_create
 from app.services.usuario.interfaces import UsuarioCaseInterface
 
 VERTIONE_COMPANY_ID = "00000000-0000-0000-0000-000000000000"
@@ -44,7 +44,7 @@ class SuperAdminCase(UsuarioCaseInterface):
         if usuario_actual.rol not in ["superAdmin"]:
             raise HTTPException(status_code=403, detail="No tienes permisos para crear usuarios")
 
-        usuario = mapear_usuario_dto_a_usuario(usuario_nuevo, params.firebase_uid)
+        usuario = mapear_usuario_dto_a_usuario_create(usuario_nuevo, params.firebase_uid)
 
         return usuario
         
