@@ -39,6 +39,7 @@ class CompaniaRepository(BaseRepository[Compania, CompaniaCreate, CompaniaUpdate
             .where(self.model.id == compania_id)
             .options(
                 selectinload(self.model.document_type_in_use)
-            )        )
+            )
+        )
         result = await self.db.execute(query)
         return result.scalars().first()
