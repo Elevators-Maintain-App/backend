@@ -18,10 +18,15 @@ class UsuarioService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_all(self) -> List[Usuario]:
-        return await usuario_crud.get_multi(self.db)
+    async def get_all(self) -> List[UsuarioOut]:
+        try:
+            users = await usuario_crud.get_multi(self.db)
+            return [UsuarioOut.model_validate(user) for user in users]
+        except Exception as e:
+            print(e)
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener los usuarios")
 
-    async def get_by_uid(self, uid: str) -> Usuario:
+    async def get_by_uid(self, uid: str) -> UsuarioOut:
         return await usuario_crud.get_by_field(self.db, "uid", uid)
 
     async def create(self, usuario_actual: Usuario, usuario_in: UsuarioCreate) -> UsuarioOut:
@@ -54,10 +59,10 @@ class UsuarioService:
         
         
 
-    async def update(self, uid: str, usuario_in: UsuarioUpdate) -> Usuario:
+    async def update(self, uid: str, usuario_in: UsuarioUpdate) -> UsuarioOut:
         usuario = await self.get_by_uid(uid)
         return await usuario_crud.update(self.db, db_obj=usuario, obj_in=usuario_in)
 
-    async def delete(self, uid: str) -> Usuario:
+    async def delete(self, uid: str) -> None:
         usuario = await self.get_by_uid(uid)
         return await usuario_crud.remove(self.db, db_obj=usuario)

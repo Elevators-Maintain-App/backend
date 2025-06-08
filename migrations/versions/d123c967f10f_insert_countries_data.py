@@ -1,7 +1,6 @@
 """insert_countries_data
 
 Revision ID: d123c967f10f
-Revises: 86ed73fa3d44
 Create Date: 2025-06-08 12:35:49.699144
 
 """
@@ -12,7 +11,7 @@ from sqlalchemy.sql import table, column
 
 # revision identifiers, used by Alembic.
 revision = 'd123c967f10f'
-down_revision = '86ed73fa3d44'
+down_revision = None
 branch_labels = None
 depends_on = None
 

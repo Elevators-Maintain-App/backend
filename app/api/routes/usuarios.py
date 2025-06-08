@@ -22,8 +22,6 @@ async def obtener_usuario(uid: str = Path(...), db: AsyncSession = Depends(get_d
     service = UsuarioService(db)
     return await service.get_by_uid(uid)
 
-
-
 @router.post("/", response_model=UsuarioOut, status_code=status.HTTP_201_CREATED)
 async def crear_usuario(
     usuario_in: UsuarioCreate,
@@ -281,68 +279,9 @@ async def get_usuarios(
     Solo superAdmin puede acceder.
     """
     try:
-        # Count total users with filters
-        total = 0
-        for _ in get_firestore_client().collection("users").stream():
-            user_data = _.to_dict()
-            
-            # Apply filters
-            if company_id and user_data.get("company_id") != company_id:
-                continue
-            if rol and user_data.get("rol") != rol:
-                continue
-            if search:
-                search_lower = search.lower()
-                if not (search_lower in user_data.get("display_name", "").lower() or 
-                       search_lower in user_data.get("email", "").lower()):
-                    continue
-            
-            total += 1
-        
-        # Get paginated users with filters
-        usuarios = []
-        count = 0
-        skipped = 0
-        
-        for doc in get_firestore_client().collection("users").stream():
-            user_data = doc.to_dict()
-            
-            # Apply filters
-            if company_id and user_data.get("company_id") != company_id:
-                continue
-            if rol and user_data.get("rol") != rol:
-                continue
-            if search:
-                search_lower = search.lower()
-                if not (search_lower in user_data.get("display_name", "").lower() or 
-                       search_lower in user_data.get("email", "").lower()):
-                    continue
-            
-            # Apply skip
-            if skipped < skip:
-                skipped += 1
-                continue
-            
-            # Apply limit
-            if count >= limit:
-                break
-            
-            usuarios.append(UsuarioOut(
-                uid=doc.id,
-                email=user_data.get("email", ""),
-                display_name=user_data.get("display_name", ""),
-                document_id=user_data.get("document_id", ""),
-                document_type=user_data.get("document_type", ""),
-                document_type_name=user_data.get("document_type_name", ""),
-                company_id=user_data.get("company_id", ""),
-                company_name=user_data.get("company_name", ""),
-                photo_url=user_data.get("photo_url"),
-                rol=user_data.get("rol", ""),
-                is_active=user_data.get("is_active", True),
-                created_at=user_data.get("created_at"),
-                updated_at=user_data.get("updated_at")
-            ))
-            count += 1
+        service = UsuarioService(db)
+        usuarios = await service.get_all()
+        total = len(usuarios)
         
         return UsuarioListResponse(
             usuarios=usuarios,
