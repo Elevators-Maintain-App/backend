@@ -16,11 +16,13 @@ from app.api.routes.zonas_geograficas import router as zonas_geograficas
 from app.api.routes.usuarios import router as usuarios_router
 from app.api.routes.compania import router as compania_router
 from app.api.routes.lov import router as lov_router
+from app.api.routes.nivel_tecnico import router as nivel_tecnico_router
 
 __all__ = ["usuarios_router", "clientes_router", 
            "tipos_documento_router", "estados_orden_router", "prioridades_router", 
            "tipos_evidencia_router", "tipos_orden_router", "tipos_unidad_router", 
            "proyectos_router", "ordenes_trabajo_router",
            "checklists_router", "unidades_router", "admin_dashboard", "dashboard",
-           "hojas_de_vida", "zonas_geograficas", "compania_router", "lov_router"
+           "hojas_de_vida", "zonas_geograficas", "compania_router", "lov_router",
+           "nivel_tecnico_router"
            ] 

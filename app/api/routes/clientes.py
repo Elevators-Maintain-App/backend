@@ -6,7 +6,7 @@ from typing import List
 from uuid import UUID
 
 from app.db.session import get_db
-from app.schemas.clientes import ClienteCreate, ClienteUpdate, ClienteInDBBase
+from app.schemas.clientes import ClienteCreate, ClienteUpdate, ClienteSchema
 from app.schemas.proyectos import ProyectoInDBBase
 from app.schemas.unidades import UnidadInDBBase
 from app.schemas.ordenes_de_trabajo import OrdenDeTrabajoInDBBase
@@ -15,22 +15,22 @@ from app.services.clientes import ClienteService
 router = APIRouter()
 
 # Rutas CRUD normales
-@router.get("/", response_model=List[ClienteInDBBase])
+@router.get("/", response_model=List[ClienteSchema])
 async def get_clientes(db: AsyncSession = Depends(get_db)):
     service = ClienteService(db)
     return await service.get_all()
 
-@router.get("/{cliente_id}", response_model=ClienteInDBBase)
+@router.get("/{cliente_id}", response_model=ClienteSchema)
 async def get_cliente(cliente_id: UUID, db: AsyncSession = Depends(get_db)):
     service = ClienteService(db)
     return await service.get_by_id(cliente_id)
 
-@router.post("/", response_model=ClienteInDBBase, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=ClienteSchema, status_code=status.HTTP_201_CREATED)
 async def create_cliente(cliente_in: ClienteCreate, db: AsyncSession = Depends(get_db)):
     service = ClienteService(db)
     return await service.create(cliente_in)
 
-@router.put("/{cliente_id}", response_model=ClienteInDBBase)
+@router.put("/{cliente_id}", response_model=ClienteSchema)
 async def update_cliente(cliente_id: UUID, cliente_in: ClienteUpdate, db: AsyncSession = Depends(get_db)):
     service = ClienteService(db)
     return await service.update(cliente_id, cliente_in)
