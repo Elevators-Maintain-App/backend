@@ -45,12 +45,12 @@ def get_firestore_client():
     return _db_firestore
 
 class UsuarioFirebaseCreate(BaseModel):
-    company_id: UUID 
-    company_name: str
+    company_id: UUID | None = None
+    company_name: str | None = None
     display_name: str
-    document_id: str
-    document_type: str
-    document_type_name: str
+    document_id: str | None = None
+    document_type: str | None = None
+    document_type_name: str | None = None
     email: str
     photo_url: Optional[str] = None
     rol: Rol
@@ -222,12 +222,19 @@ async def get_current_firebase_user(
             )
         
         data = doc.to_dict()
+
+        # ───── 1. Manejo robusto de company_id ─────
+        company_id_str = data.get("company_id")
+        try:
+            company_id = UUID(company_id_str) if company_id_str else None
+        except (ValueError, TypeError):
+            company_id = None
         
         return FirebaseUser(
             uid=uid,
             display_name=data.get("display_name", ""),
             email=data.get("email", ""),
-            company_id=UUID(data.get("company_id", "")),  # Convert string back to UUID
+            company_id=company_id,
             company_name=data.get("company_name", ""),
             document_id=data.get("document_id", ""),
             document_type=data.get("document_type", ""),

@@ -9,7 +9,7 @@ from datetime import datetime
 
 from app.db.session import get_db
 from app.services.compania import CompaniaService
-from app.schemas.compania import CompaniaCreate, CompaniaUpdate, Compania
+from app.schemas.compania import CompaniaCreate, CompaniaUpdate, Compania, CountResponse
 from app.auth.firebase import require_role, get_firestore_client
 from app.schemas.usuarios import UsuarioOut
 from app.db.models.compania import Compania as CompaniaModel
@@ -34,7 +34,7 @@ async def get_companias(
 
 @router.get(
     "/count",
-    response_model=Compania,
+    response_model=CountResponse,
     status_code=status.HTTP_200_OK
 )
 async def count_companias(

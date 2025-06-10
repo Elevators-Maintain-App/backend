@@ -76,6 +76,9 @@ class TipoDocumentoBasic(BaseModel):
         "from_attributes": True
     }
 
+class CountResponse(BaseModel):
+    count: int
+
 # Update forward references
 CompaniaWithDocumentType.model_rebuild()
 CompaniaWithOwnedTypes.model_rebuild()
