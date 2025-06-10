@@ -102,11 +102,12 @@ class OrdenDeTrabajoService:
 
     # — Detalle compartido —
     async def get_detail(self, orden_id: UUID, user) -> OrdenTrabajoDetailOut:
+        # 1) Recuperar la orden
         o = await orden_de_trabajo_crud.get(self.db, orden_id)
         if not o:
             raise HTTPException(status_code=404, detail="Orden no encontrada")
 
-        # permisos
+        # 2) Permisos
         if user.role == "admin":
             if str(o.company_id) != str(user.company_id):
                 raise HTTPException(status_code=403, detail="No autorizado")
@@ -117,36 +118,54 @@ class OrdenDeTrabajoService:
             if o.tecnico_id != user.uid:
                 raise HTTPException(status_code=403, detail="No autorizado")
 
-        # enums + relaciones
-        tipo = await tipo_orden_crud.get(self.db, o.tipo_orden_id)
+        # 3) Cargar unidad + proyecto en una sola consulta
+        stmt = (
+            select(Unidad)
+            .options(selectinload(Unidad.proyecto))
+            .where(Unidad.id == o.unidad_id)
+        )
+        result = await self.db.execute(stmt)
+        unidad: Unidad = result.scalars().first()
+        if not unidad:
+            raise HTTPException(status_code=500, detail="Error interno: unidad faltante")
+        proyecto_nombre = unidad.proyecto.nombre if unidad.proyecto else "—"
+
+        # 4) Cargar nombres de enums
+        tipo   = await tipo_orden_crud.get(self.db, o.tipo_orden_id)
         estado = await estado_orden_crud.get(self.db, o.estado_id)
         prioridad = await prioridad_crud.get(self.db, o.prioridad_id)
         unidad = await self.db.get(Unidad, o.unidad_id)
 
+        # 5) Obtener nombre de supervisor desde Firestore
         # Firestore y compañía
         sup = get_firestore_client().collection("users").document(o.supervisor_id).get()
         tec = get_firestore_client().collection("users").document(o.tecnico_id).get()
-        sup_name = sup.to_dict().get("display_name","—") if sup.exists else "—"
+        supervisor_nombre = sup.to_dict().get("display_name","—") if sup.exists else "—"
         tec_name = tec.to_dict().get("display_name","—") if tec.exists else "—"
         comp = await self.db.get(Compania, o.company_id)
 
+        # 6) Nombre de unidad
+        unidad_nombre = unidad.nombre
+
+        # 7) Cliente real (viene del proyecto asociado a la unidad)
+        cliente_id = unidad.proyecto.cliente_id if unidad.proyecto else None
+        cliente_nombre = "—"
+        if cliente_id:
+            cli_doc = get_firestore_client().collection("users").document(cliente_id).get()
+            cliente_nombre = cli_doc.to_dict().get("display_name", "—") if cli_doc.exists else "—"
+
+        # 8) Empaquetar solo los campos requeridos
         return OrdenTrabajoDetailOut(
-            id=o.id,
-            referencia=o.referencia,
-            fecha=o.fecha,
-            descripcion=o.descripcion,
-            observaciones=o.observaciones,
-            valor=o.valor,
-            tipo_orden=tipo.nombre if tipo else "—",
-            estado=estado.nombre if estado else "—",
-            prioridad=prioridad.nombre if prioridad else "—",
-            unidad_id=o.unidad_id,
-            supervisor_id=o.supervisor_id,
-            tecnico_id=o.tecnico_id,
-            cliente=tec_name,
-            compania=comp.nombre if comp else "—",
-            created_at=o.created_at,
-            updated_at=o.updated_at,
+            referencia    = o.referencia,
+            descripcion   = o.descripcion,
+            tipo_orden    = tipo.nombre if tipo else "—",
+            proyecto      = proyecto_nombre,
+            prioridad     = prioridad.nombre if prioridad else "—",
+            supervisor    = supervisor_nombre,
+            unidad        = unidad_nombre,
+            cliente       = cliente_nombre,
+            estado        = estado.nombre if estado else "—",
+            observaciones = o.observaciones or ""
         )
 
     # — Conteos para mes actual (Supervisor) —

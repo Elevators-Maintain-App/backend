@@ -68,22 +68,16 @@ class OrdenDeTrabajoWeeklyComplianceOut(BaseModel):
     detail: str      # "1 de 3 Validadas"
 
 class OrdenTrabajoDetailOut(BaseModel):
-    id: UUID
-    referencia: str
-    fecha: Optional[date]
-    descripcion: Optional[str]
-    observaciones: Optional[str]
-    valor: Optional[Decimal]
-    tipo_orden: str
-    estado: str
-    prioridad: str
-    unidad_id: UUID
-    supervisor_id: str
-    tecnico_id: str
-    cliente: str
-    compania: str
-    created_at: datetime
-    updated_at: datetime
+    referencia:    str
+    descripcion:   str
+    tipo_orden:    str
+    prioridad:     str
+    proyecto:      str
+    supervisor:    str
+    unidad:        str
+    cliente:       str
+    estado:        str
+    observaciones: str
     class Config:
         from_attributes = True
 
