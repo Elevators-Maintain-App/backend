@@ -1,3 +1,5 @@
+#app/db/models/compania.py 
+
 import uuid
 from sqlalchemy import Column, String, Integer, ForeignKey, TIMESTAMP, func
 from sqlalchemy.dialects.postgresql import UUID

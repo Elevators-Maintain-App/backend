@@ -108,10 +108,10 @@ class OrdenDeTrabajoService:
             raise HTTPException(status_code=404, detail="Orden no encontrada")
 
         # 2) Permisos
-        if user.role == "admin":
+        if user.rol == "admin":
             if str(o.company_id) != str(user.company_id):
                 raise HTTPException(status_code=403, detail="No autorizado")
-        elif user.role == "superVisor":
+        elif user.rol == "superVisor":
             if o.supervisor_id != user.uid:
                 raise HTTPException(status_code=403, detail="No autorizado")
         else:  # technician
