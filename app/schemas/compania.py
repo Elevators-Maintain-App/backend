@@ -6,9 +6,13 @@ from datetime import datetime
 class CompaniaBase(BaseModel):
     documento: str = Field(..., description="Documento de identificación de la compañía")
     tipo_documento_id: int = Field(..., description="ID del tipo de documento que usa esta compañía")
-    nombre: Optional[str] = Field(None, description="Nombre de la compañía")
-    email: Optional[str] = Field(None, description="Correo electrónico de la compañía")
-    telefono: Optional[str] = Field(None, description="Teléfono de la compañía")
+    nombre: str = Field(..., description="Nombre de la compañía")
+    email: str = Field(..., description="Correo electrónico de la compañía")
+    telefono: str = Field(..., description="Teléfono de la compañía")
+    pais_id: int = Field(..., description="ID del país de la compañía")
+    ciudad: str = Field(..., description="Ciudad de la compañía")
+    direccion: str = Field(..., description="Dirección de la compañía")
+    logo: Optional[str] = Field(None, description="Logo de la compañía")
 
 # Schema for creating a new company
 class CompaniaCreate(CompaniaBase):
@@ -21,6 +25,10 @@ class CompaniaUpdate(BaseModel):
     nombre: Optional[str] = Field(None, description="Nombre de la compañía")
     email: Optional[str] = Field(None, description="Correo electrónico de la compañía")
     telefono: Optional[str] = Field(None, description="Teléfono de la compañía")
+    pais_id: Optional[int] = Field(None, description="ID del país de la compañía")
+    ciudad: Optional[str] = Field(None, description="Ciudad de la compañía")
+    direccion: Optional[str] = Field(None, description="Dirección de la compañía")
+    logo: Optional[str] = Field(None, description="Logo de la compañía")
 
 # Schema for reading a company
 class Compania(CompaniaBase):

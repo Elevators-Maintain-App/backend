@@ -8,9 +8,13 @@ from pydantic import BaseModel
 class ClienteBase(BaseModel):
     documento: str
     tipo_documento_id: int
-    nombre: Optional[str] = None
-    email: Optional[str] = None
-    telefono: Optional[str] = None
+    nombre: str
+    email: str
+    telefono: str
+    pais_id: int
+    ciudad: str
+    direccion: str
+    logo: Optional[str] = None
 
 class ClienteCreate(ClienteBase):
     pass
@@ -21,8 +25,12 @@ class ClienteUpdate(BaseModel):
     nombre: Optional[str] = None
     email: Optional[str] = None
     telefono: Optional[str] = None
+    pais_id: Optional[int] = None
+    ciudad: Optional[str] = None
+    direccion: Optional[str] = None
+    logo: Optional[str] = None
 
-class ClienteInDBBase(ClienteBase):
+class ClienteSchema(ClienteBase):
     id: UUID
     created_at: datetime
     updated_at: datetime

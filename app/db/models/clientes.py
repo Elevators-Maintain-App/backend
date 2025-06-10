@@ -10,13 +10,20 @@ class Cliente(Base):
     __tablename__ = 'clientes'
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    nombre = Column(String, nullable=True)
     documento = Column(String, nullable=False)
     tipo_documento_id = Column(Integer, ForeignKey('tipos_documento.id'), nullable=False)
-    nombre = Column(String, nullable=True)
     email = Column(String, nullable=True)
     telefono = Column(String, nullable=True)
+    pais_id = Column(Integer, ForeignKey('paises.id'), nullable=True)
+    ciudad = Column(String, nullable=True)
+    direccion = Column(String, nullable=True)
+    logo = Column(String, nullable=True)
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
 
     # Relaciones
     tipo_documento = relationship("TipoDocumento")
+    pais = relationship("Pais", back_populates="clientes")
+
+

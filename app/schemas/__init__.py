@@ -1,7 +1,7 @@
 # app/schemas/__init__.py
 
 from app.schemas.checklists import ChecklistBase, ChecklistCreate, ChecklistUpdate, ChecklistInDBBase
-from app.schemas.clientes import ClienteBase, ClienteCreate, ClienteUpdate, ClienteInDBBase
+from app.schemas.clientes import ClienteBase, ClienteCreate, ClienteUpdate, ClienteSchema
 from app.schemas.evidencias_multimedia import EvidenciaMultimediaBase, EvidenciaMultimediaCreate, EvidenciaMultimediaUpdate, EvidenciaMultimediaInDBBase
 from app.schemas.hojas_de_vida import HojaDeVidaBase, HojaDeVidaCreate, HojaDeVidaUpdate, HojaDeVidaInDBBase
 from app.schemas.ordenes_de_trabajo import OrdenDeTrabajoBase, OrdenDeTrabajoCreate, OrdenDeTrabajoUpdate, OrdenDeTrabajoInDBBase
@@ -17,11 +17,11 @@ from app.schemas.tipos_evidencia import TipoEvidenciaBase, TipoEvidenciaCreate, 
 from app.schemas.tipos_orden import TipoOrdenBase, TipoOrdenCreate, TipoOrdenUpdate, TipoOrdenInDBBase
 from app.schemas.tipos_unidad import TipoUnidadBase, TipoUnidadCreate, TipoUnidadUpdate, TipoUnidadInDBBase
 from app.schemas.comunes import LovElemento
-from app.schemas.nivel_tecnico_schema import NivelTecnicoCreate, NivelTecnicoUpdate
+from app.schemas.nivel_tecnico import NivelTecnicoCreate, NivelTecnicoUpdate
 
 __all__ = [
     "ChecklistBase", "ChecklistCreate", "ChecklistUpdate", "ChecklistInDBBase",
-    "ClienteBase", "ClienteCreate", "ClienteUpdate", "ClienteInDBBase",
+    "ClienteBase", "ClienteCreate", "ClienteUpdate", "ClienteSchema",
     "EvidenciaMultimediaBase", "EvidenciaMultimediaCreate", "EvidenciaMultimediaUpdate", "EvidenciaMultimediaInDBBase",
     "HojaDeVidaBase", "HojaDeVidaCreate", "HojaDeVidaUpdate", "HojaDeVidaInDBBase",
     "OrdenDeTrabajoBase", "OrdenDeTrabajoCreate", "OrdenDeTrabajoUpdate", "OrdenDeTrabajoInDBBase",

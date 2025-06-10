@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.services.usuario.rol import RolService
 from app.services.compania import CompaniaService
 from app.services.usuario.nivel_tecnico import NivelTecnicoService
+from app.services.secundarios.pais import PaisService
 
 router = APIRouter()
 
@@ -31,4 +32,13 @@ async def get_nivel_tecnico(
     service = NivelTecnicoService(db)
     niveles_tecnicos = await service.get_niveles_tecnicos()
     return [LovElemento(id=nivel_tecnico.id, name=nivel_tecnico.nombre) for nivel_tecnico in niveles_tecnicos]
+
+@router.get("/paises", 
+           response_model=List[LovElemento],)
+async def get_paises(
+    db: AsyncSession = Depends(get_db),
+):
+    service = PaisService(db)
+    paises = await service.get_paises()
+    return [LovElemento(id=pais.id, name=pais.nombre) for pais in paises]
 

@@ -14,7 +14,6 @@ async def create_superuser():
     """
     Create a superuser interactively
     """
-    print("Create superuser")
     
     # Get user input
     try:
@@ -26,11 +25,9 @@ async def create_superuser():
         
         # Validate input
         if not username or not email or not password:
-            print("Username, email, and password are required.")
             return
         
         if password != confirm_password:
-            print("Passwords do not match.")
             return
         
         # Create user data
@@ -48,7 +45,6 @@ async def create_superuser():
         async with async_session() as session:
             user_service = UserService(session)
             user = await user_service.create_user(user_in=user_in)
-            print(f"Superuser {user.username} created successfully.")
             
     except Exception as e:
         print(f"Error creating superuser: {e}")

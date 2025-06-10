@@ -15,7 +15,8 @@ from .enums import (
     EstadoOrden,
     Prioridad,
     TipoEvidencia,
-    TipoDocumento
+    TipoDocumento,
+    Pais
 )
 
 __all__ = [
@@ -35,4 +36,5 @@ __all__ = [
     "TipoDocumento",
     "Usuario",
     "Compania",
+    "Pais",
 ]

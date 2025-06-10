@@ -1,7 +1,7 @@
 # app/api/routes/unidades.py
 
-from fastapi import APIRouter, Depends, HTTPException, status, Path
-from typing import List
+from fastapi import APIRouter, Depends, HTTPException, status, Path, Query
+from typing import List, Optional
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,7 +19,7 @@ from app.schemas.unidades import (
 )
 from app.schemas.proyectos import CountOut
 from app.services.unidades import UnidadService
-from app.auth.firebase import require_role, db_firestore
+from app.auth.firebase import require_role, get_firestore_client
 
 router = APIRouter()
 
@@ -33,7 +33,7 @@ async def _map_unidad(
 
     # 2. Nombre de cliente (vía Firestore desde proyecto.cliente_id)
     #   Asumimos que ProyectoModel tiene cliente_id (UID)
-    doc = db_firestore.collection("users").document(proyecto.cliente_id).get()
+    doc = get_firestore_client().collection("users").document(proyecto.cliente_id).get()
     cliente_nombre = doc.to_dict().get("display_name") if doc.exists else "—"
 
     # Nombre de tipo de unidad
@@ -146,4 +146,32 @@ async def delete_unidad(
     db: AsyncSession = Depends(get_db)
 ):
     await UnidadService(db).delete(unidad_id, user.company_id)
+
+
+async def enrich_unidad_with_cliente_info(unidad: UnidadModel) -> UnidadListOut:
+    """Helper function to enrich unidad with cliente information from Firebase"""
+    cliente_nombre = "Cliente no encontrado"
+    cliente_email = "No disponible"
+    
+    if unidad.proyecto and unidad.proyecto.cliente_id:
+        doc = get_firestore_client().collection("users").document(unidad.proyecto.cliente_id).get()
+        if doc.exists:
+            data = doc.to_dict()
+            cliente_nombre = data.get("display_name", "Cliente no encontrado")
+            cliente_email = data.get("email", "No disponible")
+    
+    return UnidadListOut(
+        id=unidad.id,
+        nombre=unidad.nombre,
+        kpi_funcionamiento=unidad.kpi_funcionamiento,
+        proyecto=unidad.proyecto.nombre if unidad.proyecto else None,
+        cliente=cliente_nombre,
+        tipo_unidad_id=unidad.tipo_unidad_id,
+        tipo_unidad=unidad.tipo_unidad.nombre if unidad.tipo_unidad else None,
+        company_id=unidad.company_id,
+        cliente_id=unidad.proyecto.cliente_id if unidad.proyecto else None,
+        cliente_email=cliente_email,
+        created_at=unidad.created_at,
+        updated_at=unidad.updated_at
+    )
 

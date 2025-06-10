@@ -10,7 +10,7 @@ from app.db.session import get_db
 from app.db.models.proyectos import Proyecto as ProyectoModel
 from app.schemas.proyectos import ProyectoCreate, ProyectoUpdate, ProyectoInDBBase, CountOut, ProyectoDetailOut, ProyectoListOut
 from app.services.proyectos import ProyectoService
-from app.auth.firebase import require_role, db_firestore
+from app.auth.firebase import require_role, get_firestore_client
 from app.db.repositories.zonas_geograficas import zona_geografica_crud
 from app.db.models.compania import Compania as CompaniaModel
 
@@ -31,7 +31,7 @@ async def _map_to_list_out(
     compania = comp.nombre if comp else "—"
 
     # 3) cliente
-    doc = db_firestore.collection("users").document(proyecto.cliente_id).get()
+    doc = get_firestore_client().collection("users").document(proyecto.cliente_id).get()
     cliente = doc.to_dict().get("display_name", "—") if doc.exists else "—"
 
     return ProyectoListOut(
@@ -139,7 +139,7 @@ async def get_proyecto_detail(
     nombre_compania = comp.nombre if comp else "—"
 
     # 4. Nombre de cliente (Firestore)
-    doc = db_firestore.collection("users").document(proyecto.cliente_id).get()
+    doc = get_firestore_client().collection("users").document(proyecto.cliente_id).get()
     if not doc.exists:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Cliente no encontrado en Firebase")
     cliente_name = doc.to_dict().get("display_name", "—")
@@ -172,7 +172,7 @@ async def create_proyecto(
     asociada al cliente indicado en `cliente_id`.
     """
     # 1) Obtener cliente de Firestore
-    doc = db_firestore.collection("users").document(proyecto_in.cliente_id).get()
+    doc = get_firestore_client().collection("users").document(proyecto_in.cliente_id).get()
     if not doc.exists:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

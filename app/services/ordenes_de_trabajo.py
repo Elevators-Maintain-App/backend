@@ -18,7 +18,7 @@ from app.db.repositories.unidades import unidad_crud
 from app.db.repositories.tipos_orden import tipo_orden_crud
 from app.db.repositories.estados_orden import estado_orden_crud
 from app.db.repositories.prioridades import prioridad_crud
-from app.auth.firebase import db_firestore
+from app.auth.firebase import get_firestore_client
 from app.db.models.compania import Compania
 from fastapi.concurrency import run_in_threadpool
 
@@ -124,8 +124,8 @@ class OrdenDeTrabajoService:
         unidad = await self.db.get(Unidad, o.unidad_id)
 
         # Firestore y compañía
-        sup = db_firestore.collection("users").document(o.supervisor_id).get()
-        tec = db_firestore.collection("users").document(o.tecnico_id).get()
+        sup = get_firestore_client().collection("users").document(o.supervisor_id).get()
+        tec = get_firestore_client().collection("users").document(o.tecnico_id).get()
         sup_name = sup.to_dict().get("display_name","—") if sup.exists else "—"
         tec_name = tec.to_dict().get("display_name","—") if tec.exists else "—"
         comp = await self.db.get(Compania, o.company_id)
@@ -260,12 +260,12 @@ class OrdenDeTrabajoService:
 
         # 2) validar roles en Firestore
         # técnico
-        tec_doc = db_firestore.collection("users").document(orden_in.tecnico_id).get()
+        tec_doc = get_firestore_client().collection("users").document(orden_in.tecnico_id).get()
         if not tec_doc.exists or tec_doc.to_dict().get("rol") != "technician":
             raise HTTPException(status_code=400, detail="Técnico invalido")
 
         # supervisor
-        sup_doc = db_firestore.collection("users").document(supervisor_id).get()
+        sup_doc = get_firestore_client().collection("users").document(supervisor_id).get()
         if not sup_doc.exists or sup_doc.to_dict().get("rol") != "superVisor":
             raise HTTPException(status_code=400, detail="Supervisor invalido")
 

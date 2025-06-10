@@ -1,11 +1,12 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from dotenv import load_dotenv
 load_dotenv(override=True)
 
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from app.auth import firebase_admin
+
+# Initialize Firebase before importing routes that use Firebase services
+from app.config import firebase_config
 
 from app.api.routes import (
     tipos_documento_router,
@@ -24,10 +25,12 @@ from app.api.routes import (
     zonas_geograficas,
     usuarios_router,
     compania_router,
-    lov_router
+    lov_router,
+    nivel_tecnico_router
 )
 from app.core.config import settings
 from app.db.session import engine, Base
+from app.core.openapi_config import OpenAPIConfig
 
 # Lifespan context manager for startup and shutdown events
 @asynccontextmanager
@@ -46,7 +49,7 @@ async def lifespan(app: FastAPI):
 # Create FastAPI application with JWT security
 app = FastAPI(
     title=settings.app_name,
-    description="FastAPI application with layered architecture",
+    description="VertiOne API v1",
     version="0.1.0",
     lifespan=lifespan,
     docs_url="/docs",
@@ -59,41 +62,18 @@ app = FastAPI(
 # Setup CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, restrict to specific origins
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Add security scheme for JWT tokens in Swagger
-from fastapi.openapi.utils import get_openapi
-
-def custom_openapi():
-    if app.openapi_schema:
-        return app.openapi_schema
-    openapi_schema = get_openapi(
-        title=settings.app_name,
-        version="0.1.0",
-        description="FastAPI application with JWT authentication",
-        routes=app.routes,
-    )
-    openapi_schema["components"]["securitySchemes"] = {
-        "BearerAuth": {
-            "type": "http",
-            "scheme": "bearer",
-            "bearerFormat": "JWT",
-            "description": "Enter your JWT token"
-        }
-    }
-    app.openapi_schema = openapi_schema
-    return app.openapi_schema
-
-app.openapi = custom_openapi
 
 @app.get("/", tags=["health"])
 async def health_check():
     """Health check endpoint"""
     return {"status": "Ok", "message": "API is running"}
+
 
 # Register API routes
 app.include_router(usuarios_router, prefix="/api/usuarios", tags=["Usuarios"])
@@ -113,6 +93,13 @@ app.include_router(tipos_orden_router, prefix="/api/tipos-orden", tags=["Enums"]
 app.include_router(tipos_unidad_router, prefix="/api/tipos-unidad", tags=["Enums"])
 app.include_router(compania_router, prefix="/api/companias", tags=["companias"])
 app.include_router(lov_router, prefix="/api/lov", tags=["lov"])
+app.include_router(nivel_tecnico_router, prefix="/api/niveles-tecnicos", tags=["Niveles Tecnicos"])
+
+# add openapi config
+openapi_config = OpenAPIConfig(app)
+app.openapi = openapi_config.get_openapi
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("app.main:app", host=settings.host, port=settings.port, reload=True) 

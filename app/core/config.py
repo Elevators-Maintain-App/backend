@@ -5,7 +5,7 @@ from typing import Optional, Dict, Any, Union
 
 class Settings(BaseSettings):
     # Application settings
-    app_name: str = "FastAPI Layered App"
+    app_name: str = "VertiOne API"
     debug: bool = False
     environment: Optional[str] = None
     

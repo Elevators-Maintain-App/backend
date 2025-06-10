@@ -4,6 +4,7 @@ from .estados_orden import EstadoOrden
 from .prioridades import Prioridad
 from .tipos_evidencia import TipoEvidencia
 from .tipos_documento import TipoDocumento
+from .pais import Pais
 
 __all__ = [
     "TipoUnidad",
@@ -12,4 +13,5 @@ __all__ = [
     "Prioridad",
     "TipoEvidencia",
     "TipoDocumento",
+    "Pais",
 ]

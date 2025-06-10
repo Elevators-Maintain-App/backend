@@ -38,7 +38,7 @@ class CompaniaRepository(BaseRepository[Compania, CompaniaCreate, CompaniaUpdate
             select(self.model)
             .where(self.model.id == compania_id)
             .options(
-                selectinload(self.model.tipo_documento)
+                selectinload(self.model.document_type_in_use)
             )
         )
         result = await self.db.execute(query)

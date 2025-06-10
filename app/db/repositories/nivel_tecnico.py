@@ -1,6 +1,6 @@
 from app.db.models.nivel_tecnico import NivelTecnico
 from app.db.repositories.base import CRUDBaseRepository
-from app.schemas.nivel_tecnico_schema import NivelTecnicoCreate, NivelTecnicoUpdate
+from app.schemas.nivel_tecnico import NivelTecnicoCreate, NivelTecnicoUpdate
 
 class CRUDNivelTecnico(CRUDBaseRepository[NivelTecnico, NivelTecnicoCreate, NivelTecnicoUpdate]):
     pass
