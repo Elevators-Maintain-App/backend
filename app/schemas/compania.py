@@ -9,9 +9,9 @@ class CompaniaBase(BaseModel):
     nombre: str = Field(..., description="Nombre de la compañía")
     email: str = Field(..., description="Correo electrónico de la compañía")
     telefono: str = Field(..., description="Teléfono de la compañía")
-    pais_id: int = Field(..., description="ID del país de la compañía")
-    ciudad: str = Field(..., description="Ciudad de la compañía")
-    direccion: str = Field(..., description="Dirección de la compañía")
+    pais_id: int | None = Field(..., description="ID del país de la compañía") 
+    ciudad: str | None = Field(..., description="Ciudad de la compañía")
+    direccion: str | None = Field(..., description="Dirección de la compañía")
     logo: Optional[str] = Field(None, description="Logo de la compañía")
 
 # Schema for creating a new company
