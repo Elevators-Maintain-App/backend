@@ -1,0 +1,79 @@
+{
+  "nombre": "Mantenimiento Ascensor",
+  "tipo_orden_id": 1,
+  "tipo_unidad_id": 1,
+  "pasos": [
+    {
+      "step_number": 1,
+      "titulo": "Preparación inicial",
+      "instrucciones": "Diligenciar ART, avisar llegada a campo al cliente y preparar área de trabajo.",
+      "evidencia_schema": {
+        "type": "photo",
+        "label": "Foto ART"
+      }
+    },
+    {
+      "step_number": 2,
+      "titulo": "Rutina de cuarto de máquinas",
+      "instrucciones": "Revisión, limpieza y ajustes necesarios en cuarto de máquinas.",
+      "evidencia_schema": {
+        "type": "photo_pair",
+        "labels": ["Antes", "Después"]
+      }
+    },
+    {
+      "step_number": 3,
+      "titulo": "Rutina techo de cabina",
+      "instrucciones": "Revisión, limpieza y ajustes necesarios en techo de cabina. Recuerda realizar acceso seguro y mantener siempre el control del equipo.",
+      "evidencia_schema": {
+        "type": "photo_pair",
+        "labels": ["Antes", "Después"]
+      }
+    },
+    {
+      "step_number": 4,
+      "titulo": "Rutina recorrido de foso",
+      "instrucciones": "Revisión, limpieza y ajustes necesarios en recorrido de foso. Recuerda realizar acceso seguro y mantener siempre el control del equipo.",
+      "evidencia_schema": {
+        "type": "photo_pair",
+        "labels": ["Antes", "Después"]
+      }
+    },
+    {
+      "step_number": 5,
+      "titulo": "Rutina pit",
+      "instrucciones": "Revisión, limpieza y ajustes necesarios en pit. Recuerda realizar acceso seguro y mantener siempre el control del equipo.",
+      "evidencia_schema": {
+        "type": "photo_pair",
+        "labels": ["Antes", "Después"]
+      }
+    },
+    {
+      "step_number": 6,
+      "titulo": "Puesta en marcha del equipo",
+      "instrucciones": "Verificar que el mantenimiento haya quedado completo, revisar condiciones de seguridad y liberar el equipo en alta, asegurando su operación segura.",
+      "evidencia_schema": {
+        "type": "photo",
+        "label": "Foto operativo"
+      }
+    },
+    {
+      "step_number": 7,
+      "titulo": "Observaciones generales",
+      "instrucciones": "Indícanos cualquier comentario, hallazgo, oportunidad de mejora o de venta que hayas identificado en esta unidad.",
+      "evidencia_schema": {
+        "type": "optional_photo",
+        "label": "Foto de hallazgo"
+      }
+    },
+    {
+      "step_number": 8,
+      "titulo": "Captura de firmas",
+      "instrucciones": "Indicar al cliente o encargado que el proceso de mantenimiento ha finalizado, solicitar su firma para terminar.",
+      "evidencia_schema": {
+        "type": "signatures",
+        "labels": ["Firma técnico", "Firma cliente"]
+      }
+    }
+  ]
+}

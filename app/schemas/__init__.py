@@ -1,6 +1,6 @@
 # app/schemas/__init__.py
 
-from app.schemas.checklists import ChecklistBase, ChecklistCreate, ChecklistUpdate, ChecklistInDBBase
+from app.schemas.checklists import ChecklistCreate, ChecklistItemOut, ChecklistItemTemplateOut, ChecklistItemUpdate, ChecklistOut, ChecklistTemplateOut
 from app.schemas.clientes import ClienteBase, ClienteCreate, ClienteUpdate, ClienteInDBBase
 from app.schemas.evidencias_multimedia import EvidenciaMultimediaBase, EvidenciaMultimediaCreate, EvidenciaMultimediaUpdate, EvidenciaMultimediaInDBBase
 from app.schemas.hojas_de_vida import HojaDeVidaBase, HojaDeVidaCreate, HojaDeVidaUpdate, HojaDeVidaInDBBase
@@ -20,7 +20,7 @@ from app.schemas.comunes import LovElemento
 from app.schemas.nivel_tecnico_schema import NivelTecnicoCreate, NivelTecnicoUpdate
 
 __all__ = [
-    "ChecklistBase", "ChecklistCreate", "ChecklistUpdate", "ChecklistInDBBase",
+    "ChecklistCreate", "ChecklistItemOut", "ChecklistItemTemplateOut", "ChecklistItemUpdate", "ChecklistOut", "ChecklistTemplateOut",
     "ClienteBase", "ClienteCreate", "ClienteUpdate", "ClienteInDBBase",
     "EvidenciaMultimediaBase", "EvidenciaMultimediaCreate", "EvidenciaMultimediaUpdate", "EvidenciaMultimediaInDBBase",
     "HojaDeVidaBase", "HojaDeVidaCreate", "HojaDeVidaUpdate", "HojaDeVidaInDBBase",
