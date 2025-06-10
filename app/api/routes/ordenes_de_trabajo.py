@@ -200,11 +200,11 @@ async def create_company_orden(
     user=Depends(get_current_firebase_user),
     db: AsyncSession = Depends(get_db)
 ):
-    if user.role not in ("admin", "superVisor"):
+    if user.rol not in ("admin", "superVisor"):
         raise HTTPException(status_code=403, detail="No autorizado")
 
     # supervisor_id según rol
-    if user.role == "admin":
+    if user.rol == "admin":
         if not orden_in.supervisor_id:
             raise HTTPException(status_code=422, detail="supervisor_id obligatorio para admin")
         sup_uid = orden_in.supervisor_id

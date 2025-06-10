@@ -187,7 +187,7 @@ async def create_proyecto(
         )
 
     # 2) Validar que el requester (si es admin) solo cree en su propia compañía
-    if user.role == "admin" and str(user.company_id) != company_uid:
+    if user.rol == "admin" and str(user.company_id) != company_uid:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No puedes crear proyectos en otra compañía"

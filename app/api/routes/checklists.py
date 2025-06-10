@@ -22,11 +22,9 @@ router = APIRouter()
 )
 async def get_template(
     orden_id: UUID = Path(...),
-    user=Depends(get_current_firebase_user),
+    user=Depends(require_role("technician")),
     db: AsyncSession = Depends(get_db)
 ):
-    if user.role != "technician":
-        raise HTTPException(status.HTTP_403_FORBIDDEN)
     svc = ChecklistService(db)
     return await svc.get_template_for_order(orden_id)
 
@@ -37,11 +35,9 @@ async def get_template(
 )
 async def get_checklist(
     orden_id: UUID = Path(...),
-    user=Depends(get_current_firebase_user),
+    user=Depends(require_role("technician")),
     db: AsyncSession = Depends(get_db)
 ):
-    if user.role != "technician":
-        raise HTTPException(status.HTTP_403_FORBIDDEN)
     svc = ChecklistService(db)
     return await svc.get_checklist(orden_id)
 
