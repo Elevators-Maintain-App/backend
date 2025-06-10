@@ -16,7 +16,7 @@ class Compania(Base):
     documento = Column(String, nullable=False)
     email = Column(String, nullable=True)
     telefono = Column(String, nullable=True)
-    pais_id = Column(Integer, ForeignKey('paises.id'), nullable=True)
+    pais_id = Column(Integer, ForeignKey("paises.id"), nullable=True)
     ciudad = Column(String, nullable=True)
     direccion = Column(String, nullable=True)
     logo = Column(String, nullable=True)
