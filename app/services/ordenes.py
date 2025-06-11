@@ -6,9 +6,9 @@ from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.ordenes_de_trabajo import OrdenDeTrabajo
-from app.db.models.enums.estados_orden import EstadoOrden
 from app.db.models.seguimiento import OrdenTrabajoSeguimiento, EventoOrden
 from app.schemas.seguimiento import SeguimientoCreate
+from app.utils.estados_orden import EstadoOrdenID
 
 
 class OrdenService:
@@ -35,31 +35,32 @@ class OrdenService:
 
     # ---------- casos de uso ---------- #
     async def iniciar(self, orden: OrdenDeTrabajo, datos: SeguimientoCreate) -> None:
-        if orden.estado != EstadoOrden.PENDIENTE:
-            raise HTTPException(status.HTTP_409_CONFLICT, "La orden ya fue iniciada")
-        orden.estado = EstadoOrden.EN_EJECUCION
+        if orden.estado_id != EstadoOrdenID.PENDIENTE: 
+            raise HTTPException(409, "La orden ya fue iniciada")
+
+        orden.estado_id = EstadoOrdenID.EN_EJECUCION
         await self._add_tracking(orden, datos)
-        if orden.checklist:
-            orden.checklist.inicio_lat = datos.lat
-            orden.checklist.inicio_lon = datos.lon
-            orden.checklist.inicio_hora = datos.timestamp or datetime.utcnow()
+        if orden.checklists:
+            orden.checklists.inicio_lat = datos.lat
+            orden.checklists.inicio_lon = datos.lon
+            orden.checklists.inicio_hora = datos.timestamp or datetime.utcnow()
 
     async def pausar(self, orden: OrdenDeTrabajo, datos: SeguimientoCreate) -> None:
-        if orden.estado != EstadoOrden.EN_EJECUCION:
+        if orden.estado_id != EstadoOrdenID.EN_EJECUCION:
             raise HTTPException(status.HTTP_409_CONFLICT, "La orden no está en ejecución")
-        orden.estado = EstadoOrden.EN_PAUSA
+        orden.estado_id = EstadoOrdenID.EN_PAUSA
         await self._add_tracking(orden, datos)
 
     async def reanudar(self, orden: OrdenDeTrabajo, datos: SeguimientoCreate) -> None:
-        if orden.estado != EstadoOrden.EN_PAUSA:
+        if orden.estado_id != EstadoOrdenID.EN_PAUSA:
             raise HTTPException(status.HTTP_409_CONFLICT, "La orden no está en pausa")
-        orden.estado = EstadoOrden.EN_EJECUCION
+        orden.estado_id = EstadoOrdenID.EN_EJECUCION
         await self._add_tracking(orden, datos)
 
     async def finalizar(self, orden: OrdenDeTrabajo, datos: SeguimientoCreate) -> None:
-        if orden.estado not in (EstadoOrden.EN_EJECUCION, EstadoOrden.EN_PAUSA):
+        if orden.estado_id not in (EstadoOrdenID.EN_EJECUCION, EstadoOrdenID.EN_PAUSA):
             raise HTTPException(status.HTTP_409_CONFLICT, "La orden no está activa")
-        orden.estado = EstadoOrden.FINALIZADA
+        orden.estado_id = EstadoOrdenID.FINALIZADA
         await self._add_tracking(orden, datos)
         if orden.checklist:
             orden.checklist.fin_hora = datos.timestamp or datetime.utcnow()
@@ -67,6 +68,6 @@ class OrdenService:
     async def paso_completado(
         self, orden: OrdenDeTrabajo, item_id: UUID, datos: SeguimientoCreate
     ) -> None:
-        if orden.estado != EstadoOrden.EN_EJECUCION:
+        if orden.estado_id != EstadoOrdenID.EN_EJECUCION:
             raise HTTPException(status.HTTP_409_CONFLICT, "La orden no está en ejecución")
         await self._add_tracking(orden, datos, checklist_item_id=item_id)

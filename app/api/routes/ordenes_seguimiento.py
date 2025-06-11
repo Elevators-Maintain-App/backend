@@ -8,15 +8,22 @@ from app.services.ordenes import OrdenService
 from app.db.session import get_db
 from app.db.models.ordenes_de_trabajo import OrdenDeTrabajo
 from app.schemas.seguimiento import SeguimientoCreate, EventoOrden
-from app.auth.firebase import require_role   
+from app.auth.firebase import require_role  
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
+
 
 router = APIRouter()
 
 
 async def _get_orden(db: AsyncSession, orden_id: UUID) -> OrdenDeTrabajo:
-    orden = await db.get(OrdenDeTrabajo, orden_id)
+    orden = await db.scalar(
+    select(OrdenDeTrabajo)
+      .options(selectinload(OrdenDeTrabajo.checklists))
+      .where(OrdenDeTrabajo.id == orden_id)
+    )
     if not orden:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Orden no encontrada")
+        raise HTTPException(404, "Orden no encontrada")
     return orden
 
 
