@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 class TipoDocumentoBase(BaseModel):
     nombre: str
     descripcion: Optional[str] = None
-    is_system_wide: bool = False
+    is_system_wide: bool | None = False
 
 class TipoDocumentoCreate(TipoDocumentoBase):
     owner_compania_id: Optional[UUID] = Field(None, alias="compania_id")
