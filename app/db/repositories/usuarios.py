@@ -5,6 +5,6 @@ from app.schemas.usuarios import UsuarioCreate, UsuarioUpdate
 from app.db.repositories.base import CRUDBaseRepository
 
 class CRUDUsuarios(CRUDBaseRepository[Usuario, UsuarioCreate, UsuarioUpdate]):
-    pass
+    ...
 
 usuario_crud = CRUDUsuarios(Usuario)

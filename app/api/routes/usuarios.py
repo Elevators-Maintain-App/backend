@@ -22,6 +22,37 @@ async def obtener_usuario(uid: str = Path(...), db: AsyncSession = Depends(get_d
     service = UsuarioService(db)
     return await service.get_by_uid(uid)
 
+@router.get("/", response_model=UsuarioListResponse, dependencies=[Depends(require_role("superAdmin", "admin", "supervisor"))])
+async def get_usuarios(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    search: Optional[str] = Query(None),
+    company_id: Optional[str] = Query(None),
+    rol: Optional[str] = Query(None),
+    db: AsyncSession = Depends(get_db),
+    usuario_actual=Depends(require_role("superAdmin", "admin", "supervisor"))
+):
+    """
+    Obtener lista de usuarios desde Firebase con filtros opcionales.
+    """
+    try:
+        service = UsuarioService(db)
+        usuarios = await service.get_all(usuario_actual, skip, limit, search, company_id, rol)
+        total = len(usuarios)
+        
+        return UsuarioListResponse(
+            usuarios=usuarios,
+            total=total,
+            skip=skip,
+            limit=limit
+        )
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al obtener usuarios: {str(e)}"
+        )
+
 @router.post("/", response_model=UsuarioOut, status_code=status.HTTP_201_CREATED)
 async def crear_usuario(
     usuario_in: UsuarioCreate,
@@ -264,37 +295,6 @@ async def get_user_detail(
         role=data.get("rol"),
         photo_url=data.get("photo_url"),
     )
-
-@router.get("/", response_model=UsuarioListResponse, dependencies=[Depends(require_role("superAdmin"))])
-async def get_usuarios(
-    skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=1000),
-    search: Optional[str] = Query(None),
-    company_id: Optional[str] = Query(None),
-    rol: Optional[str] = Query(None),
-    db: AsyncSession = Depends(get_db)
-):
-    """
-    Obtener lista de usuarios desde Firebase con filtros opcionales.
-    Solo superAdmin puede acceder.
-    """
-    try:
-        service = UsuarioService(db)
-        usuarios = await service.get_all()
-        total = len(usuarios)
-        
-        return UsuarioListResponse(
-            usuarios=usuarios,
-            total=total,
-            skip=skip,
-            limit=limit
-        )
-        
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error al obtener usuarios: {str(e)}"
-        )
 
 @router.get("/by-role/{rol}", response_model=UsuarioListResponse, dependencies=[Depends(require_role("superAdmin", "operativo"))])
 async def get_usuarios_by_role(

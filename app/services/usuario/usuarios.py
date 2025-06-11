@@ -1,6 +1,6 @@
 # app/services/usuarios.py
 
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException, status
@@ -18,9 +18,11 @@ class UsuarioService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_all(self) -> List[UsuarioOut]:
+    async def get_all(self, usuario_actual: Usuario, skip: Optional[int], limit: Optional[int] = None, search: Optional[str] = None, company_id: Optional[str] = None, rol: Optional[str] = None) -> List[UsuarioOut]:
         try:
-            users = await usuario_crud.get_multi(self.db)
+            fabrica_de_usuarios = FabricaDeUsuarios.get_user_case(usuario_actual.rol)
+            filtros = fabrica_de_usuarios.obtener_filtros(usuario_actual, search, company_id, rol)
+            users = await usuario_crud.get_multi_with_advanced_filters(self.db, skip=skip, limit=limit, exact_filters=filtros.get("exact_filters", None), ilike_filters=filtros.get("ilike_filters", None), like_filters=filtros.get("like_filters", None))            
             return [UsuarioOut.model_validate(user) for user in users]
         except Exception as e:
             print(e)
@@ -36,7 +38,7 @@ class UsuarioService:
     
         compania = await CompaniaService(self.db).get_compania(usuario_in.company_id)
         tipo_documento = await tipo_documento_crud.get(self.db, usuario_in.document_type_id)
-        fabrica_de_usuarios = FabricaDeUsuarios.get_user_case(usuario_in.rol)
+        fabrica_de_usuarios = FabricaDeUsuarios.get_user_case(usuario_actual.rol)
         usuario_firebase = fabrica_de_usuarios.obtener_firebase_usuario({
             "usuario_actual": usuario_actual,
             "usuario_nuevo": usuario_in,
