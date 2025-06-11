@@ -100,6 +100,23 @@ class CRUDBaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType])
         result = await db.execute(query)
         return result.scalars().all()
 
+    async def get_multi_with_advanced_filters(self, db: AsyncSession, skip: int = 0, limit: int = 100, exact_filters: dict = None, ilike_filters: dict = None, like_filters: dict = None) -> List[ModelType]:
+        print("** Repository get_multi_with_advanced_filters")
+        query = select(self.model).offset(skip).limit(limit)
+        if exact_filters:
+            for field, value in exact_filters.items():
+                query = query.where(getattr(self.model, field) == value)
+        if ilike_filters:
+            for field, value in ilike_filters.items():
+                query = query.where(getattr(self.model, field).ilike(value))
+        if like_filters:
+            for field, value in like_filters.items():
+                query = query.where(getattr(self.model, field).like(value))
+        result = await db.execute(query)
+
+        return result.scalars().all()
+        
+
     async def create(self, db: AsyncSession, obj_in: CreateSchemaType) -> ModelType:
         try:            
             obj_in_data = obj_in.model_dump(exclude_unset=True)

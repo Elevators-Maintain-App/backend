@@ -35,20 +35,7 @@ class SuperAdminCase(UsuarioCaseInterface):
 
         return usuario
         
-    def obtener_filtros(self, usuario_actual: Usuario, search: Optional[str], company_id: Optional[str], rol: Optional[str]) -> dict:
-        filters = {}
-        if search:
-            filters["display_name"] = f"%{search}%"
-        if company_id:
-            filters["company_id"] = company_id
-        if rol:
-            filters["rol"] = rol
-        return filters
-    
-    def obtener_filtros_avanzados(self, usuario_actual: Usuario, search: Optional[str], company_id: Optional[str], rol: Optional[str]) -> dict:
-        """
-        Returns structured filters for advanced filtering with explicit ILIKE support
-        """
+    def obtener_filtros(self, usuario_actual: Usuario, search: Optional[str], company_id: Optional[str], rol: Optional[str]) -> dict:        
         filters = {
             "exact_filters": {},
             "ilike_filters": {},

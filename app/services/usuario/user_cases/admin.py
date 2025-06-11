@@ -53,7 +53,8 @@ class AdminCase(UsuarioCaseInterface):
             "exact_filters": {
                 "company_id": usuario_actual.company_id,
             },
-            "ilike_filters": {}
+            "ilike_filters": {},
+            "like_filters": {}
         }
         
         if search:

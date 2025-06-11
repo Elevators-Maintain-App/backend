@@ -40,14 +40,15 @@ class SupervisorCase(UsuarioCaseInterface):
         return usuario
     
     def obtener_filtros(self, usuario_actual: Usuario, search: Optional[str], company_id: Optional[str], rol: Optional[str]) -> dict:
-        result = {
+        filters = {
             "exact_filters": {
                 "company_id": usuario_actual.company_id,
                 "rol": Rol.TECHNICIAN.value
             },
-            "ilike_filters": {}
+            "ilike_filters": {},
+            "like_filters": {}
         }
         if search:
-            result["ilike_filters"]["display_name"] = f"%{search}%"
+            filters["ilike_filters"]["display_name"] = f"%{search}%"
 
-        return result   
+        return filters   
