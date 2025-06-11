@@ -6,7 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
 
 from app.db.session import get_db
-from app.schemas.usuarios import UsuarioCreate, UsuarioUpdate, UsuarioOut, UserOut, CountOut, UsuarioListResponse
+from app.schemas.usuarios import UsuarioCreate, UsuarioUpdate, UsuarioOut, UserOut, CountOut
+from app.schemas.comunes import PaginacionResponse
 from app.services.usuario.usuarios import UsuarioService
 from app.auth.firebase import require_role, get_firestore_client
 from app.auth.firebase import get_current_firebase_user
@@ -22,7 +23,7 @@ async def obtener_usuario(uid: str = Path(...), db: AsyncSession = Depends(get_d
     service = UsuarioService(db)
     return await service.get_by_uid(uid)
 
-@router.get("/", response_model=UsuarioListResponse, dependencies=[Depends(require_role("superAdmin", "admin", "supervisor"))])
+@router.get("/", response_model=PaginacionResponse[UsuarioOut], dependencies=[Depends(require_role("superAdmin", "admin", "supervisor"))])
 async def get_usuarios(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
@@ -40,12 +41,12 @@ async def get_usuarios(
         usuarios = await service.get_all(usuario_actual, skip, limit, search, company_id, rol)
         total = len(usuarios)
         
-        return UsuarioListResponse(
-            usuarios=usuarios,
+        return PaginacionResponse(
+            data=usuarios,
             total=total,
             skip=skip,
             limit=limit
-        )
+        ) 
         
     except Exception as e:
         raise HTTPException(
@@ -296,7 +297,7 @@ async def get_user_detail(
         photo_url=data.get("photo_url"),
     )
 
-@router.get("/by-role/{rol}", response_model=UsuarioListResponse, dependencies=[Depends(require_role("superAdmin", "operativo"))])
+@router.get("/by-role/{rol}", response_model=PaginacionResponse[UsuarioOut], dependencies=[Depends(require_role("superAdmin", "operativo"))])
 async def get_usuarios_by_role(
     rol: str,
     skip: int = Query(0, ge=0),
@@ -358,8 +359,8 @@ async def get_usuarios_by_role(
             ))
             count += 1
         
-        return UsuarioListResponse(
-            usuarios=usuarios,
+        return PaginacionResponse(
+            data=usuarios,
             total=total,
             skip=skip,
             limit=limit
@@ -371,7 +372,7 @@ async def get_usuarios_by_role(
             detail=f"Error al obtener usuarios por rol: {str(e)}"
         )
 
-@router.get("/by-company/{company_id}", response_model=UsuarioListResponse, dependencies=[Depends(require_role("superAdmin", "operativo", "cliente"))])
+@router.get("/by-company/{company_id}", response_model=PaginacionResponse[UsuarioOut], dependencies=[Depends(require_role("superAdmin", "operativo", "cliente"))])
 async def get_usuarios_by_company(
     company_id: str,
     skip: int = Query(0, ge=0),
@@ -433,8 +434,8 @@ async def get_usuarios_by_company(
             ))
             count += 1
         
-        return UsuarioListResponse(
-            usuarios=usuarios,
+        return PaginacionResponse(
+            data=usuarios,
             total=total,
             skip=skip,
             limit=limit

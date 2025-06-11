@@ -5,6 +5,7 @@ from typing import Optional, List
 from datetime import datetime
 from uuid import UUID
 from app.db.models.usuarios import Rol
+from app.schemas.comunes import PaginacionResponse
 
 class UsuarioBase(BaseModel):
     company_id: UUID
@@ -44,11 +45,6 @@ class UsuarioOut(UsuarioBase):
     class Config:
         from_attributes = True
 
-class UsuarioListResponse(BaseModel):
-    usuarios: List[UsuarioOut]
-    total: int
-    skip: int
-    limit: int
 
 class UsuarioInDBBase(UsuarioOut):
     class Config:
