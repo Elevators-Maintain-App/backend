@@ -92,8 +92,12 @@ class CRUDBaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType])
         result = await db.execute(select(self.model).where(self.model.id == id))
         return result.scalars().first()
 
-    async def get_multi(self, db: AsyncSession, skip: int = 0, limit: int = 100) -> List[ModelType]:
-        result = await db.execute(select(self.model).offset(skip).limit(limit))
+    async def get_multi(self, db: AsyncSession, skip: int = 0, limit: int = 100, filters: dict = None) -> List[ModelType]:
+        query = select(self.model).offset(skip).limit(limit)
+        if filters:
+            for field, value in filters.items():
+                query = query.where(getattr(self.model, field) == value)
+        result = await db.execute(query)
         return result.scalars().all()
 
     async def create(self, db: AsyncSession, obj_in: CreateSchemaType) -> ModelType:
