@@ -8,6 +8,7 @@ from .unidades import Unidad
 from .zonas_geograficas import ZonaGeografica
 from .usuarios import Usuario
 from .compania import Compania
+from .seguimiento import OrdenTrabajoSeguimiento, EventoOrden
 
 from .enums import (
     TipoUnidad,
@@ -37,4 +38,6 @@ __all__ = [
     "Usuario",
     "Compania",
     "Pais",
+    "EventoOrden",
+    "OrdenTrabajoSeguimiento"
 ]

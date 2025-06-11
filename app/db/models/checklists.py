@@ -80,6 +80,11 @@ class ChecklistItem(Base):
     updated_at      = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
 
     checklist       = relationship("Checklist", back_populates="items")
+    seguimientos = relationship(
+        "OrdenTrabajoSeguimiento",
+        back_populates="checklist_item",
+        cascade="all, delete-orphan"
+    )
 
     __table_args__  = (
         UniqueConstraint('checklist_id', 'step_number', name='ux_checklist_step'),
