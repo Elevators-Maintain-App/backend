@@ -4,6 +4,7 @@ from app.schemas.usuarios import UsuarioCreate
 from app.db.models.usuarios import Usuario
 from app.db.models import Compania, TipoDocumento
 from dataclasses import dataclass
+from typing import Optional
 
 @dataclass
 class CrearUsuarioParams:
@@ -26,6 +27,6 @@ class UsuarioCaseInterface(ABC):
     def obtener_usuario_a_guardar(self, usuario_nuevo: UsuarioCreate) -> UsuarioCreate:
         ...
 
-    def obtener_filtros(self, usuario_actual: Usuario) -> dict:
+    def obtener_filtros(self, usuario_actual: Usuario, search: Optional[str], company_id: Optional[str], rol: Optional[str]) -> dict:
         ...
 

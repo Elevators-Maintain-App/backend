@@ -6,6 +6,7 @@ from app.schemas.usuarios import UsuarioCreate
 from app.auth.firebase import FirebaseUser
 from .utils import mapear_usuario_dto_a_usuario_firebase, mapear_usuario_dto_a_usuario_create
 from app.services.usuario.interfaces import UsuarioCaseInterface, CrearUsuarioFirebaseParams, CrearUsuarioParams
+from typing import Optional
 
 VERTIONE_COMPANY_ID = "00000000-0000-0000-0000-000000000000"
 VERTIONE_NAME = "VertiOne"
@@ -34,7 +35,33 @@ class SuperAdminCase(UsuarioCaseInterface):
 
         return usuario
         
-    def obtener_filtros(self, usuario_actual: Usuario) -> dict:
-        return None
+    def obtener_filtros(self, usuario_actual: Usuario, search: Optional[str], company_id: Optional[str], rol: Optional[str]) -> dict:
+        filters = {}
+        if search:
+            filters["display_name"] = f"%{search}%"
+        if company_id:
+            filters["company_id"] = company_id
+        if rol:
+            filters["rol"] = rol
+        return filters
+    
+    def obtener_filtros_avanzados(self, usuario_actual: Usuario, search: Optional[str], company_id: Optional[str], rol: Optional[str]) -> dict:
+        """
+        Returns structured filters for advanced filtering with explicit ILIKE support
+        """
+        filters = {
+            "exact_filters": {},
+            "ilike_filters": {},
+            "like_filters": {}
+        }
+        
+        if search:
+            filters["ilike_filters"]["display_name"] = f"%{search}%"
+        if company_id:
+            filters["exact_filters"]["company_id"] = company_id
+        if rol:
+            filters["exact_filters"]["rol"] = rol
+            
+        return filters
 
     

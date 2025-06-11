@@ -21,8 +21,9 @@ class UsuarioService:
     async def get_all(self, usuario_actual: Usuario, skip: Optional[int], limit: Optional[int] = None, search: Optional[str] = None, company_id: Optional[str] = None, rol: Optional[str] = None) -> List[UsuarioOut]:
         try:
             fabrica_de_usuarios = FabricaDeUsuarios.get_user_case(usuario_actual.rol)
-            filtros = fabrica_de_usuarios.obtener_filtros(usuario_actual)
-            users = await usuario_crud.get_multi(self.db, skip=skip, limit=limit, filters=filtros)
+            filtros = fabrica_de_usuarios.obtener_filtros(usuario_actual, search, company_id, rol)
+            print("filtros", filtros)
+            users = await usuario_crud.get_multi_with_advanced_filters(self.db, skip=skip, limit=limit, exact_filters=filtros["exact_filters"], ilike_filters=filtros["ilike_filters"], like_filters=filtros["like_filters"])
             return [UsuarioOut.model_validate(user) for user in users]
         except Exception as e:
             print(e)
