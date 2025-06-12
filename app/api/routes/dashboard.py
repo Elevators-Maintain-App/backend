@@ -1,12 +1,66 @@
 # app/api/routes/dashboard.py
-
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.db.session import get_db
 from app.services.dashboard import DashboardService
+from app.auth.firebase import require_role
+from app.schemas.dashboard import SuperAdminDashboard, AdminDashboard, SupervisorDashboard, ClienteDashboard, TechnicianDashboard
+from app.auth.firebase import get_current_firebase_user
+from app.auth.firebase import FirebaseUser
 
 router = APIRouter()
+
+@router.get(
+    "/superadmin",
+    description="Resumen de usuarios, proyectos, usuarios, planes, etc.",
+    dependencies=[Depends(require_role("superAdmin"))],
+    response_model=SuperAdminDashboard
+)
+async def get_super_admin_dashboard(db: AsyncSession = Depends(get_db)):
+    service = DashboardService(db)
+    return await service.get_super_admin_dashboard()
+
+@router.get(
+    "/admin",
+    description="Resumen de usuarios, proyectos, usuarios, planes, etc.",
+    dependencies=[Depends(require_role("superAdmin", "admin"))],
+    response_model=AdminDashboard
+)
+async def get_admin_dashboard(db: AsyncSession = Depends(get_db), current_user: FirebaseUser = Depends(get_current_firebase_user)):
+    service = DashboardService(db)
+    return await service.get_admin_dashboard(current_company_id=current_user.company_id)
+
+@router.get(
+    "/supervisor",
+    description="Resumen de usuarios, proyectos, usuarios, planes, etc.",
+    dependencies=[Depends(require_role("superAdmin", "admin", "supervisor"))],
+    response_model=SupervisorDashboard
+)
+async def get_supervisor_dashboard(db: AsyncSession = Depends(get_db)):
+    service = DashboardService(db)
+    return await service.get_supervisor_dashboard()
+
+@router.get(
+    "/cliente",
+    description="Resumen de usuarios, proyectos, usuarios, planes, etc.",
+    dependencies=[Depends(require_role("superAdmin", "cliente"))],
+    response_model=ClienteDashboard
+)
+async def get_cliente_dashboard(db: AsyncSession = Depends(get_db)):
+    service = DashboardService(db)
+    return await service.get_cliente_dashboard()
+
+@router.get(
+    "/tecnico",
+    description="Resumen de usuarios, proyectos, usuarios, planes, etc.",
+    dependencies=[Depends(require_role("superAdmin", "tecnico"))],
+    response_model=TechnicianDashboard
+)
+async def get_tecnico_dashboard(db: AsyncSession = Depends(get_db)):
+    service = DashboardService(db)
+    return await service.get_tecnico_dashboard()
+
+
 
 
 @router.get("/ordenes-trabajo/resumen", description="Resumen de órdenes de trabajo: abiertas, cerradas, pendientes.")

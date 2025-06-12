@@ -21,9 +21,10 @@ class Cliente(Base):
     logo = Column(String, nullable=True)
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
+    company_id = Column(UUID(as_uuid=True), ForeignKey('companias.id'), nullable=False)
 
     # Relaciones
     tipo_documento = relationship("TipoDocumento")
     pais = relationship("Pais", back_populates="clientes")
-
+    compania = relationship("Compania", back_populates="clientes")
 

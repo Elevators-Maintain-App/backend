@@ -65,3 +65,5 @@ class Compania(Base):
     )
 
     pais = relationship("Pais", back_populates="companias")
+
+    clientes = relationship("Cliente", back_populates="compania")
