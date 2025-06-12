@@ -50,3 +50,5 @@ class OrdenDeTrabajo(Base):
         back_populates="orden_de_trabajo",
         cascade="all, delete-orphan"
     )
+
+    seguimientos = relationship("OrdenTrabajoSeguimiento", back_populates="orden", cascade="all, delete-orphan")

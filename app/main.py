@@ -26,7 +26,8 @@ from app.api.routes import (
     usuarios_router,
     compania_router,
     lov_router,
-    nivel_tecnico_router
+    nivel_tecnico_router,
+    ordenes_seguimiento
 )
 from app.core.config import settings
 from app.db.session import engine, Base
@@ -79,6 +80,7 @@ async def health_check():
 app.include_router(usuarios_router, prefix="/api/usuarios", tags=["Usuarios"])
 app.include_router(proyectos_router, prefix="/api/proyectos", tags=["Proyectos"])
 app.include_router(ordenes_trabajo_router, prefix="/api/ordenes-trabajo", tags=["Ordenes de Trabajo"])
+app.include_router(ordenes_seguimiento, prefix="/api/seguimiento", tags=["Seguimiento"])
 app.include_router(checklists_router, prefix="/api/checklists", tags=["Checklists"])
 app.include_router(unidades_router, prefix="/api/unidades", tags=["Unidades"])
 app.include_router(admin_dashboard, prefix="/api/dashboard", tags=["Admin Dashboard"])
