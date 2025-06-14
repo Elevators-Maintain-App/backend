@@ -29,7 +29,11 @@ class UsuarioService:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener los usuarios")
 
     async def get_by_uid(self, uid: str) -> UsuarioOut:
-        return await usuario_crud.get_by_field(self.db, "uid", uid)
+        usuario = await usuario_crud.get_usuario_con_relaciones(self.db, uid)
+        usuario_out = UsuarioOut.model_validate(usuario)
+        usuario_out.company_name = usuario.company.nombre
+        usuario_out.document_type_name = usuario.document_type.nombre
+        return usuario_out
 
     async def create(self, usuario_actual: Usuario, usuario_in: UsuarioCreate) -> UsuarioOut:
         usuario = await usuario_crud.get_by_field(self.db, "email", usuario_in.email)

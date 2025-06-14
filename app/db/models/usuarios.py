@@ -34,5 +34,7 @@ class Usuario(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
-
-    zona_geografica = relationship("ZonaGeografica", back_populates="usuarios")
+    # Relaciones
+    company = relationship("Compania", back_populates="usuarios", foreign_keys=[company_id])
+    document_type = relationship("TipoDocumento", back_populates="usuarios", foreign_keys=[document_type_id])
+    zona_geografica = relationship("ZonaGeografica", back_populates="usuarios", foreign_keys=[zona_geografica_id])
