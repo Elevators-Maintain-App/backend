@@ -6,7 +6,7 @@ from app.db.repositories.base import CRUDBaseRepository
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 from sqlalchemy import select
-from uuid import UUID
+# Line removed as the import is unused.
 
 class CRUDUsuarios(CRUDBaseRepository[Usuario, UsuarioCreate, UsuarioUpdate]):
     async def get_usuario_con_relaciones(self, db: AsyncSession, uid: str) -> Usuario:
