@@ -41,6 +41,8 @@ class UsuarioOut(UsuarioBase):
     uid: str
     created_at: datetime
     updated_at: Optional[datetime] = None
+    company_name: Optional[str] = None
+    document_type_name: Optional[str] = None
 
     class Config:
         from_attributes = True

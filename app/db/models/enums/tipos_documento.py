@@ -35,3 +35,5 @@ class TipoDocumento(Base):
         back_populates="document_type_in_use",
         foreign_keys="Compania.tipo_documento_id"
     )
+
+    usuarios = relationship("Usuario", back_populates="document_type")
