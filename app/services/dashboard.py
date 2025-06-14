@@ -2,8 +2,6 @@
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
-from uuid import UUID
-
 from app.db.models.ordenes_de_trabajo import OrdenDeTrabajo
 from app.db.models.unidades import Unidad
 from app.db.models.hojas_de_vida import HojaDeVida
