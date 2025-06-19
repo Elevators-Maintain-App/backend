@@ -105,9 +105,10 @@ class ChecklistService:
         if not chk:
             chk = await self.init_checklist(orden_id)
 
+        chk_items_sorted = sorted(chk.items, key=lambda i: i.step_number)
         # 2) Mapear cada item a su DTO
         items_out = []
-        for i in chk.items:
+        for i in chk_items_sorted:
             items_out.append(ChecklistItemOut(
                 step_number     = i.step_number,
                 titulo          = i.titulo,
