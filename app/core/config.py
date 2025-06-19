@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     port: int = int(os.getenv("PORT", 8000))
     db_host: str = os.getenv("DB_HOST", "localhost")
     db_port: int = int(os.getenv("DB_PORT", 5432))
-    db_user: str = os.getenv("DB_USER", "postgres")
+    db_user: str = os.getenv("DB_USER", "ucoojp8f1fqc45")
     db_password: str = os.getenv("DB_PASSWORD", "postgres")
     db_name: str = os.getenv("DB_NAME", "postgres")
     

@@ -54,6 +54,7 @@ class UsuarioFirebaseCreate(BaseModel):
     email: str
     photo_url: Optional[str] = None
     rol: Rol
+    cliente_id: UUID | None = None
 
 class FirebaseUser(UsuarioFirebaseCreate):
     uid: str

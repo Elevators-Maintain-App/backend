@@ -56,7 +56,7 @@ async def list_company_ordenes(
     summary="(supervisor) Mis totales"
 )
 async def count_mis_ordenes(
-    user=Depends(require_role("superVisor")),
+    user=Depends(require_role("supervisor")),
     db: AsyncSession = Depends(get_db)
 ):
     return {"count": await OrdenDeTrabajoService(db).count_by_supervisor(user.uid)}
@@ -68,7 +68,7 @@ async def count_mis_ordenes(
     summary="(supervisor) Últimas 10 órdenes"
 )
 async def list_mis_ultimas_10(
-    user=Depends(require_role("superVisor")),
+    user=Depends(require_role("supervisor")),
     db: AsyncSession = Depends(get_db)
 ):
     return await OrdenDeTrabajoService(db).list_summary_by_supervisor(user.uid, full=False)
@@ -80,7 +80,7 @@ async def list_mis_ultimas_10(
     summary="(supervisor) Todas mis órdenes"
 )
 async def list_mis_todas(
-    user=Depends(require_role("superVisor")),
+    user=Depends(require_role("supervisor")),
     db: AsyncSession = Depends(get_db)
 ):
     return await OrdenDeTrabajoService(db).list_summary_by_supervisor(user.uid, full=True)
@@ -92,7 +92,7 @@ async def list_mis_todas(
     summary="(supervisor) Conteos por estado (mes)"
 )
 async def counts_by_state_supervisor(
-    user=Depends(require_role("superVisor")),
+    user=Depends(require_role("supervisor")),
     db: AsyncSession = Depends(get_db)
 ):
     return await OrdenDeTrabajoService(db).counts_by_state_this_month(user.uid, user.company_id)
@@ -104,7 +104,7 @@ async def counts_by_state_supervisor(
     summary="(supervisor) % Cumplimiento (mes)"
 )
 async def monthly_compliance_supervisor(
-    user=Depends(require_role("superVisor")),
+    user=Depends(require_role("supervisor")),
     db: AsyncSession = Depends(get_db)
 ):
     return await OrdenDeTrabajoService(db).monthly_compliance(user.uid, user.company_id)
@@ -177,7 +177,7 @@ async def monthly_compliance_tec(
 @router.get(
     "/{orden_id}",
     response_model=OrdenTrabajoDetailOut,
-    summary="(admin|superVisor|technician) Detalle de orden"
+    summary="(admin|supervisor|technician) Detalle de orden"
 )
 async def get_orden_detail(
     orden_id: UUID = Path(...),
@@ -193,14 +193,14 @@ async def get_orden_detail(
     "/company",
     response_model=OrdenTrabajoDetailOut,
     status_code=status.HTTP_201_CREATED,
-    summary="(admin|superVisor) Crear orden"
+    summary="(admin|supervisor) Crear orden"
 )
 async def create_company_orden(
     orden_in: OrdenDeTrabajoCreate,
     user=Depends(get_current_firebase_user),
     db: AsyncSession = Depends(get_db)
 ):
-    if user.rol not in ("admin", "superVisor"):
+    if user.rol not in ("admin", "supervisor"):
         raise HTTPException(status_code=403, detail="No autorizado")
 
     # supervisor_id según rol

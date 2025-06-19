@@ -33,22 +33,12 @@ async def get_admin_dashboard(db: AsyncSession = Depends(get_db), current_user: 
 @router.get(
     "/supervisor",
     description="Resumen de usuarios, proyectos, usuarios, planes, etc.",
-    dependencies=[Depends(require_role("superAdmin", "admin", "supervisor"))],
+    dependencies=[Depends(require_role("superAdmin", "supervisor"))],
     response_model=SupervisorDashboard
 )
-async def get_supervisor_dashboard(db: AsyncSession = Depends(get_db)):
+async def get_supervisor_dashboard(db: AsyncSession = Depends(get_db), current_user: FirebaseUser = Depends(get_current_firebase_user)):
     service = DashboardService(db)
-    return await service.get_supervisor_dashboard()
-
-@router.get(
-    "/cliente",
-    description="Resumen de usuarios, proyectos, usuarios, planes, etc.",
-    dependencies=[Depends(require_role("superAdmin", "cliente"))],
-    response_model=ClienteDashboard
-)
-async def get_cliente_dashboard(db: AsyncSession = Depends(get_db)):
-    service = DashboardService(db)
-    return await service.get_cliente_dashboard()
+    return await service.get_supervisor_dashboard(current_user)
 
 @router.get(
     "/tecnico",
@@ -61,7 +51,23 @@ async def get_tecnico_dashboard(db: AsyncSession = Depends(get_db)):
     return await service.get_tecnico_dashboard()
 
 
+@router.get(
+    "/cliente",
+    description="Resumen de usuarios, proyectos, usuarios, planes, etc.",
+    dependencies=[Depends(require_role("superAdmin", "client"))],
+    response_model=ClienteDashboard
+)
+async def get_cliente_dashboard(db: AsyncSession = Depends(get_db)):
+    service = DashboardService(db)
+    return await service.get_cliente_dashboard()
 
+
+
+
+
+
+
+# old routes
 
 @router.get("/ordenes-trabajo/resumen", description="Resumen de órdenes de trabajo: abiertas, cerradas, pendientes.")
 async def get_resumen_ordenes_trabajo(db: AsyncSession = Depends(get_db)):

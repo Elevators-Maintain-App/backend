@@ -19,7 +19,7 @@ class Usuario(Base):
     __tablename__ = "usuarios"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    uid = Column(String, nullable=False)
+    uid = Column(String, nullable=False, unique=True)
     display_name = Column(String, nullable=False)
     company_id = Column(UUID(as_uuid=True), ForeignKey("companias.id"), nullable=False)
     document_id = Column(String, nullable=False)

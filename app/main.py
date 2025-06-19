@@ -9,25 +9,26 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import firebase_config
 
 from app.api.routes import (
-    tipos_documento_router,
+    admin_dashboard,
+    checklists_router,
+    clientes_router,
+    compania_router,
+    dashboard,
     estados_orden_router,
+    hojas_de_vida,
+    lov_router,
+    nivel_tecnico_router,
+    ordenes_seguimiento,
+    ordenes_trabajo_router,
     prioridades_router,
+    proyectos_router,
+    tipos_documento_router,
     tipos_evidencia_router,
     tipos_orden_router,
     tipos_unidad_router,
-    proyectos_router,
-    ordenes_trabajo_router,
-    checklists_router,
     unidades_router,
-    admin_dashboard,
-    dashboard,
-    hojas_de_vida,
-    zonas_geograficas,
     usuarios_router,
-    compania_router,
-    lov_router,
-    nivel_tecnico_router,
-    ordenes_seguimiento
+    zonas_geograficas
 )
 from app.core.config import settings
 from app.db.session import engine, Base
@@ -77,25 +78,26 @@ async def health_check():
 
 
 # Register API routes
-app.include_router(usuarios_router, prefix="/api/usuarios", tags=["Usuarios"])
-app.include_router(proyectos_router, prefix="/api/proyectos", tags=["Proyectos"])
-app.include_router(ordenes_trabajo_router, prefix="/api/ordenes-trabajo", tags=["Ordenes de Trabajo"])
-app.include_router(ordenes_seguimiento, prefix="/api/seguimiento", tags=["Seguimiento"])
-app.include_router(checklists_router, prefix="/api/checklists", tags=["Checklists"])
-app.include_router(unidades_router, prefix="/api/unidades", tags=["Unidades"])
 app.include_router(admin_dashboard, prefix="/api/dashboard", tags=["Admin Dashboard"])
+app.include_router(checklists_router, prefix="/api/checklists", tags=["Checklists"])
+app.include_router(clientes_router, prefix="/api/clientes", tags=["Clientes"])
+app.include_router(compania_router, prefix="/api/companias", tags=["Companias"])
 app.include_router(dashboard, prefix="/api/dashboard", tags=["Dashboard"])
-app.include_router(hojas_de_vida, prefix="/api/hojas-vida", tags=["Hojas de Vida"])
-app.include_router(zonas_geograficas, prefix="/api/zonas-geograficas", tags=["Zonas Geograficas"])
-app.include_router(tipos_documento_router, prefix="/api/tipos-documento", tags=["Enums"])
 app.include_router(estados_orden_router, prefix="/api/estados-orden", tags=["Enums"])
+app.include_router(hojas_de_vida, prefix="/api/hojas-vida", tags=["Hojas de Vida"])
+app.include_router(lov_router, prefix="/api/lov", tags=["LOV"])
+app.include_router(nivel_tecnico_router, prefix="/api/niveles-tecnicos", tags=["Niveles Tecnicos"])
+app.include_router(ordenes_seguimiento, prefix="/api/seguimiento", tags=["Seguimiento"])
+app.include_router(ordenes_trabajo_router, prefix="/api/ordenes-trabajo", tags=["Ordenes de Trabajo"])
 app.include_router(prioridades_router, prefix="/api/prioridades", tags=["Enums"])
+app.include_router(proyectos_router, prefix="/api/proyectos", tags=["Proyectos"])
+app.include_router(tipos_documento_router, prefix="/api/tipos-documento", tags=["Enums"])
 app.include_router(tipos_evidencia_router, prefix="/api/tipos-evidencia", tags=["Enums"])
 app.include_router(tipos_orden_router, prefix="/api/tipos-orden", tags=["Enums"])
 app.include_router(tipos_unidad_router, prefix="/api/tipos-unidad", tags=["Enums"])
-app.include_router(compania_router, prefix="/api/companias", tags=["companias"])
-app.include_router(lov_router, prefix="/api/lov", tags=["lov"])
-app.include_router(nivel_tecnico_router, prefix="/api/niveles-tecnicos", tags=["Niveles Tecnicos"])
+app.include_router(unidades_router, prefix="/api/unidades", tags=["Unidades"])
+app.include_router(usuarios_router, prefix="/api/usuarios", tags=["Usuarios"])
+app.include_router(zonas_geograficas, prefix="/api/zonas-geograficas", tags=["Zonas Geograficas"])
 
 # add openapi config
 openapi_config = OpenAPIConfig(app)

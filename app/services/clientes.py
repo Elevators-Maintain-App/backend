@@ -31,6 +31,7 @@ class ClienteService:
 
     async def create(self, cliente_in: ClienteCreate) -> ClienteSchema:
         # Aquí debería estar tu validación de unicidad, ya implementada antes
+        print("**CREANDO CLIENTE**", cliente_in)
         return await cliente_crud.create(self.db, obj_in=cliente_in)
 
     async def update(self, cliente_id: UUID, cliente_in: ClienteUpdate) -> ClienteSchema:

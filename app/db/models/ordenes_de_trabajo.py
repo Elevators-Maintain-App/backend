@@ -26,6 +26,7 @@ class OrdenDeTrabajo(Base):
         nullable=False,
         index=True
     )
+    cliente_id     = Column(UUID(as_uuid=True), ForeignKey('clientes.id'), nullable=False, index=True)
     supervisor_id  = Column(String, nullable=False)
     tecnico_id     = Column(String, nullable=False)
     unidad_id      = Column(UUID(as_uuid=True), ForeignKey('unidades.id'), nullable=False)
@@ -38,7 +39,8 @@ class OrdenDeTrabajo(Base):
     estado        = relationship("EstadoOrden")
     prioridad     = relationship("Prioridad")
     unidad        = relationship("Unidad", back_populates="ordenes_de_trabajo")
-    compania      = relationship("Compania", back_populates="ordenes_de_trabajo")
+    compania      = relationship("Compania", back_populates="ordenes_de_trabajo", foreign_keys=[company_id])
+    cliente       = relationship("Cliente", back_populates="ordenes_de_trabajo", foreign_keys=[cliente_id])
 
     checklists            = relationship(
         "Checklist",

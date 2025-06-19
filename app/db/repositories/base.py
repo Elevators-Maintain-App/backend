@@ -7,6 +7,7 @@ from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from app.db.session import Base
+from sqlalchemy import func
 
 ModelType = TypeVar("ModelType", bound=Base)
 CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
@@ -115,7 +116,11 @@ class CRUDBaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType])
         result = await db.execute(query)
 
         return result.scalars().all()
-        
+
+    async def get_total_by_field(self, db: AsyncSession, field: str, value: Any) -> int:
+        query = select(func.count()).where(getattr(self.model, field) == value)
+        result = await db.execute(query)
+        return result.scalar()
 
     async def create(self, db: AsyncSession, obj_in: CreateSchemaType) -> ModelType:
         try:            

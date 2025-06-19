@@ -12,14 +12,17 @@ class RolService:
                 {"id": "superAdmin", "name": "Super admin"},
                 {"id": "admin", "name": "Admin"},
                 {"id": "supervisor", "name": "Supervisor"},
-                {"id": "technician", "name": "Tecnico"}
+                {"id": "technician", "name": "Tecnico"},
+                {"id": "client", "name": "Cliente"}
             ]
         
         if current_role == "admin":
             roles = [
                 {"id": "admin", "name": "Admin"},
                 {"id": "supervisor", "name": "Supervisor"},
-                {"id": "technician", "name": "Tecnico"}
+                {"id": "technician", "name": "Tecnico"},
+                {"id": "client", "name": "Cliente"}
+
             ]
         
         if current_role == "supervisor":

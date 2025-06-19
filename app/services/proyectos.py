@@ -33,6 +33,13 @@ class ProyectoService:
             value=company_id
         )
     
+    async def get_proyectos_by_cliente(self, cliente_id: UUID) -> List[ProyectoInDBBase]:
+        return await proyecto_crud.get_multi_by_field(
+            self.db,
+            field="cliente_id",
+            value=cliente_id
+        )
+    
     async def get_by_id_and_company(self, proyecto_id: UUID, company_id: UUID):
         proyecto = await proyecto_crud.get(self.db, proyecto_id)
         if not proyecto or proyecto.company_id != company_id:
