@@ -42,6 +42,13 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
+5. **(Optional)** Run migrations
+   crear migracion:
+   `docker exec -it fastapi_app alembic revision --autogenerate -m “agregar campo de logo”`
+
+Run migracion:
+`docker exec -it fastapi_app alembic upgrade head`
+
 ## Project Structure
 
 ```

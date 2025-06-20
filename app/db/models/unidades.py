@@ -15,12 +15,14 @@ class Unidad(Base):
     proyecto_id        = Column(UUID(as_uuid=True), ForeignKey('proyectos.id'), nullable=False)
     tipo_unidad_id     = Column(Integer, ForeignKey('tipos_unidad.id'), nullable=False)
     company_id         = Column(UUID(as_uuid=True), ForeignKey('companias.id'), nullable=False, index=True)
+    cliente_id         = Column(UUID(as_uuid=True), ForeignKey('clientes.id'), nullable=False, index=True)
     created_at         = Column(TIMESTAMP, server_default=func.now())
     updated_at         = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
 
     # Relaciones
-    proyecto           = relationship("Proyecto", back_populates="unidades")
+    cliente            = relationship("Cliente", back_populates="unidades", foreign_keys=[cliente_id])
     tipo_unidad        = relationship("TipoUnidad")
-    compania           = relationship("Compania", back_populates="unidades")
+    proyecto           = relationship("Proyecto", back_populates="unidades", foreign_keys=[proyecto_id])
+    compania           = relationship("Compania", back_populates="unidades", foreign_keys=[company_id])
     hoja_de_vida       = relationship("HojaDeVida", back_populates="unidad", uselist=False, cascade="all, delete-orphan")
     ordenes_de_trabajo = relationship("OrdenDeTrabajo", back_populates="unidad", cascade="all, delete-orphan")

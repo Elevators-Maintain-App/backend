@@ -11,29 +11,36 @@ from app.db.repositories.proyectos import proyecto_crud
 from app.db.repositories.unidades import unidad_crud
 from app.db.repositories.ordenes_de_trabajo import orden_de_trabajo_crud
 
-from app.schemas.clientes import ClienteCreate, ClienteUpdate, ClienteSchema
+from app.schemas.clientes import ClienteCreate, ClienteUpdate, ClienteOut
 from app.schemas.proyectos import ProyectoInDBBase
 from app.schemas.unidades import UnidadInDBBase
 from app.schemas.ordenes_de_trabajo import OrdenDeTrabajoInDBBase
+from app.auth.firebase import FirebaseUser
+from app.services.cliente.cliente_mapper import cliente_to_cliente_out
 
 class ClienteService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_all(self) -> List[ClienteSchema]:
-        return await cliente_crud.get_multi(self.db)
+    async def get_all(self, usuario_actual: FirebaseUser) -> List[ClienteOut]:
+        clientes = await cliente_crud.get_multi(self.db)
+        return [cliente_to_cliente_out(cliente) for cliente in clientes]
 
-    async def get_by_id(self, cliente_id: UUID) -> ClienteSchema:
+    async def get_by_id(self, cliente_id: UUID, usuario_actual: FirebaseUser) -> ClienteOut:        
         cliente = await cliente_crud.get(self.db, cliente_id)
         if not cliente:
             raise HTTPException(status_code=404, detail="Cliente no encontrado")
-        return cliente
+        
+        if usuario_actual.company_id != cliente.compania_id:
+            raise HTTPException(status_code=403, detail="Cliente no encontrado")
+        
+        return cliente_to_cliente_out(cliente)
 
-    async def create(self, cliente_in: ClienteCreate) -> ClienteSchema:
-        # Aquí debería estar tu validación de unicidad, ya implementada antes
+    async def create(self, cliente_in: ClienteCreate) -> ClienteOut:
+        print("**CREANDO CLIENTE**", cliente_in)
         return await cliente_crud.create(self.db, obj_in=cliente_in)
 
-    async def update(self, cliente_id: UUID, cliente_in: ClienteUpdate) -> ClienteSchema:
+    async def update(self, cliente_id: UUID, cliente_in: ClienteUpdate) -> ClienteOut:
         cliente_db = await cliente_crud.get(self.db, cliente_id)
         if not cliente_db:
             raise HTTPException(status_code=404, detail="Cliente no encontrado")

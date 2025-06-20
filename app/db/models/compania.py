@@ -22,23 +22,8 @@ class Compania(Base):
     logo = Column(String, nullable=True)
 
     created_at = Column(TIMESTAMP, server_default=func.now())
-    updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
-
-    # Relationship to the document type this company USES
-    document_type_in_use = relationship(
-        "TipoDocumento",
-        back_populates="companies_using_this_type",
-        foreign_keys=[tipo_documento_id]
-    )
+    updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())    
     
-    # Relationship to document types this company OWNS/CREATED
-    owned_document_types = relationship(
-        "TipoDocumento",
-        back_populates="owner_compania",
-        foreign_keys="TipoDocumento.owner_compania_id",
-        cascade="all, delete-orphan"
-    )
-
     # Other existing relationships
     ordenes_de_trabajo = relationship(
         "OrdenDeTrabajo",
@@ -69,3 +54,11 @@ class Compania(Base):
     clientes = relationship("Cliente", back_populates="compania")
 
     usuarios = relationship("Usuario", back_populates="company", cascade="all, delete-orphan")
+
+    document_type = relationship("TipoDocumento", back_populates="companias", foreign_keys=[tipo_documento_id])
+    
+    def __str__(self):
+        return f"Compania(id={self.id}, nombre='{self.nombre}', documento='{self.documento}')"
+    
+    def __repr__(self):
+        return self.__str__()

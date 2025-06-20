@@ -9,7 +9,7 @@ from datetime import datetime
 
 from app.db.session import get_db
 from app.services.compania import CompaniaService
-from app.schemas.compania import CompaniaCreate, CompaniaUpdate, Compania, CountResponse
+from app.schemas.compania import CompaniaCreate, CompaniaUpdate, CompaniaOut, CountResponse
 from app.auth.firebase import require_role, get_firestore_client
 from app.schemas.usuarios import UsuarioOut
 from app.db.models.compania import Compania as CompaniaModel
@@ -18,20 +18,21 @@ router = APIRouter()
 
 @router.get(
     "/",
-    response_model=List[Compania]
+    response_model=List[CompaniaOut]
 )
 async def get_companias(
-    user=Depends(require_role("superAdmin")),
     db: AsyncSession = Depends(get_db),
     skip: int = Query(0, ge=0, description="Número de registros para saltar"),
     limit: int = Query(100, ge=1, le=100, description="Límite de registros a retornar"),
+    usuario_actual=Depends(require_role("superAdmin"))
 ):
     """
     (superAdmin) Obtiene todas las compañías con paginación
     """
     service = CompaniaService(db)
-    return await service.get_companias(skip=skip, limit=limit)
+    return await service.get_companias(usuario_actual=usuario_actual, skip=skip, limit=limit)
 
+# to deprecate
 @router.get(
     "/count",
     response_model=CountResponse,
@@ -48,6 +49,7 @@ async def count_companias(
     total = result.scalar_one()
     return {"count": total}
 
+# to deprecate
 @router.get(
     "/users/count",
     response_model=Dict[str, int],
@@ -79,7 +81,7 @@ async def count_users_per_company(
 
 @router.post(
     "/",
-    response_model=Compania,
+    response_model=CompaniaOut,
     status_code=status.HTTP_201_CREATED
 )
 async def create_compania(
@@ -95,23 +97,23 @@ async def create_compania(
 
 @router.get(
     "/{compania_id}",
-    response_model=Compania
+    response_model=CompaniaOut
 )
 async def get_compania(
     compania_id: UUID4 = Path(..., description="ID de la compañía"),
-    user=Depends(require_role("superAdmin")),
+    usuario_actual=Depends(require_role("superAdmin")),
     db: AsyncSession = Depends(get_db),
 ):
     """
     (superAdmin) Obtiene una compañía por su ID
     """
     service = CompaniaService(db)
-    compania = await service.get_compania(compania_id=compania_id)
+    compania = await service.get_compania(compania_id=compania_id, usuario_actual=usuario_actual)
     return compania
 
 @router.put(
     "/{compania_id}",
-    response_model=Compania
+    response_model=CompaniaOut
 )
 async def update_compania(
     compania_in: CompaniaUpdate,
@@ -130,7 +132,7 @@ async def update_compania(
 
 @router.delete(
     "/{compania_id}",
-    response_model=Compania
+    response_model=CompaniaOut
 )
 async def delete_compania(
     compania_id: UUID4 = Path(..., description="ID de la compañía"),
@@ -145,7 +147,7 @@ async def delete_compania(
 
 @router.get(
     "/documento/{documento}",
-    response_model=Compania
+    response_model=CompaniaOut
 )
 async def read_compania_by_documento(
     documento: str = Path(..., description="Documento de la compañía"),
@@ -166,7 +168,7 @@ async def read_compania_by_documento(
 
 @router.get(
     "/tipo-documento/{tipo_documento_id}",
-    response_model=List[Compania]
+    response_model=List[CompaniaOut]
 )
 async def read_companias_by_tipo_documento(
     tipo_documento_id: int = Path(..., description="ID del tipo de documento"),

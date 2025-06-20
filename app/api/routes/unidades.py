@@ -80,7 +80,7 @@ async def count_company_unidades(
     summary="(admin) Lista unidades de su compañía"
 )
 async def list_company_unidades(
-    user=Depends(require_role("admin", "superVisor")),
+    user=Depends(require_role("admin", "supervisor")),
     db: AsyncSession = Depends(get_db)
 ):
     unidades = await UnidadService(db).get_by_company(user.company_id)

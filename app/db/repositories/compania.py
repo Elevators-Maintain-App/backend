@@ -32,13 +32,29 @@ class CompaniaRepository(BaseRepository[Compania, CompaniaCreate, CompaniaUpdate
     
     async def get_with_relations(self, compania_id: str) -> Optional[Compania]:
         """
-        Obtiene una compañía con sus relaciones
+        Obtiene una compañía con sus relaciones principales
         """
         query = (
             select(self.model)
             .where(self.model.id == compania_id)
             .options(
-                selectinload(self.model.document_type_in_use)
+                selectinload(self.model.document_type),
+                selectinload(self.model.pais),
+            )
+        )
+        result = await self.db.execute(query)
+        return result.scalars().first()
+    
+    async def get_with_basic_relations(self, compania_id: str) -> Optional[Compania]:
+        """
+        Obtiene una compañía con sus relaciones básicas (más ligero)
+        """
+        query = (
+            select(self.model)
+            .where(self.model.id == compania_id)
+            .options(
+                selectinload(self.model.document_type),
+                selectinload(self.model.pais)
             )
         )
         result = await self.db.execute(query)

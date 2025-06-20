@@ -4,10 +4,16 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 from pydantic import BaseModel
+from enum import Enum
+
+class ProyectoEstado(str, Enum):
+    ACTIVO = "ACTIVO"
+    INACTIVO = "INACTIVO"
 
 class ProyectoBase(BaseModel):
     nombre: str
     direccion: Optional[str] = None
+    estado: Optional[ProyectoEstado] = None
     zona_geografica_id: Optional[UUID] = None
     cliente_id: str
 

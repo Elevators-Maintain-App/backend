@@ -31,8 +31,10 @@ class CompaniaUpdate(BaseModel):
     logo: Optional[str] = Field(None, description="Logo de la compañía")
 
 # Schema for reading a company
-class Compania(CompaniaBase):
+class CompaniaOut(CompaniaBase):
     id: UUID4
+    nombre_pais: Optional[str] = None
+    tipo_documento_nombre: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 
@@ -41,7 +43,7 @@ class Compania(CompaniaBase):
     }
 
 # Schema for company with document type information
-class CompaniaWithDocumentType(Compania):
+class CompaniaWithDocumentType(CompaniaOut):
     document_type_in_use: Optional["TipoDocumentoBasic"] = None
 
     model_config = {
@@ -49,7 +51,7 @@ class CompaniaWithDocumentType(Compania):
     }
 
 # Schema for company with owned document types
-class CompaniaWithOwnedTypes(Compania):
+class CompaniaWithOwnedTypes(CompaniaOut):
     owned_document_types: List["TipoDocumentoBasic"] = []
 
     model_config = {
@@ -57,7 +59,7 @@ class CompaniaWithOwnedTypes(Compania):
     }
 
 # Schema for company with all document type relationships
-class CompaniaWithAllDocumentTypes(Compania):
+class CompaniaWithAllDocumentTypes(CompaniaOut):
     document_type_in_use: Optional["TipoDocumentoBasic"] = None
     owned_document_types: List["TipoDocumentoBasic"] = []
 

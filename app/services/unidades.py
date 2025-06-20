@@ -26,6 +26,20 @@ class UnidadService:
         if not unidad or str(unidad.company_id) != str(company_id):
             raise HTTPException(status_code=404, detail="Unidad no encontrada o fuera de tu compañía")
         return unidad
+    
+    async def get_total_unidades_por_cliente(self, cliente_id: UUID) -> int:
+        return await unidad_crud.get_total_by_field(
+            self.db,
+            field="cliente_id",
+            value=cliente_id
+        )
+    
+    async def get_total_unidades_por_proyecto(self, proyecto_id: UUID) -> int:
+        return await unidad_crud.get_total_by_field(
+            self.db,
+            field="proyecto_id",
+            value=proyecto_id
+        )
 
     async def create(self, unidad_in: UnidadCreate, company_id: UUID) -> UnidadInDBBase:
         existente = await unidad_crud.get_by_field(self.db, "nombre", unidad_in.nombre)

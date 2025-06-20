@@ -111,7 +111,7 @@ class OrdenDeTrabajoService:
         if user.rol == "admin":
             if str(o.company_id) != str(user.company_id):
                 raise HTTPException(status_code=403, detail="No autorizado")
-        elif user.rol == "superVisor":
+        elif user.rol == "supervisor":
             if o.supervisor_id != user.uid:
                 raise HTTPException(status_code=403, detail="No autorizado")
         else:  # technician
@@ -285,7 +285,7 @@ class OrdenDeTrabajoService:
 
         # supervisor
         sup_doc = get_firestore_client().collection("users").document(supervisor_id).get()
-        if not sup_doc.exists or sup_doc.to_dict().get("rol") != "superVisor":
+        if not sup_doc.exists or sup_doc.to_dict().get("rol") != "supervisor":
             raise HTTPException(status_code=400, detail="Supervisor invalido")
 
         # 3) validar enums
@@ -323,3 +323,17 @@ class OrdenDeTrabajoService:
 
         # 8) devolver detalle
         return await self.get_detail(nueva.id, user)
+    
+    async def get_total_ordenes_trabajo_por_cliente(self, cliente_id: UUID) -> int:
+        return await orden_de_trabajo_crud.get_total_by_field(
+            self.db,
+            field="cliente_id",
+            value=cliente_id
+        )
+    
+    async def get_total_ordenes_trabajo_por_proyecto(self, proyecto_id: UUID) -> int:
+        return await orden_de_trabajo_crud.get_total_by_field(
+            self.db,
+            field="proyecto_id",
+            value=proyecto_id
+        )

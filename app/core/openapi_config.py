@@ -8,7 +8,6 @@ class OpenAPIConfig:
         self.app = app
         self.app.openapi_schema = self._custom_openapi()
 
-
     def get_openapi(self):
         return self.app.openapi_schema
 

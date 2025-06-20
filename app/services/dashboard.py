@@ -1,7 +1,9 @@
 # app/services/dashboard.py
 
+from typing import Optional, List
+from datetime import date
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select, func, and_, extract
 from app.db.models.ordenes_de_trabajo import OrdenDeTrabajo
 from app.db.models.unidades import Unidad
 from app.db.models.hojas_de_vida import HojaDeVida
@@ -9,7 +11,16 @@ from app.db.models.usuarios import Usuario
 from app.db.models.compania import Compania
 from app.db.models.proyectos import Proyecto
 from app.db.models.clientes import Cliente
-
+from app.auth.firebase import FirebaseUser
+from app.constantes.ordenes_status import EstadoOrden
+from app.schemas.proyectos import ProyectoEstado
+from app.schemas.dashboard.supervisor import SupervisorDashboard
+from app.schemas.dashboard.technician import TechnicianDashboard
+from app.schemas.dashboard.cliente import ClienteDashboard, ClienteDashboardProyecto
+from app.services.proyectos import ProyectoService
+from app.services.unidades import UnidadService
+from app.services.ordenes_de_trabajo import OrdenDeTrabajoService
+from fastapi import HTTPException
 
 class DashboardService:
     def __init__(self, db: AsyncSession):
@@ -98,13 +109,11 @@ class DashboardService:
         """
         Devuelve el resumen de usuarios, proyectos, usuarios, planes, etc.
         """
-
         total_usuarios = select(func.count(Usuario.id)).where(Usuario.is_active == True, Usuario.company_id == current_company_id).scalar_subquery()
         total_proyectos = select(func.count(Proyecto.id)).where(Proyecto.company_id == current_company_id).scalar_subquery()
         total_clientes = select(func.count(Cliente.id)).where(Cliente.company_id == current_company_id).scalar_subquery()
         total_ordenes_trabajo = select(func.count(OrdenDeTrabajo.id)).where(OrdenDeTrabajo.company_id == current_company_id).scalar_subquery()
         total_unidades = select(func.count(Unidad.id)).where(Unidad.company_id == current_company_id).scalar_subquery()
-
         query = select(
             total_clientes.label("total_clientes"),
             total_proyectos.label("total_proyectos"),
@@ -112,7 +121,7 @@ class DashboardService:
             total_ordenes_trabajo.label("total_ordenes_trabajo"),
             total_unidades.label("total_unidades")
         )
-
+        
         result = await self.db.execute(query)
         summary = result.fetchone()
         
@@ -124,35 +133,95 @@ class DashboardService:
             "unidades": summary.total_unidades
         }
     
-    async def get_supervisor_dashboard(self):
+    async def get_supervisor_dashboard(self, current_user: FirebaseUser, year: Optional[int] = None, month: Optional[int] = None) -> SupervisorDashboard:
         """
         Devuelve el resumen de usuarios, proyectos, usuarios, planes, etc.
         """
+        today = date.today()
+        year = year or today.year
+        month = month or today.month
+        supervisor_uid = current_user.uid
+        company_id = current_user.company_id
+
+        stmt = select(
+            func.count().label('total'),
+            func.count().filter(OrdenDeTrabajo.estado_id == EstadoOrden.VALIDADA.value).label('validadas'),
+            func.count().filter(OrdenDeTrabajo.estado_id == EstadoOrden.PENDIENTE.value).label('pendientes')
+        ).where(
+            and_(
+                OrdenDeTrabajo.supervisor_id == supervisor_uid,
+                OrdenDeTrabajo.company_id == company_id,
+                extract("year", OrdenDeTrabajo.fecha) == year,
+                extract("month", OrdenDeTrabajo.fecha) == month,
+            )
+        )
+    
+        result = await self.db.execute(stmt)
+        row = result.first()
         return {
-            "usuarios": 0,
-            "proyectos": 0,
-            "planes": 0,
-            "companias": 0
+            "ordenes_trabajo": row.total,   
+            "validadas": row.validadas,
+            "pendientes": row.pendientes
         }
     
-    async def get_cliente_dashboard(self):
+    async def get_tecnico_dashboard(self, current_user: FirebaseUser, year: Optional[int] = None, month: Optional[int] = None) -> TechnicianDashboard:
         """
         Devuelve el resumen de usuarios, proyectos, usuarios, planes, etc.
         """
+        today = date.today()
+        year = year or today.year
+        month = month or today.month
+        technician_uid = current_user.uid
+        company_id = current_user.company_id
+
+        stmt = select(
+            func.count().label('total'),
+            func.count().filter(OrdenDeTrabajo.estado_id == EstadoOrden.VALIDADA.value).label('validadas'),
+            func.count().filter(OrdenDeTrabajo.estado_id == EstadoOrden.PENDIENTE.value).label('pendientes')
+        ).where(
+            and_(
+                OrdenDeTrabajo.tecnico_id == technician_uid,
+                OrdenDeTrabajo.company_id == company_id,
+                extract("year", OrdenDeTrabajo.fecha) == year,
+                extract("month", OrdenDeTrabajo.fecha) == month,
+            )
+        )
+
+        result = await self.db.execute(stmt)
+        row = result.first()
         return {
-            "usuarios": 0,
-            "proyectos": 0,
-            "planes": 0,
-            "companias": 0
+            "ordenes_trabajo": row.total,
+            "validadas": row.validadas,
+            "pendientes": row.pendientes
         }
     
-    async def get_tecnico_dashboard(self):
+    async def get_cliente_dashboard(self, current_user: FirebaseUser) -> ClienteDashboard:
         """
         Devuelve el resumen de usuarios, proyectos, usuarios, planes, etc.
         """
-        return {
-            "usuarios": 0,
-            "proyectos": 0,
-            "planes": 0,
-            "companias": 0
-        }
+        cliente_id = current_user.cliente_id
+        if not cliente_id:
+            raise HTTPException(status_code=400, detail="El usuario no tiene un cliente asignado")
+        
+        proyecto_service = ProyectoService(self.db)
+        unidad_service = UnidadService(self.db)
+        orden_service = OrdenDeTrabajoService(self.db)
+        proyectos = await proyecto_service.get_proyectos_by_cliente(cliente_id)
+
+        data: List[ClienteDashboardProyecto] = []
+
+        for proyecto in proyectos:
+            cantidad_unidades = await unidad_service.get_total_unidades_por_proyecto(proyecto.id)
+            cantidad_ordenes_activas = await orden_service.get_total_ordenes_trabajo_por_proyecto(proyecto.id)
+            data.append(ClienteDashboardProyecto(
+                nombre_proyecto=proyecto.nombre,
+                estado=proyecto.estado.value,
+                cantidad_unidades=cantidad_unidades,
+                cantidad_ordenes_activas=cantidad_ordenes_activas,
+                tiene_mantenimientos_por_vencer=False,
+                fecha_de_vencimiento=None
+            ))
+
+        return ClienteDashboard(proyectos=data)
+    
+    
