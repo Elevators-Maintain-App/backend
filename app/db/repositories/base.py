@@ -131,8 +131,8 @@ class CRUDBaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType])
             await db.refresh(db_obj)
             return db_obj
         except Exception as e:
-            print("**** error al crear usuario", e)
-            raise HTTPException(status_code=500, detail="Error al crear usuario")
+            print("**** error al crear la entidad", e)
+            raise HTTPException(status_code=500, detail=f"Error al crear {self.model.__name__}")
 
 
     async def update(self, db: AsyncSession, db_obj: ModelType, obj_in: Union[UpdateSchemaType, Dict[str, Any]]) -> ModelType:

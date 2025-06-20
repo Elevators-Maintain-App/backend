@@ -21,12 +21,12 @@ class Cliente(Base):
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
     
     tipo_documento_id = Column(Integer, ForeignKey('tipos_documento.id'), nullable=False)
-    company_id = Column(UUID(as_uuid=True), ForeignKey('companias.id'), nullable=False, index=True)
+    compania_id = Column(UUID(as_uuid=True), ForeignKey('companias.id'), nullable=False, index=True)
     pais_id = Column(Integer, ForeignKey('paises.id'), nullable=True)
 
     # Relaciones
     pais = relationship("Pais", back_populates="clientes", foreign_keys=[pais_id])
-    compania = relationship("Compania", back_populates="clientes", foreign_keys=[company_id])
+    compania = relationship("Compania", back_populates="clientes", foreign_keys=[compania_id])
     tipos_documento = relationship("TipoDocumento", foreign_keys=[tipo_documento_id])
     ordenes_de_trabajo = relationship("OrdenDeTrabajo", back_populates="cliente", cascade="all, delete-orphan")
     unidades = relationship("Unidad", back_populates="cliente", cascade="all, delete-orphan")

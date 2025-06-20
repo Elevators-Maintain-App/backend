@@ -7,6 +7,7 @@ from app.services.usuario.rol import RolService
 from app.services.compania import CompaniaService
 from app.services.usuario.nivel_tecnico import NivelTecnicoService
 from app.services.secundarios.pais import PaisService
+from app.auth.firebase import require_role
 
 router = APIRouter()
 
@@ -15,13 +16,14 @@ async def get_roles():
     service = RolService()
     return await service.get_roles("superAdmin")
 
-@router.get("/companias", 
+@router.get("/companias",
            response_model=List[LovElemento],)
 async def get_companias(
     db: AsyncSession = Depends(get_db),
+    usuario_actual=Depends(require_role("superAdmin")),
 ):
     service = CompaniaService(db)
-    companias = await service.get_companias()
+    companias = await service.get_companias(usuario_actual=usuario_actual)
     return [LovElemento(id=compania.id, name=compania.nombre) for compania in companias]
 
 @router.get("/niveles-tecnicos", 

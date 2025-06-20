@@ -3,35 +3,38 @@
 from datetime import datetime
 from typing import Optional
 from uuid import UUID
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 class ClienteBase(BaseModel):
-    documento: str
-    tipo_documento_id: int
-    nombre: str
-    email: str
-    telefono: str
-    pais_id: int
-    ciudad: str
-    direccion: str
-    logo: Optional[str] = None
+    documento: str = Field(..., description="Documento de identificación del cliente")
+    tipo_documento_id: int = Field(..., description="ID del tipo de documento del cliente")
+    compania_id: UUID = Field(..., description="ID de la compañía del cliente")
+    nombre: str = Field(..., description="Nombre del cliente")
+    email: str = Field(..., description="Correo electrónico del cliente")
+    telefono: str = Field(..., description="Teléfono del cliente")
+    pais_id: int = Field(..., description="ID del país del cliente")
+    ciudad: str = Field(..., description="Ciudad del cliente")
+    direccion: str = Field(..., description="Dirección del cliente")
+    logo: Optional[str] = Field(None, description="Logo del cliente")
 
 class ClienteCreate(ClienteBase):
     pass
 
 class ClienteUpdate(BaseModel):
-    documento: Optional[str] = None
-    tipo_documento_id: Optional[int] = None
-    nombre: Optional[str] = None
-    email: Optional[str] = None
-    telefono: Optional[str] = None
-    pais_id: Optional[int] = None
-    ciudad: Optional[str] = None
-    direccion: Optional[str] = None
-    logo: Optional[str] = None
+    documento: Optional[str] = Field(None, description="Documento de identificación del cliente")
+    tipo_documento_id: Optional[int] = Field(None, description="ID del tipo de documento del cliente")
+    nombre: Optional[str] = Field(None, description="Nombre del cliente")
+    email: Optional[str] = Field(None, description="Correo electrónico del cliente")
+    telefono: Optional[str] = Field(None, description="Teléfono del cliente")
+    pais_id: Optional[int] = Field(None, description="ID del país del cliente")
+    ciudad: Optional[str] = Field(None, description="Ciudad del cliente")
+    direccion: Optional[str] = Field(None, description="Dirección del cliente")
+    logo: Optional[str] = Field(None, description="Logo del cliente")
 
-class ClienteSchema(ClienteBase):
+class ClienteOut(ClienteBase):
     id: UUID
+    nombre_pais: Optional[str] = None
+    tipo_documento_nombre: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 
