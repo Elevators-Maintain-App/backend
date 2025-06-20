@@ -15,19 +15,26 @@ from app.schemas.clientes import ClienteCreate, ClienteUpdate, ClienteOut
 from app.schemas.proyectos import ProyectoInDBBase
 from app.schemas.unidades import UnidadInDBBase
 from app.schemas.ordenes_de_trabajo import OrdenDeTrabajoInDBBase
+from app.auth.firebase import FirebaseUser
+from app.services.cliente.cliente_mapper import cliente_to_cliente_out
 
 class ClienteService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_all(self) -> List[ClienteOut]:
-        return await cliente_crud.get_multi(self.db)
+    async def get_all(self, usuario_actual: FirebaseUser) -> List[ClienteOut]:
+        clientes = await cliente_crud.get_multi(self.db)
+        return [cliente_to_cliente_out(cliente) for cliente in clientes]
 
-    async def get_by_id(self, cliente_id: UUID) -> ClienteOut:
+    async def get_by_id(self, cliente_id: UUID, usuario_actual: FirebaseUser) -> ClienteOut:        
         cliente = await cliente_crud.get(self.db, cliente_id)
         if not cliente:
             raise HTTPException(status_code=404, detail="Cliente no encontrado")
-        return cliente
+        
+        if usuario_actual.company_id != cliente.compania_id:
+            raise HTTPException(status_code=403, detail="Cliente no encontrado")
+        
+        return cliente_to_cliente_out(cliente)
 
     async def create(self, cliente_in: ClienteCreate) -> ClienteOut:
         print("**CREANDO CLIENTE**", cliente_in)
