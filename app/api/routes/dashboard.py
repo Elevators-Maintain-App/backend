@@ -57,9 +57,9 @@ async def get_tecnico_dashboard(db: AsyncSession = Depends(get_db)):
     dependencies=[Depends(require_role("superAdmin", "client"))],
     response_model=ClienteDashboard
 )
-async def get_cliente_dashboard(db: AsyncSession = Depends(get_db)):
+async def get_cliente_dashboard(db: AsyncSession = Depends(get_db), current_user: FirebaseUser = Depends(get_current_firebase_user)):
     service = DashboardService(db)
-    return await service.get_cliente_dashboard()
+    return await service.get_cliente_dashboard(current_user)
 
 
 
