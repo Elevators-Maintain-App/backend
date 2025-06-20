@@ -56,3 +56,9 @@ class Compania(Base):
     usuarios = relationship("Usuario", back_populates="company", cascade="all, delete-orphan")
 
     document_type = relationship("TipoDocumento", back_populates="companias", foreign_keys=[tipo_documento_id])
+    
+    def __str__(self):
+        return f"Compania(id={self.id}, nombre='{self.nombre}', documento='{self.documento}')"
+    
+    def __repr__(self):
+        return self.__str__()

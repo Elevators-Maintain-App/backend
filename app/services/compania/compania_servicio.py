@@ -1,28 +1,40 @@
 from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import NotFoundException, ConflictException
+from app.core.exceptions import NotFoundException, ConflictException, ForbiddenException
 from app.db.repositories.compania import CompaniaRepository
 from app.db.models.compania import Compania
 from app.schemas.compania import CompaniaCreate, CompaniaUpdate
+from app.db.models.usuarios import Usuario, Rol
+from app.auth.firebase import FirebaseUser
+from app.services.compania.compania_mapper import compania_to_compania_out
+
 
 class CompaniaService:
     def __init__(self, db: AsyncSession):
         self.repository = CompaniaRepository(db)
     
-    async def get_compania(self, compania_id: str) -> Compania:
+    async def get_compania(self, compania_id: str, usuario_actual: FirebaseUser) -> Compania:
         """
         Obtiene una compañía por su ID
         """
+        if usuario_actual.rol != Rol.SUPER_ADMIN:
+            raise ForbiddenException("No tienes permisos para consultar esta compañía")
+        
         compania = await self.repository.get_with_relations(compania_id)
+
         if not compania:
             raise NotFoundException(f"Compañía con ID {compania_id} no encontrada")
-        return compania
+        
+        return compania_to_compania_out(compania)
     
-    async def get_companias(self, skip: int = 0, limit: int = 100) -> List[Compania]:
+    async def get_companias(self, usuario_actual: Usuario, skip: int = 0, limit: int = 100) -> List[Compania]:
         """
         Obtiene todas las compañías con paginación
         """
+        if usuario_actual.rol != Rol.SUPER_ADMIN:
+            raise ForbiddenException("No tienes permisos para obtener todas las compañías")
+        
         return await self.repository.list(skip=skip, limit=limit)
     
     async def get_compania_by_documento(self, documento: str) -> Optional[Compania]:
