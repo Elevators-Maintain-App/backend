@@ -28,7 +28,5 @@ class Cliente(Base):
     pais = relationship("Pais", back_populates="clientes", foreign_keys=[pais_id])
     compania = relationship("Compania", back_populates="clientes", foreign_keys=[compania_id])
     tipos_documento = relationship("TipoDocumento", foreign_keys=[tipo_documento_id])
-    ordenes_de_trabajo = relationship("OrdenDeTrabajo", back_populates="cliente", cascade="all, delete-orphan")
-    unidades = relationship("Unidad", back_populates="cliente", cascade="all, delete-orphan")
-    proyectos = relationship("Proyecto", back_populates="cliente", cascade="all, delete-orphan")
+
 

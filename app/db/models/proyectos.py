@@ -15,7 +15,7 @@ class Proyecto(Base):
     direccion = Column(String, nullable=True)
     estado = Column(Enum(ProyectoEstado), nullable=True, default=ProyectoEstado.ACTIVO)
     zona_geografica_id = Column(UUID(as_uuid=True), ForeignKey('zonas_geograficas.id'), nullable=True)
-    cliente_id = Column(UUID(as_uuid=True), ForeignKey('clientes.id'), nullable=True)
+    cliente_id = Column(String, nullable=True)
     company_id = Column(
         UUID(as_uuid=True),
         ForeignKey('companias.id'),
@@ -29,4 +29,3 @@ class Proyecto(Base):
     zona_geografica = relationship("ZonaGeografica", back_populates="proyectos")
     compania = relationship("Compania", back_populates="proyectos")
     unidades = relationship("Unidad", back_populates="proyecto", cascade="all, delete-orphan")
-    cliente = relationship("Cliente", back_populates="proyectos")
