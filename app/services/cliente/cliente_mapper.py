@@ -16,5 +16,6 @@ def cliente_to_cliente_out(cliente: Cliente) -> ClienteOut:
         direccion=cliente.direccion,
         logo=cliente.logo,
         created_at=cliente.created_at,
-        updated_at=cliente.updated_at
+        updated_at=cliente.updated_at,
+        compania_id=cliente.compania_id
     )

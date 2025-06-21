@@ -4,7 +4,7 @@ from sqlalchemy.future import select
 from sqlalchemy import update as sql_update, delete as sql_delete
 from pydantic import BaseModel
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from fastapi import HTTPException
 from app.db.session import Base
 from sqlalchemy import func
@@ -95,6 +95,10 @@ class CRUDBaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType])
 
     async def get_multi(self, db: AsyncSession, skip: int = 0, limit: int = 100, filters: dict = None) -> List[ModelType]:
         query = select(self.model).offset(skip).limit(limit)
+        query = query.options(
+        selectinload(self.model.pais),
+        selectinload(self.model.tipos_documento),
+        )
         if filters:
             for field, value in filters.items():
                 query = query.where(getattr(self.model, field) == value)
