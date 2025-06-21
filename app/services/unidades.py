@@ -54,6 +54,9 @@ class UnidadService:
             raise HTTPException(status_code=400, detail="Proyecto no existe")
         if str(proyecto.company_id) != str(company_id):
             raise HTTPException(status_code=400, detail="Proyecto fuera de tu compañía")
+        cliente_id = proyecto.cliente_id
+        if not cliente_id:
+            raise HTTPException(status_code=400, detail="El proyecto no tiene cliente asociado")
         # validar tipo de unidad
         tipo = await tipo_unidad_crud.get(self.db, unidad_in.tipo_unidad_id)
         if not tipo:
@@ -62,7 +65,8 @@ class UnidadService:
         # Reconstruir payload como schema
         payload = UnidadCreateInDB(
             **unidad_in.dict(exclude_unset=True),
-            company_id=company_id
+            company_id=company_id,
+            cliente_id=cliente_id
         )
         return await unidad_crud.create(self.db, obj_in=payload)
 

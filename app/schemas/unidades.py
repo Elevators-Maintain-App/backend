@@ -16,6 +16,7 @@ class UnidadCreate(UnidadBase):
 
 class UnidadCreateInDB(UnidadCreate):
     company_id: UUID
+    cliente_id: str
 
 class UnidadUpdate(BaseModel):
     nombre: Optional[str] = None
