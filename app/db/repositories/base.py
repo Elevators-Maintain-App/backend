@@ -95,10 +95,6 @@ class CRUDBaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType])
 
     async def get_multi(self, db: AsyncSession, skip: int = 0, limit: int = 100, filters: dict = None) -> List[ModelType]:
         query = select(self.model).offset(skip).limit(limit)
-        query = query.options(
-        selectinload(self.model.pais),
-        selectinload(self.model.tipos_documento),
-        )
         if filters:
             for field, value in filters.items():
                 query = query.where(getattr(self.model, field) == value)
