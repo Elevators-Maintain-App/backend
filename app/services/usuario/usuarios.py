@@ -40,7 +40,7 @@ class UsuarioService:
         if usuario:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El usuario ya existe")
     
-        compania = await CompaniaService(self.db).get_compania(usuario_in.company_id)
+        compania = await CompaniaService(self.db).get_compania(usuario_in.company_id, usuario_actual)
         tipo_documento = await tipo_documento_crud.get(self.db, usuario_in.document_type_id)
         fabrica_de_usuarios = FabricaDeUsuarios.get_user_case(usuario_actual.rol)
         usuario_firebase = fabrica_de_usuarios.obtener_firebase_usuario({
