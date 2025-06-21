@@ -18,10 +18,15 @@ from app.schemas.ordenes_de_trabajo import (
 )
 from app.services.ordenes_de_trabajo import OrdenDeTrabajoService
 from app.auth.firebase import require_role, get_current_firebase_user
+import logging 
 
 router = APIRouter()
 
-
+logging.basicConfig(
+    level=logging.DEBUG,  # O usa logging.INFO si no necesitas tanto detalle
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
 # — ADMIN — #
 
 @router.get(
@@ -190,30 +195,18 @@ async def get_orden_detail(
 # — CREAR (admin o supervisor) — #
 
 @router.post(
-    "/company",
+    "/",
     response_model=OrdenTrabajoDetailOut,
     status_code=status.HTTP_201_CREATED,
-    summary="(admin|supervisor) Crear orden"
+    summary="(admin/supervisor) Crear orden"
 )
 async def create_company_orden(
     orden_in: OrdenDeTrabajoCreate,
-    user=Depends(get_current_firebase_user),
+    user = Depends(require_role("admin", "supervisor")),
     db: AsyncSession = Depends(get_db)
 ):
-    if user.rol not in ("admin", "supervisor"):
-        raise HTTPException(status_code=403, detail="No autorizado")
-
-    # supervisor_id según rol
-    if user.rol == "admin":
-        if not orden_in.supervisor_id:
-            raise HTTPException(status_code=422, detail="supervisor_id obligatorio para admin")
-        sup_uid = orden_in.supervisor_id
-    else:
-        sup_uid = user.uid
-
-    return await OrdenDeTrabajoService(db).create_for_admin(
+    return await OrdenDeTrabajoService(db).create(
         orden_in=orden_in,
-        supervisor_id=sup_uid,
         company_id=user.company_id,
         user=user
     )

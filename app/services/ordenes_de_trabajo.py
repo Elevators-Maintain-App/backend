@@ -20,7 +20,7 @@ from app.db.repositories.estados_orden import estado_orden_crud
 from app.db.repositories.prioridades import prioridad_crud
 from app.auth.firebase import get_firestore_client
 from app.db.models.compania import Compania
-from fastapi.concurrency import run_in_threadpool
+import logging
 
 from app.schemas.ordenes_de_trabajo import (
     OrdenDeTrabajoCreate,
@@ -31,6 +31,11 @@ from app.schemas.ordenes_de_trabajo import (
     OrdenDeTrabajoWeeklyComplianceOut,
 )
 
+logging.basicConfig(
+    level=logging.DEBUG,  # O usa logging.INFO si no necesitas tanto detalle
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
 class OrdenDeTrabajoService:
     def __init__(self, db: AsyncSession):
         self.db = db
@@ -108,15 +113,15 @@ class OrdenDeTrabajoService:
             raise HTTPException(status_code=404, detail="Orden no encontrada")
 
         # 2) Permisos
-        if user.rol == "admin":
+        if user.rol.value == "admin":
             if str(o.company_id) != str(user.company_id):
-                raise HTTPException(status_code=403, detail="No autorizado")
-        elif user.rol == "supervisor":
+                raise HTTPException(status_code=403, detail="Admin No autorizado")
+        elif user.rol.value == "supervisor":
             if o.supervisor_id != user.uid:
-                raise HTTPException(status_code=403, detail="No autorizado")
+                raise HTTPException(status_code=403, detail="SupervisorNo autorizado")
         else:  # technician
             if o.tecnico_id != user.uid:
-                raise HTTPException(status_code=403, detail="No autorizado")
+                raise HTTPException(status_code=403, detail="Tecnico No autorizado")
 
         # 3) Cargar unidad + proyecto en una sola consulta
         stmt = (
@@ -264,11 +269,10 @@ class OrdenDeTrabajoService:
             detail=f"{val} de {tot} Completadas"
         )
 
-    # — Crear (admin/supervisor) —
-    async def create_for_admin(
+    # — Crear (admin) —
+    async def create(
         self,
         orden_in: OrdenDeTrabajoCreate,
-        supervisor_id: str,
         company_id: UUID,
         user
     ) -> OrdenTrabajoDetailOut:
@@ -276,6 +280,10 @@ class OrdenDeTrabajoService:
         unidad = await unidad_crud.get(self.db, orden_in.unidad_id)
         if not unidad or str(unidad.company_id) != str(company_id):
             raise HTTPException(status_code=400, detail="Unidad invalida")
+        
+        cliente_id = unidad.cliente_id
+        if not cliente_id:
+            raise HTTPException(status_code=400, detail="Unidad sin cliente asignado")
 
         # 2) validar roles en Firestore
         # técnico
@@ -284,7 +292,7 @@ class OrdenDeTrabajoService:
             raise HTTPException(status_code=400, detail="Técnico invalido")
 
         # supervisor
-        sup_doc = get_firestore_client().collection("users").document(supervisor_id).get()
+        sup_doc = get_firestore_client().collection("users").document(orden_in.supervisor_id).get()
         if not sup_doc.exists or sup_doc.to_dict().get("rol") != "supervisor":
             raise HTTPException(status_code=400, detail="Supervisor invalido")
 
@@ -298,14 +306,14 @@ class OrdenDeTrabajoService:
                 raise HTTPException(status_code=400, detail=f"{name} invalido")
 
         # 4) preparar datos, excluyendo supervisor_id del dict
-        orden_data = orden_in.dict(exclude_unset=True, exclude={"supervisor_id"})
+        orden_data = orden_in.dict(exclude_unset=True)
 
         # 5) crear instancia
         nueva = OrdenDeTrabajo(
             **orden_data,
             id=uuid4(),
             company_id=company_id,
-            supervisor_id=supervisor_id
+            cliente_id=cliente_id
         )
 
         # 6) generar referencia
@@ -316,14 +324,12 @@ class OrdenDeTrabajoService:
         )).scalar_one() + 1
         nueva.referencia = f"OTC{fecha}{seq:04d}"
 
-        # 7) persistir
+        # 7) persistir 
         self.db.add(nueva)
         await self.db.commit()
         await self.db.refresh(nueva)
-
-        # 8) devolver detalle
         return await self.get_detail(nueva.id, user)
-    
+            
     async def get_total_ordenes_trabajo_por_cliente(self, cliente_id: UUID) -> int:
         return await orden_de_trabajo_crud.get_total_by_field(
             self.db,
