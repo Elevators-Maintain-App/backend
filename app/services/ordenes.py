@@ -35,16 +35,13 @@ class OrdenService:
 
     # ---------- casos de uso ---------- #
     async def iniciar(self, orden: OrdenDeTrabajo, datos: SeguimientoCreate) -> None:
-        
         orden.estado_id = EstadoOrdenID.EN_EJECUCION
         await self._add_tracking(orden, datos)
-        if orden.checklists:
-            orden.checklists.inicio_lat = datos.lat
-            orden.checklists.inicio_lon = datos.lon
-            orden.checklists.inicio_hora = datos.timestamp or datetime.utcnow()
+        for checklist in orden.checklists:
+            if checklist.hora_entrada is None:
+                checklist.hora_entrada = (datos.timestamp or datetime.utcnow()).time()
 
     async def pausar(self, orden: OrdenDeTrabajo, datos: SeguimientoCreate) -> None:
-        
         orden.estado_id = EstadoOrdenID.EN_PAUSA
         await self._add_tracking(orden, datos)
 
@@ -54,11 +51,11 @@ class OrdenService:
         await self._add_tracking(orden, datos)
 
     async def finalizar(self, orden: OrdenDeTrabajo, datos: SeguimientoCreate) -> None:
-        
-        orden.estado_id = EstadoOrdenID.FINALIZADA
+        orden.estado_id = EstadoOrdenID.COMPLETADA
         await self._add_tracking(orden, datos)
-        if orden.checklist:
-            orden.checklist.fin_hora = datos.timestamp or datetime.utcnow()
+        for checklist in orden.checklists:
+            if checklist.hora_salida is None:
+                checklist.hora_salida = (datos.timestamp or datetime.utcnow()).time()
 
     async def paso_completado(
         self, orden: OrdenDeTrabajo, item_id: UUID, datos: SeguimientoCreate

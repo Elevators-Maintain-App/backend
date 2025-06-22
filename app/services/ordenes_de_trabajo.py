@@ -241,8 +241,8 @@ class OrdenDeTrabajoService:
 
         return {
             "programadas": total,
-            "validadas": cnts.get(3, 0) + cnts.get(2, 0),
-            "pendientes": cnts.get(1, 0) + cnts.get(5, 0),
+            "validadas": cnts.get(5, 0),
+            "pendientes": total - (cnts.get(5, 0) + cnts.get(4, 0)),
         }
 
     # — Cumplimiento mensual (Supervisor) —
