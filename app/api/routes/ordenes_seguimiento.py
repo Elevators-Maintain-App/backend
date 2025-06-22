@@ -91,3 +91,4 @@ async def completar_item(
     orden = await _get_orden(db, orden_id)
     await OrdenService(db).paso_completado(orden, item_id, body)
     await db.commit()
+

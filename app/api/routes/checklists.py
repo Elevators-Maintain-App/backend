@@ -29,6 +29,19 @@ async def get_template(
     return await svc.get_template_for_order(orden_id)
 
 @router.get(
+    "/{orden_id}/load",
+    response_model=ChecklistOut,
+    summary="(technician) inicializar checklist de la orden"
+)
+async def load_checklist(
+    orden_id: UUID = Path(...),
+    user=Depends(require_role("technician")),
+    db: AsyncSession = Depends(get_db)
+):
+    svc = ChecklistService(db)
+    return await svc.init_checklist(orden_id)
+
+@router.get(
     "/{orden_id}",
     response_model=ChecklistOut,
     summary="(technician) Obtener o inicializar checklist de la orden"
