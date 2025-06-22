@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 
-from app.db.repositories.base import BaseRepository
+from app.db.repositories.base import BaseRepository, CRUDBaseRepository
 from app.db.models.compania import Compania
 from app.schemas.compania import CompaniaCreate, CompaniaUpdate
 
@@ -59,3 +59,9 @@ class CompaniaRepository(BaseRepository[Compania, CompaniaCreate, CompaniaUpdate
         )
         result = await self.db.execute(query)
         return result.scalars().first()
+
+# Create CRUD instance for advanced filtering methods
+class CRUDCompania(CRUDBaseRepository[Compania, CompaniaCreate, CompaniaUpdate]):
+    pass
+
+compania_crud = CRUDCompania(Compania)

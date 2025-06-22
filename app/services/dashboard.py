@@ -21,6 +21,7 @@ from app.services.proyectos import ProyectoService
 from app.services.unidades import UnidadService
 from app.services.ordenes_de_trabajo import OrdenDeTrabajoService
 from app.services.usuario.usuarios import UsuarioService
+from app.services.compania.compania_servicio import CompaniaService
 from fastapi import HTTPException
 
 class DashboardService:
@@ -81,29 +82,23 @@ class DashboardService:
         }
 
 
-    async def get_super_admin_dashboard(self):
+    async def get_super_admin_dashboard(self, current_user: FirebaseUser):
         """
         Devuelve el resumen de usuarios, proyectos, usuarios, planes, etc.
         """
-        total_usuarios = select(func.count(Usuario.id)).where(Usuario.is_active == True).scalar_subquery()
-        total_proyectos = select(func.count(Proyecto.id)).scalar_subquery()
-        total_companias = select(func.count(Compania.id)).scalar_subquery()
+        usuario_service = UsuarioService(self.db)
+        proyecto_service = ProyectoService(self.db)
+        compania_service = CompaniaService(self.db)
+        total_usuarios = await usuario_service.get_total_usuarios(usuario_actual=current_user)
+        total_proyectos = await proyecto_service.get_total_proyectos(usuario_actual=current_user)
+        total_companias = await compania_service.get_total_companias(usuario_actual=current_user)
         total_planes = 0
 
-        query = select(
-            total_usuarios.label("total_usuarios"),
-            total_proyectos.label("total_proyectos"),
-            total_companias.label("total_companias")
-        )
-
-        result = await self.db.execute(query)
-        summary = result.fetchone()
-
         return {
-            "usuarios": summary.total_usuarios,
-            "proyectos": summary.total_proyectos,
+            "usuarios": total_usuarios,
+            "proyectos": total_proyectos,
             "planes": total_planes,
-            "companias": summary.total_companias
+            "companias": total_companias
         }
     
     async def get_admin_dashboard(self, current_user: FirebaseUser):
