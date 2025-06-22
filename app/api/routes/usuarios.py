@@ -38,15 +38,8 @@ async def get_usuarios(
     """
     try:
         service = UsuarioService(db)
-        usuarios = await service.get_all(usuario_actual, skip, limit, search, company_id, rol)
-        total = len(usuarios)
-        
-        return PaginacionResponse(
-            data=usuarios,
-            total=total,
-            skip=skip,
-            limit=limit
-        ) 
+        usuarios = await service.get_usuarios_con_paginacion(usuario_actual, skip, limit, search, company_id, rol)
+        return usuarios
         
     except Exception as e:
         raise HTTPException(

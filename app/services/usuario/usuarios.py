@@ -14,25 +14,41 @@ from app.db.repositories.tipos_documento import tipo_documento_crud
 from app.services.usuario.user_cases import FabricaDeUsuarios
 from app.auth.firebase import crear_usuario_firebase
 from app.db.models.usuarios import Rol
+from app.schemas.comunes import PaginacionResponse
+
 class UsuarioService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_all(self, usuario_actual: Usuario, skip: Optional[int], limit: Optional[int] = None, search: Optional[str] = None, company_id: Optional[str] = None, rol: Optional[str] = None) -> List[UsuarioOut]:
+    async def get_usuarios_con_paginacion(self, usuario_actual: Usuario, skip: Optional[int], limit: Optional[int] = None, search: Optional[str] = None, company_id: Optional[str] = None, rol: Optional[str] = None) -> PaginacionResponse[UsuarioOut]:
         try:
             fabrica_de_usuarios = FabricaDeUsuarios.get_user_case(usuario_actual.rol)
             filtros = fabrica_de_usuarios.obtener_filtros_para_listar_usuarios(usuario_actual, search, company_id, rol)
             users = await usuario_crud.get_multi_with_advanced_filters(self.db, skip=skip, limit=limit, exact_filters=filtros.get("exact_filters", None), ilike_filters=filtros.get("ilike_filters", None), like_filters=filtros.get("like_filters", None))            
-            return [UsuarioOut.model_validate(user) for user in users]
+            total_usuarios = await self._total_usuarios_con_filtro(filtros)
+            return PaginacionResponse(
+                data=[UsuarioOut.model_validate(user) for user in users],
+                total=total_usuarios,
+                skip=skip,
+                limit=limit
+            )
         except Exception as e:
             print("**** get_all", e)
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener los usuarios")
+        
+    async def _total_usuarios_con_filtro(self, filtros: dict) -> int:
+        cantidad_de_usuarios = await usuario_crud.get_total_with_advanced_filters(
+            self.db, 
+            exact_filters=filtros.get("exact_filters", None), 
+            ilike_filters=filtros.get("ilike_filters", None), 
+            like_filters=filtros.get("like_filters", None)
+        )
+        return cantidad_de_usuarios
         
     async def get_total_usuarios(self, usuario_actual: Usuario, company_id: Optional[UUID] = None, rol: Optional[Rol] = None) -> int:
         try:
             fabrica_de_usuarios = FabricaDeUsuarios.get_user_case(usuario_actual.rol)
             filtro_para_totalizar_usuarios = fabrica_de_usuarios.obtener_filtro_para_totalizar_usuarios(usuario_actual, company_id, rol)
-            print("**** filtro_para_totalizar_usuarios", filtro_para_totalizar_usuarios)
             cantidad_de_usuarios = await usuario_crud.get_total_with_advanced_filters(
                 self.db, 
                 exact_filters=filtro_para_totalizar_usuarios.get("exact_filters", None), 

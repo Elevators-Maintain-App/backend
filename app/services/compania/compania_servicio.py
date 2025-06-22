@@ -10,7 +10,7 @@ from app.db.models.usuarios import Usuario, Rol
 from app.auth.firebase import FirebaseUser
 from app.services.compania.compania_mapper import compania_to_compania_out
 from app.services.compania.user_cases import FabricaDeCompanias
-
+from app.schemas.comunes import PaginacionResponse
 
 class CompaniaService:
     def __init__(self, db: AsyncSession):
@@ -33,14 +33,14 @@ class CompaniaService:
         
         return compania_to_compania_out(compania)
     
-    async def get_companias(self, usuario_actual: Usuario, skip: Optional[int] = 0, limit: Optional[int] = None, search: Optional[str] = None, tipo_documento_id: Optional[int] = None) -> List[CompaniaOut]:
+    async def get_companias_con_paginacion(self, usuario_actual: Usuario, skip: Optional[int] = 0, limit: Optional[int] = None, search: Optional[str] = None, tipo_documento_id: Optional[int] = None) -> PaginacionResponse[CompaniaOut]:
         """
         Obtiene compañías con filtros basados en el rol del usuario
         """
         try:
             fabrica_de_companias = FabricaDeCompanias.get_compania_case(usuario_actual.rol)
             filtros = fabrica_de_companias.obtener_filtros_para_listar_companias(usuario_actual, search, tipo_documento_id)
-            
+
             companias = await compania_crud.get_multi_with_advanced_filters_and_relations(
                 self.db, 
                 skip=skip, 
@@ -49,13 +49,27 @@ class CompaniaService:
                 ilike_filters=filtros.get("ilike_filters", None), 
                 like_filters=filtros.get("like_filters", None)
             )
-            
+            total_companias = await self._total_companias_con_filtro(filtros)
+
             # Map to CompaniaOut using the existing mapper
-            return [compania_to_compania_out(compania) for compania in companias]
+            return PaginacionResponse(
+                data=[compania_to_compania_out(compania) for compania in companias],
+                total=total_companias,
+                skip=skip,
+                limit=limit
+            )
         except Exception as e:
             print("**** get_companias", e)
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener las compañías")
         
+    async def _total_companias_con_filtro(self, filtros: dict) -> int:
+        cantidad_de_companias = await compania_crud.get_total_with_advanced_filters(
+            self.db, 
+            exact_filters=filtros.get("exact_filters", None), 
+            ilike_filters=filtros.get("ilike_filters", None), 
+            like_filters=filtros.get("like_filters", None)
+        )
+        return cantidad_de_companias
     async def get_total_companias(self, usuario_actual: Usuario, tipo_documento_id: Optional[int] = None) -> int:
         """
         Obtiene el total de compañías basado en los permisos del usuario

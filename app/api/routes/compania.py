@@ -8,6 +8,7 @@ from sqlalchemy import select,  func
 from datetime import datetime
 
 from app.db.session import get_db
+from app.schemas.comunes import PaginacionResponse
 from app.services.compania import CompaniaService
 from app.schemas.compania import CompaniaCreate, CompaniaUpdate, CompaniaOut, CountResponse
 from app.auth.firebase import require_role, get_firestore_client
@@ -18,19 +19,20 @@ router = APIRouter()
 
 @router.get(
     "/",
-    response_model=List[CompaniaOut]
+    response_model=PaginacionResponse[CompaniaOut]
 )
 async def get_companias(
     db: AsyncSession = Depends(get_db),
     skip: int = Query(0, ge=0, description="Número de registros para saltar"),
     limit: int = Query(100, ge=1, le=100, description="Límite de registros a retornar"),
+    search: Optional[str] = Query(None, description="Buscar por nombre o documento"),
     usuario_actual=Depends(require_role("superAdmin"))
 ):
     """
     (superAdmin) Obtiene todas las compañías con paginación
     """
     service = CompaniaService(db)
-    return await service.get_companias(usuario_actual=usuario_actual, skip=skip, limit=limit)
+    return await service.get_companias_con_paginacion(usuario_actual=usuario_actual, skip=skip, limit=limit, search=search)
 
 # to deprecate
 @router.get(
