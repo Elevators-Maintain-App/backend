@@ -20,6 +20,7 @@ from app.schemas.dashboard.cliente import ClienteDashboard, ClienteDashboardProy
 from app.services.proyectos import ProyectoService
 from app.services.unidades import UnidadService
 from app.services.ordenes_de_trabajo import OrdenDeTrabajoService
+from app.services.usuario.usuarios import UsuarioService
 from fastapi import HTTPException
 
 class DashboardService:
@@ -105,32 +106,32 @@ class DashboardService:
             "companias": summary.total_companias
         }
     
-    async def get_admin_dashboard(self, current_company_id: str):
+    async def get_admin_dashboard(self, current_user: FirebaseUser):
         """
         Devuelve el resumen de usuarios, proyectos, usuarios, planes, etc.
         """
-        total_usuarios = select(func.count(Usuario.id)).where(Usuario.is_active == True, Usuario.company_id == current_company_id).scalar_subquery()
+        usuario_service = UsuarioService(self.db)
+        current_company_id = current_user.company_id
+
+        print("**** current_user", current_user.company_id)
+        total_usuarios = await usuario_service.get_total_usuarios(usuario_actual=current_user)
+        print("**** total_usuarios", total_usuarios)
+        
         total_proyectos = select(func.count(Proyecto.id)).where(Proyecto.company_id == current_company_id).scalar_subquery()
-        total_clientes = select(func.count(Cliente.id)).where(Cliente.company_id == current_company_id).scalar_subquery()
+        total_clientes = select(func.count(Cliente.id)).where(Cliente.compania_id == current_company_id).scalar_subquery()
         total_ordenes_trabajo = select(func.count(OrdenDeTrabajo.id)).where(OrdenDeTrabajo.company_id == current_company_id).scalar_subquery()
         total_unidades = select(func.count(Unidad.id)).where(Unidad.company_id == current_company_id).scalar_subquery()
-        query = select(
-            total_clientes.label("total_clientes"),
-            total_proyectos.label("total_proyectos"),
-            total_usuarios.label("total_usuarios"),
-            total_ordenes_trabajo.label("total_ordenes_trabajo"),
-            total_unidades.label("total_unidades")
-        )
         
-        result = await self.db.execute(query)
-        summary = result.fetchone()
+        
+        # result = await self.db.execute(query)
+        # summary = result.fetchone()
         
         return {
-            "clientes": summary.total_clientes,
-            "proyectos": summary.total_proyectos,
-            "usuarios": summary.total_usuarios,            
-            "ordenes_trabajo": summary.total_ordenes_trabajo,
-            "unidades": summary.total_unidades
+            "clientes": 1,
+            "proyectos": 1,
+            "usuarios": total_usuarios,            
+            "ordenes_trabajo": 1,
+            "unidades": 1
         }
     
     async def get_supervisor_dashboard(self, current_user: FirebaseUser, year: Optional[int] = None, month: Optional[int] = None) -> SupervisorDashboard:
