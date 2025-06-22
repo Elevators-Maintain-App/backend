@@ -111,12 +111,15 @@ class DashboardService:
         Devuelve el resumen de usuarios, proyectos, usuarios, planes, etc.
         """
         usuario_service = UsuarioService(self.db)
+        proyecto_service = ProyectoService(self.db)
         current_company_id = current_user.company_id
 
         print("**** current_user", current_user.company_id)
         total_usuarios = await usuario_service.get_total_usuarios(usuario_actual=current_user)
         print("**** total_usuarios", total_usuarios)
-        
+        total_proyectos = await proyecto_service.get_total_proyectos(usuario_actual=current_user)
+        print("**** total_proyectos", total_proyectos)
+
         total_proyectos = select(func.count(Proyecto.id)).where(Proyecto.company_id == current_company_id).scalar_subquery()
         total_clientes = select(func.count(Cliente.id)).where(Cliente.compania_id == current_company_id).scalar_subquery()
         total_ordenes_trabajo = select(func.count(OrdenDeTrabajo.id)).where(OrdenDeTrabajo.company_id == current_company_id).scalar_subquery()
