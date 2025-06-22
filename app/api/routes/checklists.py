@@ -31,7 +31,7 @@ async def get_template(
 
 @router.get(
     "/{orden_id}/load",
-    response_model=ChecklistOut,
+    status_code=201,
     summary="(technician) inicializar checklist de la orden"
 )
 async def load_checklist(
@@ -40,7 +40,13 @@ async def load_checklist(
     db: AsyncSession = Depends(get_db)
 ):
     svc = ChecklistService(db)
-    return await svc.init_checklist(orden_id)
+    try:
+        await svc.init_checklist(orden_id)
+        return {"message": "Checklist inicializado exitosamente"}
+    except HTTPException as e:
+        raise e  
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error inesperado: {str(e)}")
 
 @router.get(
     "/{orden_id}",

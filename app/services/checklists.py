@@ -71,16 +71,24 @@ class ChecklistService:
             current_step=1
         )
 
-    async def init_checklist(self, orden_id: UUID) -> Checklist:
-        # 1) Obtener plantilla
+    async def init_checklist(self, orden_id: UUID) -> None:
+        # Verificar si ya existe un checklist para esta orden
+        result = await self.db.execute(
+            select(Checklist).where(Checklist.orden_trabajo_id == orden_id)
+        )
+        existente = result.scalars().first()
+        if existente:
+            return  # ya existe, no hacer nada
+
+        # Obtener plantilla
         tpl_dto = await self.get_template_for_order(orden_id)
 
-        # 2) Crear checklist
+        # Crear checklist
         chk = Checklist(orden_trabajo_id=orden_id)
         self.db.add(chk)
-        await self.db.flush()  # para obtener chk.id
+        await self.db.flush()
 
-        # 3) Crear ítems según plantilla
+        # Crear ítems
         for paso in tpl_dto.pasos:
             item = ChecklistItem(
                 checklist_id=chk.id,
@@ -92,8 +100,6 @@ class ChecklistService:
             self.db.add(item)
 
         await self.db.commit()
-        await self.db.refresh(chk)
-        return chk
 
     async def get_checklist(self, orden_id: UUID) -> ChecklistOut:
         # 1) Cargar o inicializar checklist
