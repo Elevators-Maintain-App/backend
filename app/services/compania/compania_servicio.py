@@ -41,7 +41,7 @@ class CompaniaService:
             fabrica_de_companias = FabricaDeCompanias.get_compania_case(usuario_actual.rol)
             filtros = fabrica_de_companias.obtener_filtros_para_listar_companias(usuario_actual, search, tipo_documento_id)
             
-            companias = await compania_crud.get_multi_with_advanced_filters(
+            companias = await compania_crud.get_multi_with_advanced_filters_and_relations(
                 self.db, 
                 skip=skip, 
                 limit=limit, 
@@ -100,7 +100,7 @@ class CompaniaService:
             tipo_documento_id=tipo_documento_id, skip=skip, limit=limit
         )
     
-    async def create_compania(self, compania_in: CompaniaCreate, usuario_actual: Usuario) -> Compania:
+    async def create_compania(self, compania_in: CompaniaCreate, usuario_actual: FirebaseUser) -> Compania:
         """
         Crea una nueva compañía (solo SuperAdmin)
         """
@@ -108,10 +108,6 @@ class CompaniaService:
         
         if not fabrica_de_companias.puede_gestionar_companias(usuario_actual):
             raise ForbiddenException("No tienes permisos para crear compañías")
-        
-        # Solo SuperAdmin puede crear compañías
-        if usuario_actual.rol != Rol.SUPER_ADMIN:
-            raise ForbiddenException("Solo SuperAdmin puede crear compañías")
         
         # Verificar si ya existe una compañía con ese documento
         existing_compania = await self.repository.get_by_documento(compania_in.documento)
@@ -130,9 +126,6 @@ class CompaniaService:
         
         if not fabrica_de_companias.puede_gestionar_companias(usuario_actual):
             raise ForbiddenException("No tienes permisos para actualizar compañías")
-            
-        if not fabrica_de_companias.puede_ver_compania(usuario_actual, compania_id):
-            raise ForbiddenException("No tienes permisos para acceder a esta compañía")
         
         compania = await self.repository.get_with_relations(compania_id)
         if not compania:

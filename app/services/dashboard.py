@@ -22,6 +22,7 @@ from app.services.unidades import UnidadService
 from app.services.ordenes_de_trabajo import OrdenDeTrabajoService
 from app.services.usuario.usuarios import UsuarioService
 from app.services.compania.compania_servicio import CompaniaService
+from app.services.cliente.cliente_servicio import ClienteService
 from fastapi import HTTPException
 
 class DashboardService:
@@ -107,29 +108,22 @@ class DashboardService:
         """
         usuario_service = UsuarioService(self.db)
         proyecto_service = ProyectoService(self.db)
-        current_company_id = current_user.company_id
+        orden_service = OrdenDeTrabajoService(self.db)
+        cliente_service = ClienteService(self.db)
+        unidad_service = UnidadService(self.db)
 
-        print("**** current_user", current_user.company_id)
         total_usuarios = await usuario_service.get_total_usuarios(usuario_actual=current_user)
-        print("**** total_usuarios", total_usuarios)
         total_proyectos = await proyecto_service.get_total_proyectos(usuario_actual=current_user)
-        print("**** total_proyectos", total_proyectos)
+        total_clientes = await cliente_service.get_total_clientes(usuario_actual=current_user)
+        total_ordenes_trabajo = await orden_service.get_total_ordenes_trabajo_por_compania(company_id=current_user.company_id)
+        total_unidades = await unidad_service.get_total_unidades_por_compania(company_id=current_user.company_id)
 
-        total_proyectos = select(func.count(Proyecto.id)).where(Proyecto.company_id == current_company_id).scalar_subquery()
-        total_clientes = select(func.count(Cliente.id)).where(Cliente.compania_id == current_company_id).scalar_subquery()
-        total_ordenes_trabajo = select(func.count(OrdenDeTrabajo.id)).where(OrdenDeTrabajo.company_id == current_company_id).scalar_subquery()
-        total_unidades = select(func.count(Unidad.id)).where(Unidad.company_id == current_company_id).scalar_subquery()
-        
-        
-        # result = await self.db.execute(query)
-        # summary = result.fetchone()
-        
         return {
-            "clientes": 1,
-            "proyectos": 1,
+            "clientes": total_clientes,
+            "proyectos": total_proyectos,
             "usuarios": total_usuarios,            
-            "ordenes_trabajo": 1,
-            "unidades": 1
+            "ordenes_trabajo": total_ordenes_trabajo,
+            "unidades": total_unidades
         }
     
     async def get_supervisor_dashboard(self, current_user: FirebaseUser, year: Optional[int] = None, month: Optional[int] = None) -> SupervisorDashboard:
@@ -198,9 +192,9 @@ class DashboardService:
         """
         Devuelve el resumen de usuarios, proyectos, usuarios, planes, etc.
         """
-        cliente_id = current_user.cliente_id
+        cliente_id = current_user.uid
         if not cliente_id:
-            raise HTTPException(status_code=400, detail="El usuario no tiene un cliente asignado")
+            raise HTTPException(status_code=403, detail="El usuario no puede acceder a este dashboard")
         
         proyecto_service = ProyectoService(self.db)
         unidad_service = UnidadService(self.db)

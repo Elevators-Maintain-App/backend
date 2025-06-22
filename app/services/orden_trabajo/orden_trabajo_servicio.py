@@ -1,0 +1,185 @@
+from typing import List, Optional
+from uuid import UUID
+from datetime import datetime, date
+from fastapi import HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, func, and_, extract
+from sqlalchemy.orm import selectinload
+
+from app.db.models.ordenes_de_trabajo import OrdenDeTrabajo
+from app.db.models.usuarios import Usuario
+from app.db.models.unidades import Unidad
+from app.db.repositories.ordenes_de_trabajo import orden_de_trabajo_crud
+from app.schemas.ordenes_de_trabajo import (
+    OrdenDeTrabajoCreate,
+    OrdenTrabajoDetailOut,
+    OrdenDeTrabajoSummaryOut,
+    OrdenDeTrabajoUpdate
+)
+from app.services.orden_trabajo.user_cases import FabricaDeOrdenesTabajo
+from app.core.exceptions import ForbiddenException
+import logging
+
+logger = logging.getLogger(__name__)
+
+class OrdenTrabajoService:
+    def __init__(self, db: AsyncSession):
+        self.db = db
+
+    async def get_all(self, usuario_actual: Usuario, skip: Optional[int] = 0, limit: Optional[int] = None, search: Optional[str] = None, company_id: Optional[str] = None, estado_id: Optional[int] = None, tipo_orden_id: Optional[int] = None, prioridad_id: Optional[int] = None) -> List[OrdenDeTrabajoSummaryOut]:
+        """
+        Obtiene órdenes de trabajo con filtros basados en el rol del usuario
+        """
+        try:
+            fabrica_de_ordenes = FabricaDeOrdenesTabajo.get_orden_trabajo_case(usuario_actual.rol)
+            filtros = fabrica_de_ordenes.obtener_filtros_para_listar_ordenes(usuario_actual, search, company_id, estado_id, tipo_orden_id, prioridad_id)
+            
+            ordenes = await orden_de_trabajo_crud.get_multi_with_advanced_filters(
+                self.db, 
+                skip=skip, 
+                limit=limit, 
+                exact_filters=filtros.get("exact_filters", None), 
+                ilike_filters=filtros.get("ilike_filters", None), 
+                like_filters=filtros.get("like_filters", None)
+            )
+            
+            return [OrdenDeTrabajoSummaryOut.from_orm(orden) for orden in ordenes]
+        except Exception as e:
+            logger.error(f"Error get_all ordenes: {e}")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener las órdenes de trabajo")
+        
+    async def get_total_ordenes(self, usuario_actual: Usuario, company_id: Optional[UUID] = None, estado_id: Optional[int] = None, tipo_orden_id: Optional[int] = None, prioridad_id: Optional[int] = None) -> int:
+        """
+        Obtiene el total de órdenes de trabajo basado en los permisos del usuario
+        """
+        try:
+            fabrica_de_ordenes = FabricaDeOrdenesTabajo.get_orden_trabajo_case(usuario_actual.rol)
+            filtro_para_totalizar_ordenes = fabrica_de_ordenes.obtener_filtro_para_totalizar_ordenes(usuario_actual, company_id, estado_id, tipo_orden_id, prioridad_id)
+            
+            cantidad_de_ordenes = await orden_de_trabajo_crud.get_total_with_advanced_filters(
+                self.db, 
+                exact_filters=filtro_para_totalizar_ordenes.get("exact_filters", None), 
+                ilike_filters=filtro_para_totalizar_ordenes.get("ilike_filters", None), 
+                like_filters=filtro_para_totalizar_ordenes.get("like_filters", None)
+            )
+            return cantidad_de_ordenes
+        except Exception as e:
+            logger.error(f"Error get_total_ordenes: {e}")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener la cantidad de órdenes de trabajo")
+
+    async def get_by_id(self, orden_id: UUID, usuario_actual: Usuario) -> OrdenTrabajoDetailOut:
+        """
+        Obtiene una orden de trabajo por su ID basado en los permisos del usuario
+        """
+        fabrica_de_ordenes = FabricaDeOrdenesTabajo.get_orden_trabajo_case(usuario_actual.rol)
+        
+        orden = await orden_de_trabajo_crud.get(self.db, orden_id)
+        if not orden:
+            raise HTTPException(status_code=404, detail="Orden de trabajo no encontrada")
+        
+        if not fabrica_de_ordenes.puede_ver_orden(usuario_actual, str(orden_id), orden.company_id, orden.supervisor_id, orden.tecnico_id):
+            raise ForbiddenException("No tienes permisos para ver esta orden de trabajo")
+        
+        # Aquí se puede implementar la lógica para construir el OrdenTrabajoDetailOut
+        # similar a la implementación existente en get_detail
+        return await self._build_detail_response(orden)
+
+    async def create(self, orden_in: OrdenDeTrabajoCreate, usuario_actual: Usuario) -> OrdenDeTrabajoSummaryOut:
+        """
+        Crea una nueva orden de trabajo basado en los permisos del usuario
+        """
+        fabrica_de_ordenes = FabricaDeOrdenesTabajo.get_orden_trabajo_case(usuario_actual.rol)
+        
+        if not fabrica_de_ordenes.puede_crear_ordenes(usuario_actual):
+            raise ForbiddenException("No tienes permisos para crear órdenes de trabajo")
+        
+        # Para Admin y Supervisor, la orden debe pertenecer a su compañía
+        if usuario_actual.rol in ['admin', 'supervisor']:
+            orden_in.company_id = usuario_actual.company_id
+        
+        # Si es supervisor, se auto-asigna como supervisor
+        if usuario_actual.rol == 'supervisor':
+            orden_in.supervisor_id = str(usuario_actual.id)
+        
+        orden_guardada = await orden_de_trabajo_crud.create(self.db, obj_in=orden_in)
+        return OrdenDeTrabajoSummaryOut.from_orm(orden_guardada)
+
+    async def update(self, orden_id: UUID, orden_in: OrdenDeTrabajoUpdate, usuario_actual: Usuario) -> OrdenDeTrabajoSummaryOut:
+        """
+        Actualiza una orden de trabajo basado en los permisos del usuario
+        """
+        fabrica_de_ordenes = FabricaDeOrdenesTabajo.get_orden_trabajo_case(usuario_actual.rol)
+        
+        if not fabrica_de_ordenes.puede_gestionar_ordenes(usuario_actual):
+            raise ForbiddenException("No tienes permisos para actualizar órdenes de trabajo")
+        
+        orden_db = await orden_de_trabajo_crud.get(self.db, orden_id)
+        if not orden_db:
+            raise HTTPException(status_code=404, detail="Orden de trabajo no encontrada")
+        
+        if not fabrica_de_ordenes.puede_ver_orden(usuario_actual, str(orden_id), orden_db.company_id, orden_db.supervisor_id, orden_db.tecnico_id):
+            raise ForbiddenException("No tienes permisos para actualizar esta orden de trabajo")
+
+        orden_actualizada = await orden_de_trabajo_crud.update(self.db, db_obj=orden_db, obj_in=orden_in)
+        return OrdenDeTrabajoSummaryOut.from_orm(orden_actualizada)
+
+    async def delete(self, orden_id: UUID, usuario_actual: Usuario) -> None:
+        """
+        Elimina una orden de trabajo basado en los permisos del usuario
+        """
+        fabrica_de_ordenes = FabricaDeOrdenesTabajo.get_orden_trabajo_case(usuario_actual.rol)
+        
+        if not fabrica_de_ordenes.puede_eliminar_ordenes(usuario_actual):
+            raise ForbiddenException("No tienes permisos para eliminar órdenes de trabajo")
+        
+        orden_db = await orden_de_trabajo_crud.get(self.db, orden_id)
+        if not orden_db:
+            raise HTTPException(status_code=404, detail="Orden de trabajo no encontrada")
+        
+        if not fabrica_de_ordenes.puede_ver_orden(usuario_actual, str(orden_id), orden_db.company_id, orden_db.supervisor_id, orden_db.tecnico_id):
+            raise ForbiddenException("No tienes permisos para eliminar esta orden de trabajo")
+
+        await orden_de_trabajo_crud.remove(self.db, orden_id)
+
+    # Métodos de conteo específicos por rol (manteniendo compatibilidad)
+    async def count_by_company(self, company_id: UUID, usuario_actual: Usuario) -> int:
+        """Conteo de órdenes por compañía (solo Admin/SuperAdmin)"""
+        fabrica_de_ordenes = FabricaDeOrdenesTabajo.get_orden_trabajo_case(usuario_actual.rol)
+        if not fabrica_de_ordenes.puede_gestionar_ordenes(usuario_actual):
+            raise ForbiddenException("No tienes permisos para ver estadísticas de la compañía")
+        
+        return await self.get_total_ordenes(usuario_actual, company_id=company_id)
+
+    async def count_by_supervisor(self, supervisor_uid: str, usuario_actual: Usuario) -> int:
+        """Conteo de órdenes por supervisor"""
+        if usuario_actual.rol == 'supervisor' and str(usuario_actual.id) != supervisor_uid:
+            raise ForbiddenException("Solo puedes ver tus propias estadísticas")
+        
+        return await self.get_total_ordenes(usuario_actual)
+
+    async def count_by_technician(self, technician_uid: str, usuario_actual: Usuario) -> int:
+        """Conteo de órdenes por técnico"""
+        if usuario_actual.rol == 'technician' and str(usuario_actual.id) != technician_uid:
+            raise ForbiddenException("Solo puedes ver tus propias estadísticas")
+        
+        return await self.get_total_ordenes(usuario_actual)
+
+    async def _build_detail_response(self, orden: OrdenDeTrabajo) -> OrdenTrabajoDetailOut:
+        """
+        Construye la respuesta detallada de una orden de trabajo
+        Este método encapsula la lógica compleja de construcción del detalle
+        """
+        # Aquí se implementaría la lógica existente de get_detail
+        # Por ahora, devolvemos una versión simplificada
+        return OrdenTrabajoDetailOut(
+            referencia=orden.referencia,
+            descripcion=orden.descripcion,
+            tipo_orden="",  # Se obtendría de la relación
+            proyecto="",    # Se obtendría de la relación
+            prioridad="",   # Se obtendría de la relación
+            supervisor="",  # Se obtendría de Firebase
+            unidad="",      # Se obtendría de la relación
+            cliente="",     # Se obtendría de la relación
+            estado="",      # Se obtendría de la relación
+            observaciones=orden.observaciones or ""
+        ) 

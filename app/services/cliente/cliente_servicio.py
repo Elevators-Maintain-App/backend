@@ -1,6 +1,6 @@
 # app/services/clientes.py
 
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -16,41 +16,126 @@ from app.schemas.proyectos import ProyectoInDBBase
 from app.schemas.unidades import UnidadInDBBase
 from app.schemas.ordenes_de_trabajo import OrdenDeTrabajoInDBBase
 from app.auth.firebase import FirebaseUser
+from app.db.models.usuarios import Usuario
 from app.services.cliente.cliente_mapper import cliente_to_cliente_out
+from app.services.cliente.user_cases import FabricaDeClientes
+from app.core.exceptions import ForbiddenException
 
 class ClienteService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_all(self, usuario_actual: FirebaseUser) -> List[ClienteOut]:
+    async def get_all(self, usuario_actual: Usuario, skip: Optional[int] = 0, limit: Optional[int] = None, search: Optional[str] = None, company_id: Optional[str] = None, tipo_documento_id: Optional[int] = None) -> List[ClienteOut]:
+        """
+        Obtiene clientes con filtros basados en el rol del usuario
+        """
+        try:
+            fabrica_de_clientes = FabricaDeClientes.get_cliente_case(usuario_actual.rol)
+            filtros = fabrica_de_clientes.obtener_filtros_para_listar_clientes(usuario_actual, search, company_id, tipo_documento_id)
+            
+            clientes = await cliente_crud.get_multi_with_advanced_filters(
+                self.db, 
+                skip=skip, 
+                limit=limit, 
+                exact_filters=filtros.get("exact_filters", None), 
+                ilike_filters=filtros.get("ilike_filters", None), 
+                like_filters=filtros.get("like_filters", None)
+            )
+            
+            return [cliente_to_cliente_out(cliente) for cliente in clientes]
+        except Exception as e:
+            print("**** get_all clientes", e)
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener los clientes")
+        
+    async def get_total_clientes(self, usuario_actual: Usuario, company_id: Optional[UUID] = None, tipo_documento_id: Optional[int] = None) -> int:
+        """
+        Obtiene el total de clientes basado en los permisos del usuario
+        """
+        try:
+            fabrica_de_clientes = FabricaDeClientes.get_cliente_case(usuario_actual.rol)
+            filtro_para_totalizar_clientes = fabrica_de_clientes.obtener_filtro_para_totalizar_clientes(usuario_actual, company_id, tipo_documento_id)
+            
+            cantidad_de_clientes = await cliente_crud.get_total_with_advanced_filters(
+                self.db, 
+                exact_filters=filtro_para_totalizar_clientes.get("exact_filters", None), 
+                ilike_filters=filtro_para_totalizar_clientes.get("ilike_filters", None), 
+                like_filters=filtro_para_totalizar_clientes.get("like_filters", None)
+            )
+            return cantidad_de_clientes
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener la cantidad de clientes")
+
+    async def get_all_basic(self, usuario_actual: FirebaseUser) -> List[ClienteOut]:
+        """
+        Método básico para obtener clientes (para compatibilidad con versiones anteriores)
+        """
         clientes = await cliente_crud.get_multi(self.db)
         return [cliente_to_cliente_out(cliente) for cliente in clientes]
 
-    async def get_by_id(self, cliente_id: UUID, usuario_actual: FirebaseUser) -> ClienteOut:        
-        cliente = await cliente_crud.get(self.db, cliente_id)
+    async def get_by_id(self, cliente_id: UUID, usuario_actual: Usuario) -> ClienteOut:        
+        """
+        Obtiene un cliente por su ID basado en los permisos del usuario
+        """
+        fabrica_de_clientes = FabricaDeClientes.get_cliente_case(usuario_actual.rol)
+        
+        cliente = await cliente_crud.get_cliente_con_relaciones(self.db, cliente_id)
         if not cliente:
             raise HTTPException(status_code=404, detail="Cliente no encontrado")
         
-        if usuario_actual.company_id != cliente.compania_id:
-            raise HTTPException(status_code=403, detail="Cliente no encontrado")
+        if not fabrica_de_clientes.puede_ver_cliente(usuario_actual, str(cliente_id), cliente.compania_id):
+            raise ForbiddenException("No tienes permisos para ver este cliente")
         
         return cliente_to_cliente_out(cliente)
 
-    async def create(self, cliente_in: ClienteCreate) -> ClienteOut:
+    async def create(self, cliente_in: ClienteCreate, usuario_actual: Usuario) -> ClienteOut:
+        """
+        Crea un nuevo cliente basado en los permisos del usuario
+        """
+        fabrica_de_clientes = FabricaDeClientes.get_cliente_case(usuario_actual.rol)
+        
+        if not fabrica_de_clientes.puede_crear_clientes(usuario_actual):
+            raise ForbiddenException("No tienes permisos para crear clientes")
+        
+        # Para Admin y Supervisor, el cliente debe pertenecer a su compañía
+        if usuario_actual.rol in ['admin', 'supervisor']:
+            cliente_in.compania_id = usuario_actual.company_id
+        
         print("**CREANDO CLIENTE**", cliente_in)
         return await cliente_crud.create(self.db, obj_in=cliente_in)
 
-    async def update(self, cliente_id: UUID, cliente_in: ClienteUpdate) -> ClienteOut:
-        cliente_db = await cliente_crud.get(self.db, cliente_id)
+    async def update(self, cliente_id: UUID, cliente_in: ClienteUpdate, usuario_actual: Usuario) -> ClienteOut:
+        """
+        Actualiza un cliente basado en los permisos del usuario
+        """
+        fabrica_de_clientes = FabricaDeClientes.get_cliente_case(usuario_actual.rol)
+        
+        if not fabrica_de_clientes.puede_gestionar_clientes(usuario_actual):
+            raise ForbiddenException("No tienes permisos para actualizar clientes")
+        
+        cliente_db = await cliente_crud.get_cliente_con_relaciones(self.db, cliente_id)
         if not cliente_db:
             raise HTTPException(status_code=404, detail="Cliente no encontrado")
+        
+        if not fabrica_de_clientes.puede_ver_cliente(usuario_actual, str(cliente_id), cliente_db.compania_id):
+            raise ForbiddenException("No tienes permisos para actualizar este cliente")
 
         return await cliente_crud.update(self.db, db_obj=cliente_db, obj_in=cliente_in)
 
-    async def delete(self, cliente_id: UUID) -> None:
-        cliente_db = await cliente_crud.get(self.db, cliente_id)
+    async def delete(self, cliente_id: UUID, usuario_actual: Usuario) -> None:
+        """
+        Elimina un cliente basado en los permisos del usuario
+        """
+        fabrica_de_clientes = FabricaDeClientes.get_cliente_case(usuario_actual.rol)
+        
+        if not fabrica_de_clientes.puede_eliminar_clientes(usuario_actual):
+            raise ForbiddenException("No tienes permisos para eliminar clientes")
+        
+        cliente_db = await cliente_crud.get_cliente_con_relaciones(self.db, cliente_id)
         if not cliente_db:
             raise HTTPException(status_code=404, detail="Cliente no encontrado")
+        
+        if not fabrica_de_clientes.puede_ver_cliente(usuario_actual, str(cliente_id), cliente_db.compania_id):
+            raise ForbiddenException("No tienes permisos para eliminar este cliente")
 
         await cliente_crud.remove(self.db, cliente_id)
 

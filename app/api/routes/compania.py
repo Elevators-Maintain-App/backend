@@ -86,14 +86,14 @@ async def count_users_per_company(
 )
 async def create_compania(
     compania_in: CompaniaCreate,
-    user=Depends(require_role("superAdmin")),
+    usuario_actual=Depends(require_role("superAdmin")),
     db: AsyncSession = Depends(get_db),
 ):
     """
     (superAdmin) Crea una nueva compañía
     """
     service = CompaniaService(db)
-    return await service.create_compania(compania_in=compania_in)
+    return await service.create_compania(compania_in=compania_in, usuario_actual=usuario_actual)
 
 @router.get(
     "/{compania_id}",
@@ -118,7 +118,7 @@ async def get_compania(
 async def update_compania(
     compania_in: CompaniaUpdate,
     compania_id: UUID4 = Path(..., description="ID de la compañía"),
-    user=Depends(require_role("superAdmin")),
+    usuario_actual=Depends(require_role("superAdmin")),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -127,7 +127,8 @@ async def update_compania(
     service = CompaniaService(db)
     return await service.update_compania(
         compania_id=compania_id, 
-        compania_in=compania_in
+        compania_in=compania_in,
+        usuario_actual=usuario_actual
     )
 
 @router.delete(

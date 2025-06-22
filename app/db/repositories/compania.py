@@ -62,6 +62,58 @@ class CompaniaRepository(BaseRepository[Compania, CompaniaCreate, CompaniaUpdate
 
 # Create CRUD instance for advanced filtering methods
 class CRUDCompania(CRUDBaseRepository[Compania, CompaniaCreate, CompaniaUpdate]):
-    pass
+    async def get_multi_with_relations(self, db: AsyncSession, *, skip: int = 0, limit: int = 100, **kwargs) -> List[Compania]:
+        """
+        Get multiple companies with their relationships loaded
+        """
+        query = (
+            select(self.model)
+            .options(
+                selectinload(self.model.document_type),
+                selectinload(self.model.pais),
+            )
+            .offset(skip)
+            .limit(limit)
+        )
+        result = await db.execute(query)
+        return result.scalars().all()
+    
+    async def get_multi_with_advanced_filters_and_relations(
+        self,
+        db: AsyncSession,
+        *,
+        skip: int = 0,
+        limit: int = 100,
+        exact_filters: dict = None,
+        ilike_filters: dict = None,
+        like_filters: dict = None
+    ) -> List[Compania]:
+        """
+        Get multiple companies with advanced filters and relationships loaded
+        """
+        query = select(self.model).options(
+            selectinload(self.model.document_type),
+            selectinload(self.model.pais),
+        )
+        
+        # Apply filters
+        if exact_filters:
+            for field, value in exact_filters.items():
+                if hasattr(self.model, field):
+                    query = query.where(getattr(self.model, field) == value)
+        
+        if ilike_filters:
+            for field, value in ilike_filters.items():
+                if hasattr(self.model, field):
+                    query = query.where(getattr(self.model, field).ilike(value))
+        
+        if like_filters:
+            for field, value in like_filters.items():
+                if hasattr(self.model, field):
+                    query = query.where(getattr(self.model, field).like(value))
+        
+        query = query.offset(skip).limit(limit)
+        result = await db.execute(query)
+        return result.scalars().all()
 
 compania_crud = CRUDCompania(Compania)
