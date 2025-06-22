@@ -46,9 +46,9 @@ class AdminClienteCase(ClienteCaseInterface):
         """Admin can manage clients in their company"""
         return True
         
-    def puede_crear_clientes(self, usuario_actual: Usuario) -> bool:
+    def puede_crear_clientes(self, usuario_actual: Usuario, compania_id: UUID) -> bool:
         """Admin can create clients in their company"""
-        return True
+        return usuario_actual.company_id == compania_id
         
     def puede_eliminar_clientes(self, usuario_actual: Usuario) -> bool:
         """Admin can delete clients in their company"""

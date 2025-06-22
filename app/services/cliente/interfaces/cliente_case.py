@@ -2,6 +2,7 @@ from abc import ABC
 from app.db.models.usuarios import Usuario
 from typing import Optional
 from uuid import UUID
+from app.db.models.usuarios import Rol
 
 class ClienteCaseInterface(ABC):
     def obtener_filtros_para_listar_clientes(self, usuario_actual: Usuario, search: Optional[str], company_id: Optional[str], tipo_documento_id: Optional[int]) -> dict:
@@ -16,7 +17,7 @@ class ClienteCaseInterface(ABC):
     def puede_gestionar_clientes(self, usuario_actual: Usuario) -> bool:
         ...
         
-    def puede_crear_clientes(self, usuario_actual: Usuario) -> bool:
+    def puede_crear_clientes(self, usuario_actual: Usuario, compania_id: UUID) -> bool:
         ...
         
     def puede_eliminar_clientes(self, usuario_actual: Usuario) -> bool:

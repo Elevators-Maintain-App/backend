@@ -13,13 +13,7 @@ class CompaniaCaseInterface(ABC):
         ...
         
     def puede_ver_compania(self, usuario_actual: Usuario, compania_id: str) -> bool:
-        if usuario_actual.rol == Rol.SUPER_ADMIN:
-            return True
-        if usuario_actual.rol == Rol.ADMIN and usuario_actual.company_id == compania_id:
-            return True
-        return False
+        ...
         
     def puede_gestionar_companias(self, usuario_actual: FirebaseUser) -> bool:
-        if usuario_actual.rol == Rol.SUPER_ADMIN:
-            return True
-        return False
+        ...

@@ -42,7 +42,7 @@ class SuperAdminClienteCase(ClienteCaseInterface):
         """SuperAdmin can manage all clients"""
         return True
         
-    def puede_crear_clientes(self, usuario_actual: Usuario) -> bool:
+    def puede_crear_clientes(self, usuario_actual: Usuario, compania_id: UUID) -> bool:
         """SuperAdmin can create clients"""
         return True
         

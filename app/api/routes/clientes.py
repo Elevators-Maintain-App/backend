@@ -1,8 +1,8 @@
 # app/api/routes/clientes.py
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 
 from app.db.session import get_db
@@ -12,14 +12,23 @@ from app.schemas.unidades import UnidadInDBBase
 from app.schemas.ordenes_de_trabajo import OrdenDeTrabajoInDBBase
 from app.services.cliente.cliente_servicio import ClienteService
 from app.auth.firebase import require_role, FirebaseUser
+from app.schemas.comunes import PaginacionResponse
 
 router = APIRouter()
 
 # Rutas CRUD normales
-@router.get("/", response_model=List[ClienteOut])
-async def get_clientes(db: AsyncSession = Depends(get_db), usuario_actual: FirebaseUser = Depends(require_role("superAdmin", "admin", "supervisor"))):
+@router.get("/", response_model=PaginacionResponse[ClienteOut])
+async def get_clientes(
+    db: AsyncSession = Depends(get_db),
+    usuario_actual: FirebaseUser = Depends(require_role("superAdmin", "admin", "supervisor")),
+    skip: int = Query(0, ge=0, description="Número de registros para saltar"),
+    limit: int = Query(100, ge=1, le=100, description="Límite de registros a retornar"),
+    search: Optional[str] = Query(None, description="Buscar por nombre o documento"),
+    company_id: Optional[str] = Query(None, description="ID de la compañía"),
+    tipo_documento_id: Optional[int] = Query(None, description="ID del tipo de documento")
+):
     service = ClienteService(db)
-    return await service.get_all(usuario_actual=usuario_actual)
+    return await service.get_clientes_con_paginacion(usuario_actual=usuario_actual, skip=skip, limit=limit, search=search, company_id=company_id, tipo_documento_id=tipo_documento_id)
 
 @router.get("/{cliente_id}", response_model=ClienteOut)
 async def get_cliente(cliente_id: UUID, db: AsyncSession = Depends(get_db), usuario_actual: FirebaseUser = Depends(require_role("superAdmin", "admin", "supervisor"))):
@@ -27,19 +36,24 @@ async def get_cliente(cliente_id: UUID, db: AsyncSession = Depends(get_db), usua
     return await service.get_by_id(cliente_id, usuario_actual=usuario_actual)
 
 @router.post("/", response_model=ClienteOut, status_code=status.HTTP_201_CREATED)
-async def create_cliente(cliente_in: ClienteCreate, db: AsyncSession = Depends(get_db)):
+async def create_cliente(cliente_in: ClienteCreate, db: AsyncSession = Depends(get_db), usuario_actual: FirebaseUser = Depends(require_role("superAdmin", "admin", "supervisor"))):
     service = ClienteService(db)
-    return await service.create(cliente_in)
+    return await service.create_cliente(cliente_in, usuario_actual=usuario_actual)
 
 @router.put("/{cliente_id}", response_model=ClienteOut)
-async def update_cliente(cliente_id: UUID, cliente_in: ClienteUpdate, db: AsyncSession = Depends(get_db)):
+async def update_cliente(
+    cliente_id: UUID,
+    cliente_in: ClienteUpdate,
+    db: AsyncSession = Depends(get_db),
+    usuario_actual: FirebaseUser = Depends(require_role("superAdmin", "admin", "supervisor"))
+):
     service = ClienteService(db)
-    return await service.update(cliente_id, cliente_in)
+    return await service.update_cliente(cliente_id, cliente_in, usuario_actual=usuario_actual)
 
 @router.delete("/{cliente_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_cliente(cliente_id: UUID, db: AsyncSession = Depends(get_db)):
+async def delete_cliente(cliente_id: UUID, db: AsyncSession = Depends(get_db), usuario_actual: FirebaseUser = Depends(require_role("superAdmin", "admin", "supervisor"))):
     service = ClienteService(db)
-    await service.delete(cliente_id)
+    await service.delete_cliente(cliente_id, usuario_actual=usuario_actual)
 
 # Rutas Especiales 
 
