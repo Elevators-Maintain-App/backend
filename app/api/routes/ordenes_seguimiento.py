@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.services.ordenes import OrdenService
 from app.db.session import get_db
 from app.db.models.ordenes_de_trabajo import OrdenDeTrabajo
+from app.db.models.checklists import Checklist, ChecklistItem
 from app.schemas.seguimiento import SeguimientoCreate, EventoOrden
 from app.auth.firebase import require_role  
 from sqlalchemy import select
@@ -92,3 +93,35 @@ async def completar_item(
     await OrdenService(db).paso_completado(orden, item_id, body)
     await db.commit()
 
+@router.post("/{orden_id}/pasos/{step_number}/completar", status_code=status.HTTP_204_NO_CONTENT)
+async def completar_paso_por_orden(
+    orden_id: UUID,
+    step_number: int,
+    body: SeguimientoCreate = Body(...),
+    user=Depends(require_role("technician")),
+    db: AsyncSession = Depends(get_db),
+):
+    body.evento = EventoOrden.PASO_COMPLETADO
+    orden = await _get_orden(db, orden_id)
+
+    # Obtener checklist asociado a la orden
+    result = await db.execute(
+        select(Checklist.id)
+        .where(Checklist.orden_trabajo_id == orden_id)
+    )
+    checklist_id = result.scalar()
+    if not checklist_id:
+        raise HTTPException(status_code=404, detail="Checklist no encontrado")
+
+    # Obtener item por checklist y step_number
+    result = await db.execute(
+        select(ChecklistItem.id)
+        .where(ChecklistItem.checklist_id == checklist_id)
+        .where(ChecklistItem.step_number == step_number)
+    )
+    item_id = result.scalar()
+    if not item_id:
+        raise HTTPException(status_code=404, detail="Paso no encontrado")
+
+    await OrdenService(db).paso_completado(orden, item_id, body)
+    await db.commit()
