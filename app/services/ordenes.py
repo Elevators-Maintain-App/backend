@@ -35,9 +35,7 @@ class OrdenService:
 
     # ---------- casos de uso ---------- #
     async def iniciar(self, orden: OrdenDeTrabajo, datos: SeguimientoCreate) -> None:
-        if orden.estado_id != EstadoOrdenID.PENDIENTE: 
-            raise HTTPException(409, "La orden ya fue iniciada")
-
+        
         orden.estado_id = EstadoOrdenID.EN_EJECUCION
         await self._add_tracking(orden, datos)
         if orden.checklists:
@@ -46,20 +44,17 @@ class OrdenService:
             orden.checklists.inicio_hora = datos.timestamp or datetime.utcnow()
 
     async def pausar(self, orden: OrdenDeTrabajo, datos: SeguimientoCreate) -> None:
-        if orden.estado_id != EstadoOrdenID.EN_EJECUCION:
-            raise HTTPException(status.HTTP_409_CONFLICT, "La orden no está en ejecución")
+        
         orden.estado_id = EstadoOrdenID.EN_PAUSA
         await self._add_tracking(orden, datos)
 
     async def reanudar(self, orden: OrdenDeTrabajo, datos: SeguimientoCreate) -> None:
-        if orden.estado_id != EstadoOrdenID.EN_PAUSA:
-            raise HTTPException(status.HTTP_409_CONFLICT, "La orden no está en pausa")
+        
         orden.estado_id = EstadoOrdenID.EN_EJECUCION
         await self._add_tracking(orden, datos)
 
     async def finalizar(self, orden: OrdenDeTrabajo, datos: SeguimientoCreate) -> None:
-        if orden.estado_id not in (EstadoOrdenID.EN_EJECUCION, EstadoOrdenID.EN_PAUSA):
-            raise HTTPException(status.HTTP_409_CONFLICT, "La orden no está activa")
+        
         orden.estado_id = EstadoOrdenID.FINALIZADA
         await self._add_tracking(orden, datos)
         if orden.checklist:
@@ -68,6 +63,5 @@ class OrdenService:
     async def paso_completado(
         self, orden: OrdenDeTrabajo, item_id: UUID, datos: SeguimientoCreate
     ) -> None:
-        if orden.estado_id != EstadoOrdenID.EN_EJECUCION:
-            raise HTTPException(status.HTTP_409_CONFLICT, "La orden no está en ejecución")
+        
         await self._add_tracking(orden, datos, checklist_item_id=item_id)
