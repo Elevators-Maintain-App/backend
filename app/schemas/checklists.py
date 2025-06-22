@@ -28,6 +28,16 @@ class ChecklistTemplateOut(BaseModel):
     class Config:
         from_attributes = True
 
+class ChecklistTemplateOut2(BaseModel):
+    id: UUID
+    nombre: str
+    tipo_orden_id: int
+    tipo_unidad_id: int
+    pasos_ids: List[UUID]
+
+    class Config:
+        from_attributes = True
+
 # ► Ejecución de checklist y sus items
 
 class ChecklistItemOut(BaseModel):

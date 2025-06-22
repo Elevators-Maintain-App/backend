@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from uuid import UUID, uuid4
 from datetime import datetime
+from sqlalchemy.orm import selectinload
 
 from app.db.models.checklists import (
     ChecklistTemplate,
@@ -14,7 +15,7 @@ from app.db.models.checklists import (
 from app.db.models.unidades import Unidad
 from app.db.models.ordenes_de_trabajo import OrdenDeTrabajo
 from app.schemas.checklists import (
-    ChecklistTemplateOut, ChecklistItemOut, ChecklistOut, ChecklistTemplateCreate, ChecklistItemTemplateOut
+    ChecklistTemplateOut, ChecklistTemplateOut2, ChecklistItemOut, ChecklistOut, ChecklistTemplateCreate, ChecklistItemTemplateOut
 )
 
 class ChecklistService:
@@ -234,9 +235,9 @@ class ChecklistService:
         # ahora template.pasos ya tiene sus IDs
         pasos_ids = [paso.id for paso in template.pasos]
 
-
+        
         # 5) Preparamos la salida
-        return ChecklistTemplateOut(
+        return ChecklistTemplateOut2(
             id=template.id,
             nombre=template.nombre,
             tipo_orden_id=template.tipo_orden_id,

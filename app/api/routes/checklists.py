@@ -8,7 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.session import get_db
 from app.schemas.checklists import (
     ChecklistTemplateOut, ChecklistOut,
-    ChecklistItemUpdate, ChecklistTemplateCreate
+    ChecklistItemUpdate, ChecklistTemplateCreate,
+    ChecklistTemplateOut2
 )
 from app.services.checklists import ChecklistService
 from app.auth.firebase import require_role, get_current_firebase_user
@@ -77,7 +78,7 @@ async def update_checklist_item(
 
 @router.post(
     "/templates",
-    response_model=ChecklistTemplateOut,
+    response_model=ChecklistTemplateOut2,
     status_code=status.HTTP_201_CREATED,
     summary="(admin) Crear plantilla de checklist con pasos"
 )
