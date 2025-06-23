@@ -16,9 +16,9 @@ router = APIRouter()
     dependencies=[Depends(require_role("superAdmin"))],
     response_model=SuperAdminDashboard
 )
-async def get_super_admin_dashboard(db: AsyncSession = Depends(get_db)):
+async def get_super_admin_dashboard(db: AsyncSession = Depends(get_db), current_user: FirebaseUser = Depends(get_current_firebase_user)):
     service = DashboardService(db)
-    return await service.get_super_admin_dashboard()
+    return await service.get_super_admin_dashboard(current_user)
 
 @router.get(
     "/admin",
@@ -28,7 +28,7 @@ async def get_super_admin_dashboard(db: AsyncSession = Depends(get_db)):
 )
 async def get_admin_dashboard(db: AsyncSession = Depends(get_db), current_user: FirebaseUser = Depends(get_current_firebase_user)):
     service = DashboardService(db)
-    return await service.get_admin_dashboard(current_company_id=current_user.company_id)
+    return await service.get_admin_dashboard(current_user=current_user)
 
 @router.get(
     "/supervisor",
@@ -46,9 +46,9 @@ async def get_supervisor_dashboard(db: AsyncSession = Depends(get_db), current_u
     dependencies=[Depends(require_role("superAdmin", "tecnico"))],
     response_model=TechnicianDashboard
 )
-async def get_tecnico_dashboard(db: AsyncSession = Depends(get_db)):
+async def get_tecnico_dashboard(db: AsyncSession = Depends(get_db), current_user: FirebaseUser = Depends(get_current_firebase_user)):
     service = DashboardService(db)
-    return await service.get_tecnico_dashboard()
+    return await service.get_tecnico_dashboard(current_user)
 
 
 @router.get(

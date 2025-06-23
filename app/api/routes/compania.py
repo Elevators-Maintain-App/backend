@@ -8,6 +8,7 @@ from sqlalchemy import select,  func
 from datetime import datetime
 
 from app.db.session import get_db
+from app.schemas.comunes import PaginacionResponse
 from app.services.compania import CompaniaService
 from app.schemas.compania import CompaniaCreate, CompaniaUpdate, CompaniaOut, CountResponse
 from app.auth.firebase import require_role, get_firestore_client
@@ -18,19 +19,20 @@ router = APIRouter()
 
 @router.get(
     "/",
-    response_model=List[CompaniaOut]
+    response_model=PaginacionResponse[CompaniaOut]
 )
 async def get_companias(
     db: AsyncSession = Depends(get_db),
     skip: int = Query(0, ge=0, description="Número de registros para saltar"),
     limit: int = Query(100, ge=1, le=100, description="Límite de registros a retornar"),
+    search: Optional[str] = Query(None, description="Buscar por nombre o documento"),
     usuario_actual=Depends(require_role("superAdmin"))
 ):
     """
     (superAdmin) Obtiene todas las compañías con paginación
     """
     service = CompaniaService(db)
-    return await service.get_companias(usuario_actual=usuario_actual, skip=skip, limit=limit)
+    return await service.get_companias_con_paginacion(usuario_actual=usuario_actual, skip=skip, limit=limit, search=search)
 
 # to deprecate
 @router.get(
@@ -86,14 +88,14 @@ async def count_users_per_company(
 )
 async def create_compania(
     compania_in: CompaniaCreate,
-    user=Depends(require_role("superAdmin")),
+    usuario_actual=Depends(require_role("superAdmin")),
     db: AsyncSession = Depends(get_db),
 ):
     """
     (superAdmin) Crea una nueva compañía
     """
     service = CompaniaService(db)
-    return await service.create_compania(compania_in=compania_in)
+    return await service.create_compania(compania_in=compania_in, usuario_actual=usuario_actual)
 
 @router.get(
     "/{compania_id}",
@@ -118,7 +120,7 @@ async def get_compania(
 async def update_compania(
     compania_in: CompaniaUpdate,
     compania_id: UUID4 = Path(..., description="ID de la compañía"),
-    user=Depends(require_role("superAdmin")),
+    usuario_actual=Depends(require_role("superAdmin")),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -127,7 +129,8 @@ async def update_compania(
     service = CompaniaService(db)
     return await service.update_compania(
         compania_id=compania_id, 
-        compania_in=compania_in
+        compania_in=compania_in,
+        usuario_actual=usuario_actual
     )
 
 @router.delete(

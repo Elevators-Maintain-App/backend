@@ -49,7 +49,7 @@ class Compania(Base):
         cascade="all, delete-orphan"
     )
 
-    pais = relationship("Pais", back_populates="companias")
+    pais = relationship("Pais", back_populates="companias", foreign_keys=[pais_id])
 
     clientes = relationship("Cliente", back_populates="compania")
 

@@ -5,6 +5,8 @@ from app.db.models.usuarios import Usuario
 from app.db.models import Compania, TipoDocumento
 from dataclasses import dataclass
 from typing import Optional
+from uuid import UUID
+from app.db.models.usuarios import Rol
 
 @dataclass
 class CrearUsuarioParams:
@@ -27,6 +29,8 @@ class UsuarioCaseInterface(ABC):
     def obtener_usuario_a_guardar(self, usuario_nuevo: UsuarioCreate) -> UsuarioCreate:
         ...
 
-    def obtener_filtros(self, usuario_actual: Usuario, search: Optional[str], company_id: Optional[str], rol: Optional[str]) -> dict:
+    def obtener_filtros_para_listar_usuarios(self, usuario_actual: Usuario, search: Optional[str], company_id: Optional[str], rol: Optional[str]) -> dict:
         ...
 
+    def obtener_filtro_para_totalizar_usuarios(self, usuario_actual: Usuario, company_id: Optional[UUID], rol: Optional[Rol]) -> dict:
+        ...

@@ -329,7 +329,14 @@ class OrdenDeTrabajoService:
         await self.db.commit()
         await self.db.refresh(nueva)
         return await self.get_detail(nueva.id, user)
-            
+    
+    async def get_total_ordenes_trabajo_por_compania(self, company_id: UUID) -> int:
+        return await orden_de_trabajo_crud.get_total_by_field(
+            self.db,
+            field="company_id",
+            value=company_id
+        )
+    
     async def get_total_ordenes_trabajo_por_cliente(self, cliente_id: UUID) -> int:
         return await orden_de_trabajo_crud.get_total_by_field(
             self.db,

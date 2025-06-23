@@ -27,6 +27,13 @@ class UnidadService:
             raise HTTPException(status_code=404, detail="Unidad no encontrada o fuera de tu compañía")
         return unidad
     
+    async def get_total_unidades_por_compania(self, company_id: UUID) -> int:
+        return await unidad_crud.get_total_by_field(
+            self.db,
+            field="company_id",
+            value=company_id
+        )
+    
     async def get_total_unidades_por_cliente(self, cliente_id: UUID) -> int:
         return await unidad_crud.get_total_by_field(
             self.db,

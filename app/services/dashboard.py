@@ -20,6 +20,9 @@ from app.schemas.dashboard.cliente import ClienteDashboard, ClienteDashboardProy
 from app.services.proyectos import ProyectoService
 from app.services.unidades import UnidadService
 from app.services.ordenes_de_trabajo import OrdenDeTrabajoService
+from app.services.usuario.usuarios import UsuarioService
+from app.services.compania.compania_servicio import CompaniaService
+from app.services.cliente.cliente_servicio import ClienteService
 from fastapi import HTTPException
 
 class DashboardService:
@@ -80,57 +83,47 @@ class DashboardService:
         }
 
 
-    async def get_super_admin_dashboard(self):
+    async def get_super_admin_dashboard(self, current_user: FirebaseUser):
         """
         Devuelve el resumen de usuarios, proyectos, usuarios, planes, etc.
         """
-        total_usuarios = select(func.count(Usuario.id)).where(Usuario.is_active == True).scalar_subquery()
-        total_proyectos = select(func.count(Proyecto.id)).scalar_subquery()
-        total_companias = select(func.count(Compania.id)).scalar_subquery()
+        usuario_service = UsuarioService(self.db)
+        proyecto_service = ProyectoService(self.db)
+        compania_service = CompaniaService(self.db)
+        total_usuarios = await usuario_service.get_total_usuarios(usuario_actual=current_user)
+        total_proyectos = await proyecto_service.get_total_proyectos(usuario_actual=current_user)
+        total_companias = await compania_service.get_total_companias(usuario_actual=current_user)
         total_planes = 0
 
-        query = select(
-            total_usuarios.label("total_usuarios"),
-            total_proyectos.label("total_proyectos"),
-            total_companias.label("total_companias")
-        )
-
-        result = await self.db.execute(query)
-        summary = result.fetchone()
-
         return {
-            "usuarios": summary.total_usuarios,
-            "proyectos": summary.total_proyectos,
+            "usuarios": total_usuarios,
+            "proyectos": total_proyectos,
             "planes": total_planes,
-            "companias": summary.total_companias
+            "companias": total_companias
         }
     
-    async def get_admin_dashboard(self, current_company_id: str):
+    async def get_admin_dashboard(self, current_user: FirebaseUser):
         """
         Devuelve el resumen de usuarios, proyectos, usuarios, planes, etc.
         """
-        total_usuarios = select(func.count(Usuario.id)).where(Usuario.is_active == True, Usuario.company_id == current_company_id).scalar_subquery()
-        total_proyectos = select(func.count(Proyecto.id)).where(Proyecto.company_id == current_company_id).scalar_subquery()
-        total_clientes = select(func.count(Cliente.id)).where(Cliente.company_id == current_company_id).scalar_subquery()
-        total_ordenes_trabajo = select(func.count(OrdenDeTrabajo.id)).where(OrdenDeTrabajo.company_id == current_company_id).scalar_subquery()
-        total_unidades = select(func.count(Unidad.id)).where(Unidad.company_id == current_company_id).scalar_subquery()
-        query = select(
-            total_clientes.label("total_clientes"),
-            total_proyectos.label("total_proyectos"),
-            total_usuarios.label("total_usuarios"),
-            total_ordenes_trabajo.label("total_ordenes_trabajo"),
-            total_unidades.label("total_unidades")
-        )
-        
-        result = await self.db.execute(query)
-        summary = result.fetchone()
-        
+        usuario_service = UsuarioService(self.db)
+        proyecto_service = ProyectoService(self.db)
+        orden_service = OrdenDeTrabajoService(self.db)
+        cliente_service = ClienteService(self.db)
+        unidad_service = UnidadService(self.db)
+
+        total_usuarios = await usuario_service.get_total_usuarios(usuario_actual=current_user)
+        total_proyectos = await proyecto_service.get_total_proyectos(usuario_actual=current_user)
+        total_clientes = await cliente_service.get_total_clientes(usuario_actual=current_user)
+        total_ordenes_trabajo = await orden_service.get_total_ordenes_trabajo_por_compania(company_id=current_user.company_id)
+        total_unidades = await unidad_service.get_total_unidades_por_compania(company_id=current_user.company_id)
+
         return {
-            "clientes": summary.total_clientes,
-            "proyectos": summary.total_proyectos,
-            "usuarios": summary.total_usuarios,            
-            "ordenes_trabajo": summary.total_ordenes_trabajo,
-            "unidades": summary.total_unidades
+            "clientes": total_clientes,
+            "proyectos": total_proyectos,
+            "usuarios": total_usuarios,            
+            "ordenes_trabajo": total_ordenes_trabajo,
+            "unidades": total_unidades
         }
     
     async def get_supervisor_dashboard(self, current_user: FirebaseUser, year: Optional[int] = None, month: Optional[int] = None) -> SupervisorDashboard:
@@ -199,9 +192,9 @@ class DashboardService:
         """
         Devuelve el resumen de usuarios, proyectos, usuarios, planes, etc.
         """
-        cliente_id = current_user.cliente_id
+        cliente_id = current_user.uid
         if not cliente_id:
-            raise HTTPException(status_code=400, detail="El usuario no tiene un cliente asignado")
+            raise HTTPException(status_code=403, detail="El usuario no puede acceder a este dashboard")
         
         proyecto_service = ProyectoService(self.db)
         unidad_service = UnidadService(self.db)

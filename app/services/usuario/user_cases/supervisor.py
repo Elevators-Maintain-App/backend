@@ -8,7 +8,7 @@ from app.auth.firebase import FirebaseUser
 from app.db.models import TipoDocumento
 from app.services.usuario.user_cases.utils import mapear_usuario_dto_a_usuario_firebase, mapear_usuario_dto_a_usuario_create
 from typing import Optional
-
+from uuid import UUID
 class SupervisorCase(UsuarioCaseInterface):
     def obtener_firebase_usuario(self, params: CrearUsuarioFirebaseParams) -> FirebaseUser:
         usuario_actual: Usuario = params["usuario_actual"]
@@ -39,7 +39,7 @@ class SupervisorCase(UsuarioCaseInterface):
 
         return usuario
     
-    def obtener_filtros(self, usuario_actual: Usuario, search: Optional[str], company_id: Optional[str], rol: Optional[str]) -> dict:
+    def obtener_filtros_para_listar_usuarios(self, usuario_actual: Usuario, search: Optional[str], company_id: Optional[str], rol: Optional[str]) -> dict:
         filters = {
             "exact_filters": {
                 "company_id": usuario_actual.company_id,
@@ -51,4 +51,20 @@ class SupervisorCase(UsuarioCaseInterface):
         if search:
             filters["ilike_filters"]["display_name"] = f"%{search}%"
 
-        return filters   
+        return filters 
+
+
+    def obtener_filtro_para_totalizar_usuarios(self, usuario_actual: Usuario, company_id: Optional[UUID], rol: Optional[Rol]) -> dict:
+        compania_id =  usuario_actual.company_id
+        filters = {
+            "exact_filters": {
+                "company_id": compania_id,
+            },
+            "ilike_filters": {},
+            "like_filters": {}
+        }
+
+        if rol:
+            filters["exact_filters"]["rol"] = rol
+
+        return filters
