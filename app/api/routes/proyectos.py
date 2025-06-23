@@ -66,10 +66,10 @@ async def count_all_proyectos(
     summary="(superAdmin) Lista todos los proyectos"
 )
 async def list_all_proyectos(
-    user=Depends(require_role("superAdmin")),
+    usuario_actual=Depends(require_role("superAdmin")),
     db: AsyncSession = Depends(get_db)
 ):
-    proyectos = await ProyectoService(db).get_all()
+    proyectos = await ProyectoService(db).get_all(usuario_actual=usuario_actual)
     return [await _map_to_list_out(p, db) for p in proyectos]
 
 # 3) admin: count proyectos de su compañía
@@ -80,11 +80,11 @@ async def list_all_proyectos(
     summary="(admin) Cuenta proyectos en su compañía"
 )
 async def count_company_proyectos(
-    user=Depends(require_role("admin")),
+    usuario_actual=Depends(require_role("admin")),
     db: AsyncSession = Depends(get_db)
 ):
     result = await db.execute(
-        select(func.count()).select_from(ProyectoModel).where(ProyectoModel.company_id == user.company_id)
+        select(func.count()).select_from(ProyectoModel).where(ProyectoModel.company_id == usuario_actual.company_id)
     )
     total: int = result.scalar_one()
     return {"count": total}
