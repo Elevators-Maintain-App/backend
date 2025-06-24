@@ -52,3 +52,7 @@ class SeguimientoCreate(BaseModel):
             ]
         }
     }
+
+class FinalizarOrdenPayload(SeguimientoCreate):
+    firma_tecnico: str | None = None
+    firma_cliente: str | None = None

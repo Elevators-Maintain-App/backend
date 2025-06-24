@@ -8,7 +8,7 @@ from app.services.ordenes import OrdenService
 from app.db.session import get_db
 from app.db.models.ordenes_de_trabajo import OrdenDeTrabajo
 from app.db.models.checklists import Checklist, ChecklistItem
-from app.schemas.seguimiento import SeguimientoCreate, EventoOrden
+from app.schemas.seguimiento import SeguimientoCreate, EventoOrden, FinalizarOrdenPayload
 from app.auth.firebase import require_role  
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
@@ -70,7 +70,7 @@ async def reanudar_orden(
 @router.post("/{orden_id}/finalizar", status_code=status.HTTP_204_NO_CONTENT)
 async def finalizar_orden(
     orden_id: UUID,
-    body: SeguimientoCreate = Body(...),
+    body: FinalizarOrdenPayload = Body(...),
     user=Depends(require_role("technician")),
     db: AsyncSession = Depends(get_db),
 ):
