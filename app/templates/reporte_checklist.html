@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Reporte de Mantenimiento</title>
+  <style>
+    body {
+      font-family: 'DejaVu Sans', sans-serif;
+      margin: 30px;
+      color: #333;
+    }
+    h1, h2 {
+      text-align: center;
+      color: #004aad;
+    }
+    .info {
+      margin-bottom: 20px;
+    }
+    .info p {
+      margin: 5px 0;
+    }
+    .paso {
+      border-top: 1px solid #ccc;
+      padding-top: 10px;
+      margin-top: 20px;
+    }
+    .paso h3 {
+      color: #0071ad;
+    }
+    .evidencias img {
+      width: 200px;
+      margin: 10px;
+      border: 1px solid #ccc;
+    }
+    .firmas {
+      margin-top: 40px;
+      display: flex;
+      justify-content: space-around;
+    }
+    .firmas img {
+      height: 80px;
+      border-bottom: 1px solid #333;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Informe de Rutina de Mantenimiento</h1>
+
+  <div class="info">
+    <p><strong>Orden ID:</strong> {{ checklist.orden_trabajo_id }}</p>
+    <p><strong>Hora de entrada:</strong> {{ checklist.hora_entrada }}</p>
+    <p><strong>Hora de salida:</strong> {{ checklist.hora_salida }}</p>
+  </div>
+
+  {% for item in checklist.items %}
+    <div class="paso">
+      <h3>Paso {{ item.step_number }}: {{ item.titulo }}</h3>
+      <p><em>{{ item.instrucciones }}</em></p>
+      {% if item.comentario %}
+        <p><strong>Comentario:</strong> {{ item.comentario }}</p>
+      {% endif %}
+      <div class="evidencias">
+        {% if item.evidencia_data.url %}
+          <img src="{{ item.evidencia_data.url }}">
+        {% elif item.evidencia_data.url1 %}
+          <img src="{{ item.evidencia_data.url1 }}">
+          <img src="{{ item.evidencia_data.url2 }}">
+        {% endif %}
+      </div>
+    </div>
+  {% endfor %}
+
+  <div class="firmas">
+    {% if checklist.firma_tecnico %}
+      <div>
+        <p><strong>Técnico</strong></p>
+        <img src="{{ checklist.firma_tecnico }}">
+      </div>
+    {% endif %}
+    {% if checklist.firma_cliente %}
+      <div>
+        <p><strong>Cliente</strong></p>
+        <img src="{{ checklist.firma_cliente }}">
+      </div>
+    {% endif %}
+  </div>
+
+</body>
+</html>

@@ -252,3 +252,11 @@ class ChecklistService:
             updated_at=template.updated_at,
             pasos_ids=pasos_ids
         )
+    
+
+    async def get_checklist_con_items(self, orden_id: UUID):
+        from app.db.models.checklists import Checklist
+        result = await self.db.execute(
+            select(Checklist).where(Checklist.orden_trabajo_id == orden_id).options(selectinload(Checklist.items))
+        )
+        return result.scalar_one_or_none()

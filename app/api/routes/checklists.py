@@ -14,6 +14,12 @@ from app.schemas.checklists import (
 from app.services.checklists import ChecklistService
 from app.auth.firebase import require_role, get_current_firebase_user
 
+
+from fastapi.responses import StreamingResponse
+from weasyprint import HTML
+from jinja2 import Environment, FileSystemLoader
+import io
+
 router = APIRouter()
 
 @router.get(
@@ -99,3 +105,28 @@ async def create_template(
     """
     svc = ChecklistService(db)
     return await svc.create_template_with_items(payload)
+
+@router.get("/{orden_id}/reporte.pdf")
+async def generar_reporte_pdf(
+    orden_id: UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    checklist = await ChecklistService(db).get_checklist_con_items(orden_id)
+    if not checklist:
+        raise HTTPException(status_code=404, detail="Checklist no encontrado")
+
+    # Renderizar HTML
+    env = Environment(loader=FileSystemLoader("app/templates"))
+    template = env.get_template("reporte_checklist.html")
+    html_content = template.render(checklist=checklist)
+
+    # Generar PDF
+    pdf_buffer = io.BytesIO()
+    HTML(string=html_content, base_url=".").write_pdf(pdf_buffer)
+    pdf_buffer.seek(0)
+
+    return StreamingResponse(
+        pdf_buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"inline; filename=reporte_{orden_id}.pdf"}
+    )
