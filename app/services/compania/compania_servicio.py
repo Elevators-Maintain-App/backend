@@ -33,7 +33,13 @@ class CompaniaService:
         
         return compania_to_compania_out(compania)
     
-    async def get_companias_con_paginacion(self, usuario_actual: Usuario, skip: Optional[int] = 0, limit: Optional[int] = None, search: Optional[str] = None, tipo_documento_id: Optional[int] = None) -> PaginacionResponse[CompaniaOut]:
+    async def get_companias_con_paginacion(
+            self, usuario_actual: Usuario,
+            skip: Optional[int] = 0,
+            limit: Optional[int] = 100,
+            search: Optional[str] = None,
+            tipo_documento_id: Optional[int] = None
+    ) -> PaginacionResponse[CompaniaOut]:
         """
         Obtiene compañías con filtros basados en el rol del usuario
         """
@@ -50,10 +56,11 @@ class CompaniaService:
                 like_filters=filtros.get("like_filters", None)
             )
             total_companias = await self._total_companias_con_filtro(filtros)
+            data = [compania_to_compania_out(compania) for compania in companias]
 
             # Map to CompaniaOut using the existing mapper
             return PaginacionResponse(
-                data=[compania_to_compania_out(compania) for compania in companias],
+                data=data,
                 total=total_companias,
                 skip=skip,
                 limit=limit

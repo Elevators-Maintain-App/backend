@@ -23,8 +23,8 @@ async def get_companias(
     usuario_actual=Depends(require_role("superAdmin")),
 ):
     service = CompaniaService(db)
-    companias = await service.get_companias_con_paginacion(usuario_actual=usuario_actual)
-    return [LovElemento(id=compania.id, name=compania.nombre) for compania in companias]
+    companias_paginadas = await service.get_companias_con_paginacion(usuario_actual=usuario_actual)
+    return [LovElemento(id=compania.id, name=compania.nombre) for compania in companias_paginadas.data]
 
 @router.get("/niveles-tecnicos", 
            response_model=List[LovElemento],)
