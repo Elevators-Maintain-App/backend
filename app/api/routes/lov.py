@@ -8,6 +8,7 @@ from app.services.compania import CompaniaService
 from app.services.usuario.nivel_tecnico import NivelTecnicoService
 from app.services.secundarios.pais import PaisService
 from app.auth.firebase import require_role
+from app.db.repositories.tipos_documento import tipo_documento_crud
 
 router = APIRouter()
 
@@ -43,4 +44,12 @@ async def get_paises(
     service = PaisService(db)
     paises = await service.get_paises()
     return [LovElemento(id=pais.id, name=pais.nombre) for pais in paises]
+
+@router.get("/tipos-documento", 
+           response_model=List[LovElemento],)
+async def get_tipos_documento(
+    db: AsyncSession = Depends(get_db),
+):
+    tipos_documento = await tipo_documento_crud.get_multi(db)
+    return [LovElemento(id=tipo_documento.id, name=tipo_documento.nombre) for tipo_documento in tipos_documento]
 
