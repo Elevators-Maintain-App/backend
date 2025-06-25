@@ -38,6 +38,7 @@ class UsuarioUpdate(BaseModel):
 
 # Para respuestas generales
 class UsuarioOut(UsuarioBase):
+    id: UUID
     uid: str
     created_at: datetime
     updated_at: Optional[datetime] = None

@@ -15,6 +15,7 @@ from app.services.usuario.user_cases import FabricaDeUsuarios
 from app.auth.firebase import crear_usuario_firebase
 from app.db.models.usuarios import Rol
 from app.schemas.comunes import PaginacionResponse
+from app.services.usuario.usuarios_mapper import usuario_to_usuario_out, usuarios_to_usuarios_out
 
 class UsuarioService:
     def __init__(self, db: AsyncSession):
@@ -24,10 +25,11 @@ class UsuarioService:
         try:
             fabrica_de_usuarios = FabricaDeUsuarios.get_user_case(usuario_actual.rol)
             filtros = fabrica_de_usuarios.obtener_filtros_para_listar_usuarios(usuario_actual, search, company_id, rol)
-            users = await usuario_crud.get_multi_with_advanced_filters(self.db, skip=skip, limit=limit, exact_filters=filtros.get("exact_filters", None), ilike_filters=filtros.get("ilike_filters", None), like_filters=filtros.get("like_filters", None))            
+            users = await usuario_crud.get_usuarios_con_relaciones_con_paginacion(self.db, skip=skip, limit=limit, exact_filters=filtros.get("exact_filters", None), ilike_filters=filtros.get("ilike_filters", None), like_filters=filtros.get("like_filters", None))            
+            usuarios_out = usuarios_to_usuarios_out(users)
             total_usuarios = await self._total_usuarios_con_filtro(filtros)
             return PaginacionResponse(
-                data=[UsuarioOut.model_validate(user) for user in users],
+                data=usuarios_out,
                 total=total_usuarios,
                 skip=skip,
                 limit=limit
@@ -61,9 +63,9 @@ class UsuarioService:
 
     async def get_by_uid(self, uid: str) -> UsuarioOut:
         usuario = await usuario_crud.get_usuario_con_relaciones(self.db, uid)
-        usuario_out = UsuarioOut.model_validate(usuario)
-        usuario_out.company_name = usuario.company.nombre
-        usuario_out.document_type_name = usuario.document_type.nombre
+        if not usuario:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado")
+        usuario_out = usuario_to_usuario_out(usuario)
         return usuario_out
 
     async def create(self, usuario_actual: Usuario, usuario_in: UsuarioCreate) -> UsuarioOut:

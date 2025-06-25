@@ -16,8 +16,6 @@ from app.db.models.compania import Compania as CompaniaModel
 
 router = APIRouter()
 
-# """
-# Usuarios
 @router.get("/{uid}", response_model=UsuarioOut)
 async def obtener_usuario(uid: str = Path(...), db: AsyncSession = Depends(get_db)):
     service = UsuarioService(db)

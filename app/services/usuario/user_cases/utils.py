@@ -13,7 +13,7 @@ def mapear_usuario_dto_a_usuario_firebase(usuario_nuevo: UsuarioCreate, compania
             document_id=str(usuario_nuevo.document_id),
             document_type=str(tipo_documento.id),
             document_type_name=tipo_documento.nombre,
-            email=usuario_nuevo.email,
+            email=usuario_nuevo.email.lower(),
             photo_url= usuario_nuevo.photo_url if usuario_nuevo.photo_url else None,
             rol=usuario_nuevo.rol.value,
         )
@@ -26,7 +26,7 @@ def mapear_usuario_dto_a_usuario_create(usuario_nuevo: UsuarioCreate, firebase_u
                 display_name=usuario_nuevo.display_name,
                 document_id=usuario_nuevo.document_id,
                 document_type_id=usuario_nuevo.document_type_id,
-                email=usuario_nuevo.email,
+                email=usuario_nuevo.email.lower(),
                 phone_number=usuario_nuevo.phone_number,
                 photo_url=usuario_nuevo.photo_url if usuario_nuevo.photo_url else None,
                 rol=usuario_nuevo.rol,
