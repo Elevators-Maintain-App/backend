@@ -58,7 +58,7 @@ class NotificacionService:
             "smtp_port": int(settings.smtp_port) if settings.smtp_port else 587,
             "use_tls": True,
             "timeout": settings.email_timeout,
-            "nombre_remitente": "Sistema Hazard"
+            "nombre_remitente": "Verti-one"
         }
         
         try:

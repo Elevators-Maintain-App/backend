@@ -27,9 +27,9 @@ class TemplateManager:
         
         # Configuración global para todos los templates
         self.global_context = {
-            'empresa_nombre': 'Hazard Service',
-            'empresa_direccion': 'Dirección de tu empresa',
-            'soporte_email': 'soporte@hazard.com',
+            'empresa_nombre': 'Verti-one',
+            'empresa_direccion': 'Calle 123, Ciudad, País',
+            'soporte_email': 'support@verti-one.com',
             'year': datetime.now().year
         }
     

@@ -1,0 +1,143 @@
+<!-- Template para test del sistema de notificaciones -->
+<div class="alert alert-info">
+  <h2 style="margin: 0 0 10px 0; color: #004085">
+    Test del Sistema de Notificaciones
+  </h2>
+  <p style="margin: 0; font-size: 16px">Prueba de Funcionalidad - Verti-one</p>
+</div>
+
+<p>Hola {{ usuario_nombre | default('Usuario') }},</p>
+
+<p>
+  Este es un <strong>email de prueba</strong> del sistema de notificaciones de
+  <strong>Verti-one</strong>. Si estás recibiendo este mensaje, significa que el
+  servicio de notificaciones está funcionando correctamente.
+</p>
+
+<table
+  border="0"
+  cellpadding="0"
+  cellspacing="0"
+  style="
+    width: 100%;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    margin: 20px 0;
+  "
+>
+  <tr>
+    <td style="padding: 20px">
+      <h3 style="margin: 0 0 15px 0; color: #495057">
+        📊 Información del Test
+      </h3>
+
+      <table border="0" cellpadding="5" cellspacing="0" style="width: 100%">
+        <tr>
+          <td style="font-weight: bold; width: 40%">Fecha y hora:</td>
+          <td>{{ fecha_envio | date_format('%d/%m/%Y %H:%M:%S') }}</td>
+        </tr>
+        <tr>
+          <td style="font-weight: bold">Sistema:</td>
+          <td>Verti-one Backend</td>
+        </tr>
+        <tr>
+          <td style="font-weight: bold">Módulo:</td>
+          <td>Servicio de Notificaciones</td>
+        </tr>
+        <tr>
+          <td style="font-weight: bold">Versión:</td>
+          <td>{{ version | default('1.0.0') }}</td>
+        </tr>
+        <tr>
+          <td style="font-weight: bold">Ambiente:</td>
+          <td style="color: #007bff; font-weight: bold">
+            {{ ambiente | default('Producción') }}
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+<div
+  style="
+    background-color: #e7f3ff;
+    border-left: 4px solid #007bff;
+    padding: 15px;
+    margin: 20px 0;
+  "
+>
+  <h4 style="margin: 0 0 10px 0; color: #004085">
+    💡 Características Probadas
+  </h4>
+  <ul style="margin: 10px 0; padding-left: 20px">
+    <li>✅ Configuración automática desde variables de entorno</li>
+    <li>✅ Renderizado de templates HTML profesionales</li>
+    <li>✅ Envío SMTP a través de Office 365</li>
+    <li>✅ Procesamiento CSS inline para compatibilidad</li>
+    <li>✅ Manejo de errores y validaciones</li>
+  </ul>
+</div>
+
+<div
+  style="
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+    border-radius: 6px;
+    padding: 20px;
+    margin: 25px 0;
+    text-align: center;
+  "
+>
+  <h3 style="margin: 0 0 10px 0; color: #155724">🎉 ¡Test Exitoso!</h3>
+  <p style="margin: 0; color: #155724">
+    El sistema de notificaciones está funcionando correctamente y listo para
+    usar.
+  </p>
+</div>
+
+{% if mensaje_adicional %}
+<div
+  style="
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 6px;
+    padding: 15px;
+    margin: 20px 0;
+  "
+>
+  <h4 style="margin: 0 0 10px 0; color: #856404">📝 Mensaje Adicional</h4>
+  <p style="margin: 0; color: #856404">{{ mensaje_adicional }}</p>
+</div>
+{% endif %}
+
+<hr style="border: none; border-top: 1px solid #dee2e6; margin: 30px 0" />
+
+<p>
+  Si tienes alguna consulta sobre el sistema de notificaciones o necesitas
+  configurar nuevos canales, contacta al equipo de desarrollo.
+</p>
+
+<p style="margin-bottom: 0">
+  Saludos,<br />
+  <strong>Equipo de Desarrollo Verti-one</strong><br />
+  <em>Sistema de Mantenimiento de Ascensores</em>
+</p>
+
+<!-- Información técnica en footer -->
+<div
+  style="
+    margin-top: 30px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    font-size: 12px;
+    color: #6c757d;
+  "
+>
+  <strong>Información Técnica:</strong><br />
+  ID de Test: {{ test_id | default('TEST-' + fecha_envio |
+  date_format('%Y%m%d%H%M%S')) }}<br />
+  Canal: Email (SMTP)<br />
+  Proveedor: Office365EmailProvider
+</div>

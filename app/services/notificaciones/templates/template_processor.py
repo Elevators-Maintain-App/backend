@@ -250,11 +250,6 @@ class TemplateProcessor:
         <tr>
             <td>
                 <div class="email-container">
-                    <!-- Header -->
-                    <div class="header">
-                        <h1 style="margin: 0; font-size: 24px;">{{{{ empresa_nombre or "Hazard Service" }}}}</h1>
-                        <p style="margin: 5px 0 0 0; opacity: 0.9;">{{{{ subtitulo or "Sistema de Mantenimiento" }}}}</p>
-                    </div>
                     
                     <!-- Content -->
                     <div class="content">

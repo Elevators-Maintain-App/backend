@@ -41,7 +41,6 @@ class TemplateEngine:
     def _setup_custom_filters(self):
         """Configura filtros personalizados para los templates."""
         
-        @self.env.filter
         def money(value):
             """Formatea números como moneda."""
             try:
@@ -49,12 +48,15 @@ class TemplateEngine:
             except (ValueError, TypeError):
                 return value
         
-        @self.env.filter
         def date_format(value, format='%d/%m/%Y'):
             """Formatea fechas."""
             if hasattr(value, 'strftime'):
                 return value.strftime(format)
             return value
+        
+        # Registrar filtros en el environment
+        self.env.filters['money'] = money
+        self.env.filters['date_format'] = date_format
     
     def render_template(self, template_name: str, **context) -> str:
         """

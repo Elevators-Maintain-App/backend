@@ -4,6 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException, status, Path, Query
 from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
+from datetime import datetime
+import uuid
 
 from app.db.session import get_db
 from app.schemas.usuarios import UsuarioCreate, UsuarioUpdate, UsuarioOut, UserOut, CountOut
@@ -15,13 +17,14 @@ from uuid import UUID
 from app.db.models.compania import Compania as CompaniaModel
 from app.services.notificaciones.notificacion_service import NotificacionService
 from app.services.notificaciones.models.notificacion_model import NotificacionModel, DestinatarioModel, TipoNotificacion
+from app.services.notificaciones.templates import TemplateManager
 from app.core.config import settings
 
 router = APIRouter()
 
 @router.get("/send-email")
 async def send_email():
-    """Endpoint de prueba para enviar notificaciones por email."""
+    """Endpoint de prueba para enviar notificaciones por email usando template HTML."""
     try:
         # Crear servicio auto-configurado (lee desde variables de entorno)
         notificacion_service = NotificacionService(TipoNotificacion.EMAIL)
@@ -33,16 +36,21 @@ async def send_email():
                 "error": "Please configure NOTIFICATION_EMAIL and EMAIL_PWD environment variables"
             }
         
-        destinatario = DestinatarioModel(
-            email="ccdelgadop@gmail.com",
-            nombre="Usuario de Prueba"
-        )
+        # Crear template manager para email profesional
+        template_manager = TemplateManager()
         
-        notificacion = NotificacionModel(
-            tipo_canal=TipoNotificacion.EMAIL,
-            asunto="Test Verti One - Auto-configurado",
-            mensaje="Este es un mensaje de prueba del sistema auto-configurado de notificaciones de Hazard Service.",
-            destinatarios=[destinatario]
+        # Crear notificación usando template HTML
+        notificacion = template_manager.create_notification_from_template(
+            template_name='bienvenida_usuario.html',
+            destinatarios=[
+                DestinatarioModel(
+                    email="ccdelgadop@gmail.com",
+                    nombre="Usuario de Prueba"
+                )
+            ],
+            asunto="Test Verti-one - Sistema de Notificaciones",
+            context={
+            }
         )
 
         resultado = await notificacion_service.enviar_notificacion(notificacion)
