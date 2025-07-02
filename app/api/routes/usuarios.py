@@ -13,8 +13,47 @@ from app.auth.firebase import require_role, get_firestore_client
 from app.auth.firebase import get_current_firebase_user
 from uuid import UUID
 from app.db.models.compania import Compania as CompaniaModel
+from app.services.notificaciones.notificacion_service import NotificacionService
+from app.services.notificaciones.models.notificacion_model import NotificacionModel, DestinatarioModel, TipoNotificacion
+from app.core.config import settings
 
 router = APIRouter()
+
+@router.get("/send-email")
+async def send_email():
+    """Endpoint de prueba para enviar notificaciones por email."""
+    try:
+        # Crear servicio auto-configurado (lee desde variables de entorno)
+        notificacion_service = NotificacionService(TipoNotificacion.EMAIL)
+        
+        # Verificar si email está disponible
+        if not notificacion_service.is_canal_disponible(TipoNotificacion.EMAIL):
+            return {
+                "message": "Email not configured", 
+                "error": "Please configure NOTIFICATION_EMAIL and EMAIL_PWD environment variables"
+            }
+        
+        destinatario = DestinatarioModel(
+            email="ccdelgadop@gmail.com",
+            nombre="Usuario de Prueba"
+        )
+        
+        notificacion = NotificacionModel(
+            tipo_canal=TipoNotificacion.EMAIL,
+            asunto="Test Verti One - Auto-configurado",
+            mensaje="Este es un mensaje de prueba del sistema auto-configurado de notificaciones de Hazard Service.",
+            destinatarios=[destinatario]
+        )
+
+        resultado = await notificacion_service.enviar_notificacion(notificacion)
+        
+        if resultado.exito:
+            return {"message": "Email sent successfully", "details": resultado.mensaje}
+        else:
+            return {"message": "Email failed", "error": resultado.mensaje}
+            
+    except Exception as e:
+        return {"message": "Error sending email", "error": str(e)}
 
 @router.get("/{uid}", response_model=UsuarioOut)
 async def obtener_usuario(uid: str = Path(...), db: AsyncSession = Depends(get_db)):

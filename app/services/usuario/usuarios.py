@@ -16,6 +16,8 @@ from app.auth.firebase import crear_usuario_firebase
 from app.db.models.usuarios import Rol
 from app.schemas.comunes import PaginacionResponse
 from app.services.usuario.usuarios_mapper import usuario_to_usuario_out, usuarios_to_usuarios_out
+from app.services.notificaciones import NotificacionService
+
 
 class UsuarioService:
     def __init__(self, db: AsyncSession):
@@ -92,6 +94,19 @@ class UsuarioService:
                 "usuario_nuevo": usuario_in,
                 "firebase_uid": usuario_firebase.uid
             })
+        
+        configuraciones = {
+            "email": {
+                "username": "tu_email@empresa.com",
+                "password": "tu_app_password",  # Usar App Password, no contraseña normal
+                "nombre_remitente": "Sistema Hazard - Mantenimiento",
+                "debug": True  # Para ver logs detallados durante desarrollo
+            }
+        }
+    
+        servicio = NotificacionService(configuraciones)
+        servicio.enviar_notificacion(usuario_a_guardar.email, "Bienvenido al sistema", "Bienvenido al sistema")
+
         usuario_guardado = await usuario_crud.create(self.db, obj_in=usuario_a_guardar)
 
         return usuario_guardado
