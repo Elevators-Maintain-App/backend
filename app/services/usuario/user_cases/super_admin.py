@@ -67,4 +67,5 @@ class SuperAdminCase(UsuarioCaseInterface):
 
         return filters
 
+
     

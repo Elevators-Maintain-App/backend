@@ -4,10 +4,14 @@ from app.db.models.enums.tipos_documento import TipoDocumento
 from app.db.models.usuarios import Usuario
 from app.auth.firebase import UsuarioFirebaseCreate
 import uuid
+import secrets
+import string
 
 def mapear_usuario_dto_a_usuario_firebase(usuario_nuevo: UsuarioCreate, compania: Compania, tipo_documento: TipoDocumento) -> UsuarioFirebaseCreate:
+    password = obtener_contraseña_temporal()
     usuario_firebase = UsuarioFirebaseCreate(
             company_id=compania.id,
+            password=password,
             company_name=compania.nombre,
             display_name=usuario_nuevo.display_name,
             document_id=str(usuario_nuevo.document_id),
@@ -35,5 +39,18 @@ def mapear_usuario_dto_a_usuario_create(usuario_nuevo: UsuarioCreate, firebase_u
                 is_active=usuario_nuevo.is_active,
                 company_id=usuario_nuevo.company_id,
             )
-    
+
     return usuario
+
+
+def obtener_contraseña_temporal(length: int = 12) -> str:
+    alphabet = (
+        string.ascii_lowercase
+        + string.ascii_uppercase
+        + string.digits
+        + "!@#$%&*"  # Símbolos básicos, evitando caracteres problemáticos
+    )
+
+    return ''.join(secrets.choice(alphabet) for _ in range(length))
+
+
