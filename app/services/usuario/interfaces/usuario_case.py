@@ -37,3 +37,6 @@ class UsuarioCaseInterface(ABC):
 
     async def enviar_email_de_bienvenida(self, email_destinatario: str, nombre_destinatario: str, password: str):
         ...
+
+    async def enviar_email_de_cambio_de_contraseña(self, email_destinatario: str, nombre_destinatario: str):
+        ...
