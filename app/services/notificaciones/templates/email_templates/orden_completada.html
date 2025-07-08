@@ -1,0 +1,118 @@
+<!-- Template para notificación de orden completada -->
+<div class="alert alert-success">
+  <h2 style="margin: 0 0 10px 0; color: #155724">
+    ✅ Orden de Trabajo Completada
+  </h2>
+  <p style="margin: 0; font-size: 16px">
+    Orden #{{ orden_id }} - {{ edificio }}
+  </p>
+</div>
+
+<p>Estimado/a {{ cliente_nombre }},</p>
+
+<p>
+  Le informamos que la <strong>orden de trabajo #{{ orden_id }}</strong> para el
+  mantenimiento del ascensor en <strong>{{ edificio }}</strong> ha sido
+  completada exitosamente.
+</p>
+
+<table
+  border="0"
+  cellpadding="0"
+  cellspacing="0"
+  style="
+    width: 100%;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    margin: 20px 0;
+  "
+>
+  <tr>
+    <td style="padding: 20px">
+      <h3 style="margin: 0 0 15px 0; color: #495057">
+        📋 Detalles del Servicio
+      </h3>
+
+      <table border="0" cellpadding="5" cellspacing="0" style="width: 100%">
+        <tr>
+          <td style="font-weight: bold; width: 40%">Técnico asignado:</td>
+          <td>{{ tecnico_nombre }}</td>
+        </tr>
+        <tr>
+          <td style="font-weight: bold">Fecha de finalización:</td>
+          <td>{{ fecha_finalizacion | date_format('%d/%m/%Y %H:%M') }}</td>
+        </tr>
+        {% if duracion_horas %}
+        <tr>
+          <td style="font-weight: bold">Tiempo de ejecución:</td>
+          <td>{{ duracion_horas }} horas</td>
+        </tr>
+        {% endif %}
+        <tr>
+          <td style="font-weight: bold">Estado:</td>
+          <td style="color: #28a745; font-weight: bold">
+            Completado Satisfactoriamente
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+{% if observaciones %}
+<div
+  style="
+    background-color: #e7f3ff;
+    border-left: 4px solid #007bff;
+    padding: 15px;
+    margin: 20px 0;
+  "
+>
+  <h4 style="margin: 0 0 10px 0; color: #004085">
+    📝 Observaciones del Técnico
+  </h4>
+  <p style="margin: 0">{{ observaciones }}</p>
+</div>
+{% endif %}
+
+<div
+  style="
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+    border-radius: 6px;
+    padding: 20px;
+    margin: 25px 0;
+    text-align: center;
+  "
+>
+  <h3 style="margin: 0 0 10px 0; color: #155724">
+    🎉 ¡El ascensor ya está operativo!
+  </h3>
+  <p style="margin: 0; color: #155724">
+    El equipo se encuentra funcionando correctamente y seguro para su uso.
+  </p>
+</div>
+
+{% if mostrar_boton_calificar %}
+<div style="text-align: center; margin: 30px 0">
+  <a
+    href="{{ url_calificar or '#' }}"
+    class="btn"
+    style="background-color: #28a745"
+  >
+    ⭐ Calificar Servicio
+  </a>
+</div>
+{% endif %}
+
+<hr style="border: none; border-top: 1px solid #dee2e6; margin: 30px 0" />
+
+<p>
+  Si tiene alguna consulta o requiere asistencia adicional, no dude en
+  contactarnos.
+</p>
+
+<p style="margin-bottom: 0">
+  Saludos cordiales,<br />
+  <strong>Equipo Técnico Hazard Service</strong>
+</p>

@@ -1,0 +1,194 @@
+<!-- Template para asignación de trabajo a técnico -->
+<div class="alert alert-warning">
+  <h2 style="margin: 0 0 10px 0; color: #856404">🔧 Nueva Orden Asignada</h2>
+  <p style="margin: 0; font-size: 16px">
+    Orden #{{ orden_id }} - {{ prioridad | upper }}
+  </p>
+</div>
+
+<p>Hola <strong>{{ tecnico_nombre }}</strong>,</p>
+
+<p>
+  Se te ha asignado una nueva orden de trabajo. Por favor revisa los detalles y
+  confirma la recepción en el sistema.
+</p>
+
+<table
+  border="0"
+  cellpadding="0"
+  cellspacing="0"
+  style="
+    width: 100%;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    margin: 20px 0;
+  "
+>
+  <tr>
+    <td style="padding: 20px">
+      <h3 style="margin: 0 0 15px 0; color: #495057">
+        📋 Información de la Orden
+      </h3>
+
+      <table border="0" cellpadding="8" cellspacing="0" style="width: 100%">
+        <tr>
+          <td style="font-weight: bold; width: 30%">🔧 Orden:</td>
+          <td style="font-size: 18px; font-weight: bold; color: #007bff">
+            #{{ orden_id }}
+          </td>
+        </tr>
+        <tr>
+          <td style="font-weight: bold">👤 Cliente:</td>
+          <td>{{ cliente }}</td>
+        </tr>
+        <tr>
+          <td style="font-weight: bold">📍 Ubicación:</td>
+          <td>{{ ubicacion }}</td>
+        </tr>
+        <tr>
+          <td style="font-weight: bold">⚡ Prioridad:</td>
+          <td>
+            <span
+              style="
+                            padding: 4px 8px; 
+                            border-radius: 4px; 
+                            font-weight: bold; 
+                            color: white;
+                            background-color: {% if prioridad == 'critica' %}#dc3545{% elif prioridad == 'alta' %}#fd7e14{% elif prioridad == 'media' %}#ffc107{% else %}#6c757d{% endif %};
+                        "
+            >
+              {{ prioridad | upper }}
+            </span>
+          </td>
+        </tr>
+        {% if fecha_programada %}
+        <tr>
+          <td style="font-weight: bold">📅 Fecha programada:</td>
+          <td style="font-weight: bold; color: #dc3545">
+            {{ fecha_programada | date_format('%d/%m/%Y a las %H:%M') }}
+          </td>
+        </tr>
+        {% endif %}
+        <tr>
+          <td style="font-weight: bold">📝 Fecha de asignación:</td>
+          <td>{{ fecha_asignacion | date_format('%d/%m/%Y %H:%M') }}</td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+<div
+  style="
+    background-color: #e7f3ff;
+    border-left: 4px solid #007bff;
+    padding: 15px;
+    margin: 20px 0;
+  "
+>
+  <h4 style="margin: 0 0 10px 0; color: #004085">🔍 Descripción del Trabajo</h4>
+  <p style="margin: 0; font-size: 15px">{{ descripcion }}</p>
+</div>
+
+{% if materiales_requeridos %}
+<div
+  style="
+    background-color: #fff3cd;
+    border-left: 4px solid #ffc107;
+    padding: 15px;
+    margin: 20px 0;
+  "
+>
+  <h4 style="margin: 0 0 10px 0; color: #856404">📦 Materiales Requeridos</h4>
+  <ul style="margin: 0; padding-left: 20px">
+    {% for material in materiales_requeridos %}
+    <li>{{ material }}</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %} {% if contacto_cliente %}
+<table
+  border="0"
+  cellpadding="0"
+  cellspacing="0"
+  style="
+    width: 100%;
+    background-color: #d4edda;
+    border-radius: 8px;
+    margin: 20px 0;
+  "
+>
+  <tr>
+    <td style="padding: 20px">
+      <h4 style="margin: 0 0 15px 0; color: #155724">
+        📞 Contacto del Cliente
+      </h4>
+
+      <table border="0" cellpadding="5" cellspacing="0">
+        <tr>
+          <td style="font-weight: bold">Nombre:</td>
+          <td>{{ contacto_cliente.nombre }}</td>
+        </tr>
+        {% if contacto_cliente.telefono %}
+        <tr>
+          <td style="font-weight: bold">Teléfono:</td>
+          <td style="font-weight: bold; color: #155724">
+            {{ contacto_cliente.telefono }}
+          </td>
+        </tr>
+        {% endif %} {% if contacto_cliente.email %}
+        <tr>
+          <td style="font-weight: bold">Email:</td>
+          <td>{{ contacto_cliente.email }}</td>
+        </tr>
+        {% endif %}
+      </table>
+    </td>
+  </tr>
+</table>
+{% endif %} {% if instrucciones_especiales %}
+<div
+  style="
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 6px;
+    padding: 15px;
+    margin: 20px 0;
+  "
+>
+  <h4 style="margin: 0 0 10px 0; color: #721c24">
+    ⚠️ Instrucciones Especiales
+  </h4>
+  <p style="margin: 0; color: #721c24">{{ instrucciones_especiales }}</p>
+</div>
+{% endif %}
+
+<div style="text-align: center; margin: 30px 0">
+  <a
+    href="{{ url_confirmar or '#' }}"
+    class="btn"
+    style="background-color: #28a745; margin-right: 10px"
+  >
+    ✅ Confirmar Recepción
+  </a>
+  <a
+    href="{{ url_orden or '#' }}"
+    class="btn"
+    style="background-color: #007bff"
+  >
+    📱 Ver en Sistema
+  </a>
+</div>
+
+<hr style="border: none; border-top: 1px solid #dee2e6; margin: 30px 0" />
+
+<p style="font-size: 14px; color: #6c757d">
+  <strong>Recordatorio:</strong> Por favor confirma la recepción de esta orden
+  en el sistema y mantén actualizado el estado del trabajo para que el cliente
+  pueda hacer seguimiento.
+</p>
+
+<p style="margin-bottom: 0">
+  ¡Gracias por tu excelente trabajo!<br />
+  <strong>Sistema de Gestión Hazard Service</strong>
+</p>

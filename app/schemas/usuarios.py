@@ -18,7 +18,7 @@ class UsuarioBase(BaseModel):
     nivel: Optional[str] = Field(None, description="Nivel del usuario")
     zona_geografica_id: Optional[UUID] = Field(None, description="ID de la zona geográfica")
     photo_url: Optional[str] = Field(None, description="URL de la foto del usuario")
-    is_active: Optional[bool] = Field(..., description="Indica si el usuario está activo")
+    is_active: Optional[bool] = Field(None, description="Indica si el usuario está activo")
 
 
 # Para creación desde el frontend o sincronización con Firebase

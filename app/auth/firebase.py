@@ -12,6 +12,8 @@ from app.db.repositories.usuarios import usuario_crud
 from app.db.models.usuarios import Usuario
 from app.db.models.usuarios import Rol
 from uuid import UUID
+import string
+import secrets
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -55,6 +57,7 @@ class UsuarioFirebaseCreate(BaseModel):
     photo_url: Optional[str] = None
     rol: Rol
     cliente_id: UUID | None = None
+    password: Optional[str] = None
 
 class FirebaseUser(UsuarioFirebaseCreate):
     uid: str
@@ -84,10 +87,12 @@ async def crear_usuario_firebase(usuario_dto: UsuarioFirebaseCreate, password: O
         HTTPException: For validation or permission errors
     """
     try:
+        contraseña_temporal = obtener_contraseña_temporal(length=8)
         kwargs = {
             "email": usuario_dto.email,
             "display_name": usuario_dto.display_name,
             "photo_url": usuario_dto.photo_url,
+            "password": contraseña_temporal,
             "email_verified": False,
             "disabled": False,
         }
@@ -124,6 +129,7 @@ async def crear_usuario_firebase(usuario_dto: UsuarioFirebaseCreate, password: O
             document_id=usuario_dto.document_id,
             document_type=usuario_dto.document_type,
             document_type_name=usuario_dto.document_type_name,
+            password=contraseña_temporal,
             photo_url=usuario_dto.photo_url,
             rol=usuario_dto.rol,
         )
@@ -265,3 +271,14 @@ def require_role(*allowed_roles: str):
         return current_user
 
     return role_dependency
+
+def obtener_contraseña_temporal(length: int = 12) -> str:
+        alphabet = (
+            string.ascii_lowercase
+            + string.ascii_uppercase
+            + string.digits
+            + "!@#$%&*"  # Símbolos básicos, evitando caracteres problemáticos
+        )
+        
+        # Generar contraseña aleatoria segura
+        return ''.join(secrets.choice(alphabet) for _ in range(length))
