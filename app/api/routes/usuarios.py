@@ -107,7 +107,7 @@ async def actualizar_usuario(uid: str, usuario_in: UsuarioUpdate, db: AsyncSessi
     service = UsuarioService(db)
     return await service.update(uid, usuario_in)
 
-@router.delete("/{uid}", response_model=UsuarioOut)
+@router.delete("/{uid}", response_model=UsuarioOut, dependencies=[Depends(require_role("superAdmin", "admin", "supervisor"))])
 async def eliminar_usuario(uid: str, db: AsyncSession = Depends(get_db)):
     service = UsuarioService(db)
     return await service.delete(uid)

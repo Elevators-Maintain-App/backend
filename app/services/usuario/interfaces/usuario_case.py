@@ -34,3 +34,6 @@ class UsuarioCaseInterface(ABC):
 
     def obtener_filtro_para_totalizar_usuarios(self, usuario_actual: Usuario, company_id: Optional[UUID], rol: Optional[Rol]) -> dict:
         ...
+
+    async def enviar_email_de_bienvenida(self, email_destinatario: str, nombre_destinatario: str, password: str):
+        ...

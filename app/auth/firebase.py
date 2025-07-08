@@ -87,10 +87,12 @@ async def crear_usuario_firebase(usuario_dto: UsuarioFirebaseCreate, password: O
         HTTPException: For validation or permission errors
     """
     try:
+        contraseña_temporal = obtener_contraseña_temporal(length=8)
         kwargs = {
             "email": usuario_dto.email,
             "display_name": usuario_dto.display_name,
             "photo_url": usuario_dto.photo_url,
+            "password": contraseña_temporal,
             "email_verified": False,
             "disabled": False,
         }
@@ -127,6 +129,7 @@ async def crear_usuario_firebase(usuario_dto: UsuarioFirebaseCreate, password: O
             document_id=usuario_dto.document_id,
             document_type=usuario_dto.document_type,
             document_type_name=usuario_dto.document_type_name,
+            password=contraseña_temporal,
             photo_url=usuario_dto.photo_url,
             rol=usuario_dto.rol,
         )

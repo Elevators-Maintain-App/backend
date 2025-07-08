@@ -1,15 +1,16 @@
 from dataclasses import dataclass
 from fastapi import HTTPException
-from app.services.usuario.interfaces import UsuarioCaseInterface, CrearUsuarioFirebaseParams, CrearUsuarioParams
+from app.services.usuario.interfaces import CrearUsuarioFirebaseParams, CrearUsuarioParams
 from app.db.models.compania import Compania
 from app.db.models.usuarios import Usuario, Rol
 from app.schemas.usuarios import UsuarioCreate
 from app.auth.firebase import FirebaseUser
 from app.db.models import TipoDocumento
-from app.services.usuario.user_cases.utils import mapear_usuario_dto_a_usuario_firebase, mapear_usuario_dto_a_usuario_create
 from typing import Optional
 from uuid import UUID
-class SupervisorCase(UsuarioCaseInterface):
+from .base_usuario import BaseUsuario
+
+class SupervisorCase(BaseUsuario):
     def obtener_firebase_usuario(self, params: CrearUsuarioFirebaseParams) -> FirebaseUser:
         usuario_actual: Usuario = params["usuario_actual"]
         usuario_nuevo: UsuarioCreate = params["usuario_nuevo"]
@@ -22,7 +23,7 @@ class SupervisorCase(UsuarioCaseInterface):
         if usuario_nuevo.rol not in [Rol.TECHNICIAN]:
             raise HTTPException(status_code=403, detail="No tienes permisos para crear usuarios")
         
-        return mapear_usuario_dto_a_usuario_firebase(usuario_nuevo, compania, tipo_documento)
+        return self.mapear_usuario_dto_a_usuario_firebase(usuario_nuevo, compania, tipo_documento)
     
     def obtener_usuario_a_guardar(self, params: CrearUsuarioParams) -> Usuario:
         usuario_actual: Usuario = params["usuario_actual"]
@@ -34,7 +35,7 @@ class SupervisorCase(UsuarioCaseInterface):
         if usuario_nuevo.rol not in [Rol.TECHNICIAN]:
             raise HTTPException(status_code=403, detail="No tienes permisos para crear usuarios")
         
-        usuario = mapear_usuario_dto_a_usuario_create(usuario_nuevo, params["firebase_uid"])
+        usuario = self.mapear_usuario_dto_a_usuario_create(usuario_nuevo, params["firebase_uid"])
         usuario.company_id = usuario_actual.company_id
 
         return usuario

@@ -26,7 +26,15 @@ class ClienteService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_clientes_con_paginacion(self, usuario_actual: Usuario, skip: Optional[int] = 0, limit: Optional[int] = None, search: Optional[str] = None, company_id: Optional[str] = None, tipo_documento_id: Optional[int] = None) -> PaginacionResponse[ClienteOut]:
+    async def get_clientes_con_paginacion(
+            self,
+            usuario_actual: Usuario,
+            skip: Optional[int] = 0,
+            limit: Optional[int] = 20,
+            search: Optional[str] = None,
+            company_id: Optional[str] = None,
+            tipo_documento_id: Optional[int] = None
+        ) -> PaginacionResponse[ClienteOut]:
         """
         Obtiene clientes con filtros basados en el rol del usuario
         """
@@ -149,6 +157,7 @@ class ClienteService:
             raise ForbiddenException("No tienes permisos para eliminar este cliente")
 
         await cliente_crud.remove(self.db, cliente_id)
+    
 
     # Métodos especiales:
     async def get_proyectos(self, cliente_id: UUID) -> List[ProyectoInDBBase]:

@@ -9,6 +9,7 @@ from app.services.usuario.nivel_tecnico import NivelTecnicoService
 from app.services.secundarios.pais import PaisService
 from app.auth.firebase import require_role
 from app.db.repositories.tipos_documento import tipo_documento_crud
+from app.services.cliente import ClienteService
 
 router = APIRouter()
 
@@ -52,4 +53,14 @@ async def get_tipos_documento(
 ):
     tipos_documento = await tipo_documento_crud.get_multi(db)
     return [LovElemento(id=tipo_documento.id, name=tipo_documento.nombre) for tipo_documento in tipos_documento]
+
+@router.get("/clientes",
+           response_model=List[LovElemento],) 
+async def get_clientes(
+    db: AsyncSession = Depends(get_db),
+    usuario_actual=Depends(require_role("superAdmin", "admin", "supervisor")),
+):
+    service = ClienteService(db)
+    clientes = await service.get_clientes_con_paginacion(usuario_actual=usuario_actual, limit=1000, skip=0)
+    return [LovElemento(id=cliente.id, name=cliente.nombre) for cliente in clientes.data]
 

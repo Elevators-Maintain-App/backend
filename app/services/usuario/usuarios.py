@@ -1,6 +1,6 @@
 # app/services/usuarios.py
 
-from typing import List, Optional
+from typing import Optional
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException, status
@@ -16,9 +16,6 @@ from app.auth.firebase import crear_usuario_firebase
 from app.db.models.usuarios import Rol
 from app.schemas.comunes import PaginacionResponse
 from app.services.usuario.usuarios_mapper import usuario_to_usuario_out, usuarios_to_usuarios_out
-from app.services.notificaciones import NotificacionService, TipoNotificacion
-from app.services.notificaciones.templates import TemplateManager
-from app.services.notificaciones.models import DestinatarioModel
 
 
 class UsuarioService:
@@ -98,25 +95,7 @@ class UsuarioService:
                 "firebase_uid": usuario_firebase.uid
             })
         
-        notificacion_service = NotificacionService(TipoNotificacion.EMAIL)
-        template_manager = TemplateManager()
-
-        notificacion = template_manager.create_notification_from_template(
-            template_name='bienvenida_usuario.html',
-            destinatarios=[
-                DestinatarioModel(
-                    email=usuario_a_guardar.email,
-                    nombre=usuario_a_guardar.display_name
-                )
-            ],
-            asunto="Bienvenido a Verti-one",
-            context={
-                "password": usuario_firebase.password,
-                "login_link": f"https://verti-one.com"
-            }
-        )
-
-        resultado = await notificacion_service.enviar_notificacion(notificacion)
+        await fabrica_de_usuarios.enviar_email_de_bienvenida(usuario_a_guardar.email, usuario_a_guardar.display_name, usuario_firebase.password)
 
         usuario_guardado = await usuario_crud.create(self.db, obj_in=usuario_a_guardar)
 
