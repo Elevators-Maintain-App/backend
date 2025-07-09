@@ -1,6 +1,7 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from fastapi import HTTPException, status
+from datetime import datetime
 
 from app.services.usuario.usuarios import UsuarioService
 from app.db.models.usuarios import Usuario, Rol
@@ -23,9 +24,10 @@ class TestUsuarioService:
             email="newuser@example.com",
             display_name="New User",
             rol=Rol.ADMIN,
-            company_id="test-company-id",
-            document_type_id="doc-type-id",
-            document="123456789"
+            company_id="12345678-1234-5678-9012-123456789abc",
+            document_id="123456789",
+            document_type_id=1,
+            phone_number="+1234567890"
         )
 
     @pytest.fixture
@@ -41,19 +43,21 @@ class TestUsuarioService:
         """Test successful get_all operation."""
         # Arrange
         with patch('app.services.usuario.usuarios.FabricaDeUsuarios.get_user_case') as mock_fabrica, \
-             patch('app.services.usuario.usuarios.usuario_crud.get_multi_with_advanced_filters') as mock_get_multi:
+             patch('app.services.usuario.usuarios.usuario_crud.get_usuarios_con_relaciones_con_paginacion') as mock_get_multi, \
+             patch('app.services.usuario.usuarios.UsuarioService._total_usuarios_con_filtro') as mock_total:
             
             mock_case = MagicMock()
-            mock_case.obtener_filtros.return_value = {
+            mock_case.obtener_filtros_para_listar_usuarios.return_value = {
                 "exact_filters": {"company_id": "123"},
                 "ilike_filters": {"display_name": "%john%"},
                 "like_filters": {}
             }
             mock_fabrica.return_value = mock_case
             mock_get_multi.return_value = sample_usuarios_list
+            mock_total.return_value = len(sample_usuarios_list)
 
             # Act
-            result = await usuario_service.get_all(
+            result = await usuario_service.get_usuarios_con_paginacion(
                 usuario_actual=mock_usuario_actual,
                 skip=0,
                 limit=10,
@@ -63,10 +67,10 @@ class TestUsuarioService:
             )
 
             # Assert
-            assert len(result) == len(sample_usuarios_list)
-            assert all(isinstance(user, UsuarioOut) for user in result)
+            assert len(result.data) == len(sample_usuarios_list)
+            assert result.total == len(sample_usuarios_list)
             mock_fabrica.assert_called_once_with(mock_usuario_actual.rol)
-            mock_case.obtener_filtros.assert_called_once_with(
+            mock_case.obtener_filtros_para_listar_usuarios.assert_called_once_with(
                 mock_usuario_actual, "john", "123", "ADMIN"
             )
             mock_get_multi.assert_called_once()
@@ -76,27 +80,29 @@ class TestUsuarioService:
         """Test get_all operation without filters."""
         # Arrange
         with patch('app.services.usuario.usuarios.FabricaDeUsuarios.get_user_case') as mock_fabrica, \
-             patch('app.services.usuario.usuarios.usuario_crud.get_multi_with_advanced_filters') as mock_get_multi:
+             patch('app.services.usuario.usuarios.usuario_crud.get_usuarios_con_relaciones_con_paginacion') as mock_get_multi, \
+             patch('app.services.usuario.usuarios.UsuarioService._total_usuarios_con_filtro') as mock_total:
             
             mock_case = MagicMock()
-            mock_case.obtener_filtros.return_value = {
+            mock_case.obtener_filtros_para_listar_usuarios.return_value = {
                 "exact_filters": {},
                 "ilike_filters": {},
                 "like_filters": {}
             }
             mock_fabrica.return_value = mock_case
             mock_get_multi.return_value = sample_usuarios_list
+            mock_total.return_value = len(sample_usuarios_list)
 
             # Act
-            result = await usuario_service.get_all(
+            result = await usuario_service.get_usuarios_con_paginacion(
                 usuario_actual=mock_usuario_actual,
                 skip=None,
                 limit=None
             )
 
             # Assert
-            assert len(result) == len(sample_usuarios_list)
-            mock_case.obtener_filtros.assert_called_once_with(
+            assert len(result.data) == len(sample_usuarios_list)
+            mock_case.obtener_filtros_para_listar_usuarios.assert_called_once_with(
                 mock_usuario_actual, None, None, None
             )
 
@@ -109,7 +115,7 @@ class TestUsuarioService:
 
             # Act & Assert
             with pytest.raises(HTTPException) as exc_info:
-                await usuario_service.get_all(
+                await usuario_service.get_usuarios_con_paginacion(
                     usuario_actual=mock_usuario_actual,
                     skip=0,
                     limit=10
@@ -119,28 +125,38 @@ class TestUsuarioService:
             assert "Error al obtener los usuarios" in str(exc_info.value.detail)
 
     @pytest.mark.asyncio
-    async def test_get_by_uid_success(self, usuario_service):
+    async def test_get_by_uid_success(self, usuario_service, mock_compania, mock_tipo_documento):
         """Test successful get_by_uid operation."""
         # Arrange
         expected_user = Usuario(
-            id="user-id",
+            id="12345678-1234-5678-9012-123456789001",
             uid="firebase-uid",
             email="user@example.com",
             display_name="Test User",
             rol=Rol.ADMIN,
-            company_id="company-id"
+            company_id="12345678-1234-5678-9012-123456789abc",
+            document_id="12345",
+            document_type_id=1,
+            phone_number="+1234567890",
+            is_active=True,
+            created_at=datetime.now()
         )
+        # Mock the relationships
+        expected_user.company = mock_compania
+        expected_user.document_type = mock_tipo_documento
         
-        with patch('app.services.usuario.usuarios.usuario_crud.get_by_field') as mock_get_by_field:
-            mock_get_by_field.return_value = expected_user
+        with patch('app.services.usuario.usuarios.usuario_crud.get_usuario_con_relaciones') as mock_get_user:
+            mock_get_user.return_value = expected_user
 
             # Act
             result = await usuario_service.get_by_uid("firebase-uid")
 
             # Assert
-            assert result == expected_user
-            mock_get_by_field.assert_called_once_with(
-                usuario_service.db, "uid", "firebase-uid"
+            assert isinstance(result, UsuarioOut)
+            assert result.company_name == mock_compania.nombre
+            assert result.document_type_name == mock_tipo_documento.nombre
+            mock_get_user.assert_called_once_with(
+                usuario_service.db, "firebase-uid"
             )
 
     @pytest.mark.asyncio
@@ -174,12 +190,18 @@ class TestUsuarioService:
 
             # Setup mocks
             mock_get_by_field.return_value = None  # User doesn't exist
-            mock_compania_service.return_value.get_compania.return_value = mock_compania
+            
+            # Mock CompaniaService instance and its async method
+            mock_compania_service_instance = AsyncMock()
+            mock_compania_service_instance.get_compania.return_value = mock_compania
+            mock_compania_service.return_value = mock_compania_service_instance
+            
             mock_tipo_doc_get.return_value = mock_tipo_documento
             
             mock_case = MagicMock()
             mock_case.obtener_firebase_usuario.return_value = mock_firebase_user
             mock_case.obtener_usuario_a_guardar.return_value = created_user
+            mock_case.enviar_email_de_bienvenida = AsyncMock(return_value=None)
             mock_fabrica.return_value = mock_case
             
             mock_crear_firebase.return_value = mock_firebase_user
@@ -290,26 +312,29 @@ class TestUsuarioService:
         """Test get_all with pagination parameters."""
         # Arrange
         with patch('app.services.usuario.usuarios.FabricaDeUsuarios.get_user_case') as mock_fabrica, \
-             patch('app.services.usuario.usuarios.usuario_crud.get_multi_with_advanced_filters') as mock_get_multi:
+             patch('app.services.usuario.usuarios.usuario_crud.get_usuarios_con_relaciones_con_paginacion') as mock_get_multi, \
+             patch('app.services.usuario.usuarios.UsuarioService._total_usuarios_con_filtro') as mock_total:
             
             mock_case = MagicMock()
-            mock_case.obtener_filtros.return_value = {
+            mock_case.obtener_filtros_para_listar_usuarios.return_value = {
                 "exact_filters": {},
                 "ilike_filters": {},
                 "like_filters": {}
             }
             mock_fabrica.return_value = mock_case
             mock_get_multi.return_value = sample_usuarios_list[1:2]  # Simulate pagination
+            mock_total.return_value = len(sample_usuarios_list)
 
             # Act
-            result = await usuario_service.get_all(
+            result = await usuario_service.get_usuarios_con_paginacion(
                 usuario_actual=mock_usuario_actual,
                 skip=1,
                 limit=1
             )
 
             # Assert
-            assert len(result) == 1
+            assert len(result.data) == 1
+            assert result.total == len(sample_usuarios_list)
             mock_get_multi.assert_called_once_with(
                 usuario_service.db,
                 skip=1,
