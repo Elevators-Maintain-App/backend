@@ -66,6 +66,18 @@ async def reanudar_orden(
     await OrdenService(db).reanudar(orden, body)
     await db.commit()
 
+@router.post("/{orden_id}/validar", status_code=status.HTTP_204_NO_CONTENT)
+async def enviar_orden_a_validacion(
+    orden_id: UUID,
+    body: SeguimientoCreate = Body(...),
+    user=Depends(require_role("technician")),
+    db: AsyncSession = Depends(get_db),
+):
+    body.evento = EventoOrden.ENVIAR_A_VALIDACION
+    orden = await _get_orden(db, orden_id)
+    await OrdenService(db).enviar_a_validacion(orden, body)
+    await db.commit()
+
 
 @router.post("/{orden_id}/finalizar", status_code=status.HTTP_204_NO_CONTENT)
 async def finalizar_orden(
