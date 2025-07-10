@@ -19,11 +19,11 @@ class Settings(BaseSettings):
     db_name: str = os.getenv("DB_NAME", "postgres")
 
     # Notification settings
-    notification_email: str = os.getenv("NOTIFICATION_EMAIL")
-    email_password: str = os.getenv("EMAIL_PWD")
-    smtp_server: str = os.getenv("SMTP_SERVER")
-    smtp_port: str = os.getenv("SMTP_PORT")
-    email_timeout: int = int(os.getenv("EMAIL_TIMEOUT", 30))
+    notification_email: str = os.getenv("NOTIFICATION_EMAIL", "mock@email.com")
+    email_password: str = os.getenv("EMAIL_PWD", "mockpassword")
+    smtp_server: str = os.getenv("SMTP_SERVER", "smtp.mock.com")
+    smtp_port: str = os.getenv("SMTP_PORT", "587")
+    email_timeout: int = int(os.getenv("EMAIL_TIMEOUT", "30"))
 
     
     # Database settings - will be constructed based on environment
