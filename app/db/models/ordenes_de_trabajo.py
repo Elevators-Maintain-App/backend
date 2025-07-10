@@ -2,7 +2,7 @@
 
 from sqlalchemy import Column, Integer, Text, DECIMAL, Date, TIMESTAMP, func, String, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, foreign
 import uuid
 
 from app.db.session import Base
@@ -50,6 +50,22 @@ class OrdenDeTrabajo(Base):
         "EvidenciaMultimedia",
         back_populates="orden_de_trabajo",
         cascade="all, delete-orphan"
+    )
+
+    cliente = relationship(
+        "Usuario",
+        primaryjoin="OrdenDeTrabajo.cliente_id == foreign(Usuario.uid)",
+        lazy="joined",
+        uselist=False,
+        viewonly=True,
+    )
+
+    tecnico = relationship(
+        "Usuario",
+        primaryjoin="OrdenDeTrabajo.tecnico_id == foreign(Usuario.uid)",
+        lazy="joined",
+        uselist=False,
+        viewonly=True,
     )
 
     seguimientos = relationship("OrdenTrabajoSeguimiento", back_populates="orden", cascade="all, delete-orphan")

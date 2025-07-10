@@ -5,6 +5,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_, extract
 from sqlalchemy.orm import selectinload
+from app.schemas.dashboard.technician import DashboardTecnicoOut, OrdenEnCursoOut
 
 from app.db.models.ordenes_de_trabajo import OrdenDeTrabajo
 from app.db.models.usuarios import Usuario
@@ -183,3 +184,96 @@ class OrdenTrabajoService:
             estado="",      # Se obtendría de la relación
             observaciones=orden.observaciones or ""
         ) 
+    
+
+    async def get_dashboard_data(self, technician_uid: str, company_id, fecha_inicio: date, fecha_fin: date) -> DashboardTecnicoOut:
+        # Estados por categoría
+        estados_completadas = [4, 5]  # En validación, Cerrada
+        estados_pendientes = [1, 3, 6]  # Pendiente, En ejecución, En pausa
+
+        # Query base
+        filtro_base = and_(
+            OrdenDeTrabajo.tecnico_id == str(technician_uid),
+            OrdenDeTrabajo.company_id == str(company_id),
+            OrdenDeTrabajo.fecha >= fecha_inicio,
+            OrdenDeTrabajo.fecha <= fecha_fin,
+        )
+        
+        # 1. Total de órdenes programadas
+        total_stmt = select(func.count()).where(filtro_base)
+        total = (await self.db.execute(total_stmt)).scalar_one()
+
+        # 2. Conteo de órdenes completadas (en validación o cerradas)
+        completadas_stmt = select(func.count()).where(
+            and_(filtro_base, OrdenDeTrabajo.estado_id.in_(estados_completadas))
+        )
+        completadas = (await self.db.execute(completadas_stmt)).scalar_one()
+
+        # 3. Conteo de órdenes pendientes (pendiente, en ejecución o en pausa)
+        pendientes_stmt = select(func.count()).where(
+            and_(filtro_base, OrdenDeTrabajo.estado_id.in_(estados_pendientes))
+        )
+        pendientes = (await self.db.execute(pendientes_stmt)).scalar_one()
+
+        # 4. Lista de órdenes en curso
+        ordenes_stmt = (
+            select(OrdenDeTrabajo)
+            .where(
+                and_(
+                    filtro_base,
+                    OrdenDeTrabajo.estado_id.in_(estados_pendientes)
+                )
+            )
+            .options(
+                selectinload(OrdenDeTrabajo.unidad).selectinload(Unidad.proyecto),
+                selectinload(OrdenDeTrabajo.estado),
+                selectinload(OrdenDeTrabajo.tipo_orden),
+                selectinload(OrdenDeTrabajo.prioridad),
+                selectinload(OrdenDeTrabajo.cliente),
+                selectinload(OrdenDeTrabajo.tecnico),
+            )
+            .order_by(OrdenDeTrabajo.fecha.asc())
+        )
+        res = await self.db.execute(ordenes_stmt)
+
+        # Asignar prioridad de ordenamiento por estado
+        estado_prioridad = {
+            "En ejecución": 1,
+            "En pausa": 2,
+            "Pendiente": 3
+        }
+
+        ordenes = []
+        for o in res.scalars().all():
+            ordenes.append((
+                estado_prioridad.get(o.estado.nombre, 99),  # valor por defecto alto si no está en el dict
+                OrdenEnCursoOut(
+                    id=o.id,
+                    cliente=o.cliente.display_name if o.cliente else None,
+                    proyecto=o.unidad.proyecto.nombre,
+                    unidad=o.unidad.nombre,
+                    descripcion=o.descripcion,
+                    observaciones=o.observaciones or "",
+                    estado=o.estado.nombre,
+                    fecha_programada=o.fecha,
+                    prioridad=o.prioridad.nombre,
+                    tipo_orden=o.tipo_orden.nombre,
+                    tecnico=o.tecnico.display_name if o.tecnico else None
+                )
+            ))
+
+        # Ordenar por prioridad
+        ordenes.sort(key=lambda x: x[0])
+        ordenes_final = [o[1] for o in ordenes]
+
+        cumplimiento = completadas / total if total else 0.0
+
+        return DashboardTecnicoOut(
+            ordenes_programadas=total,
+            ordenes_completadas=completadas,
+            ordenes_pendientes=pendientes,
+            cumplimiento_decimal=round(cumplimiento, 4),
+            cumplimiento_str = f"{int(cumplimiento * 100)}%",
+            cumplimiento_label=f"{completadas} órdenes completadas de {total} órdenes totales",
+            ordenes_en_curso=ordenes_final
+        )

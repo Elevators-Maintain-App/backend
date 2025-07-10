@@ -1,12 +1,16 @@
 # app/api/routes/dashboard.py
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Body, status, Query, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.session import get_db
 from app.services.dashboard import DashboardService
 from app.auth.firebase import require_role
-from app.schemas.dashboard import SuperAdminDashboard, AdminDashboard, SupervisorDashboard, ClienteDashboard, TechnicianDashboard
+from app.schemas.dashboard import SuperAdminDashboard, AdminDashboard, SupervisorDashboard, ClienteDashboard, TechnicianDashboard, DashboardTecnicoOut, SuperAdminDashboard
+from app.schemas.comunes.shared import DateRangeInput
 from app.auth.firebase import get_current_firebase_user
 from app.auth.firebase import FirebaseUser
+from app.services.orden_trabajo import OrdenTrabajoService
+from datetime import date, timedelta
+from typing import Optional
 
 router = APIRouter()
 
@@ -49,6 +53,33 @@ async def get_supervisor_dashboard(db: AsyncSession = Depends(get_db), current_u
 async def get_tecnico_dashboard(db: AsyncSession = Depends(get_db), current_user: FirebaseUser = Depends(get_current_firebase_user)):
     service = DashboardService(db)
     return await service.get_tecnico_dashboard(current_user)
+
+#Endpoint para el dashboard del tecnico completo
+
+@router.get(
+    "/technician",
+    response_model=DashboardTecnicoOut,
+    summary="Dashboard técnico con métricas y órdenes en curso"
+)
+async def dashboard_tecnico(
+    fecha_inicio: Optional[date] = Query(None),
+    fecha_fin: Optional[date] = Query(None),
+    user=Depends(require_role("technician")),
+    db: AsyncSession = Depends(get_db)
+):
+    today = date.today()
+    fecha_inicio = fecha_inicio or (today - timedelta(days=7))
+    fecha_fin = fecha_fin or today
+
+    if fecha_inicio > fecha_fin:
+        raise HTTPException(status_code=400, detail="La fecha de inicio no puede ser posterior a la fecha final.")
+
+    return await OrdenTrabajoService(db).get_dashboard_data(
+        technician_uid=user.uid,
+        company_id=user.company_id,
+        fecha_inicio=fecha_inicio,
+        fecha_fin=fecha_fin
+    )
 
 
 @router.get(
