@@ -69,7 +69,7 @@ async def reanudar_orden(
 @router.post("/{orden_id}/validar", status_code=status.HTTP_204_NO_CONTENT)
 async def enviar_orden_a_validacion(
     orden_id: UUID,
-    body: SeguimientoCreate = Body(...),
+    body: FinalizarOrdenPayload = Body(...),
     user=Depends(require_role("technician")),
     db: AsyncSession = Depends(get_db),
 ):
@@ -82,8 +82,8 @@ async def enviar_orden_a_validacion(
 @router.post("/{orden_id}/finalizar", status_code=status.HTTP_204_NO_CONTENT)
 async def finalizar_orden(
     orden_id: UUID,
-    body: FinalizarOrdenPayload = Body(...),
-    user=Depends(require_role("technician")),
+    body: SeguimientoCreate = Body(...),
+    user=Depends(require_role("supervisor")),  # asegúrate que tenga rol correcto
     db: AsyncSession = Depends(get_db),
 ):
     body.evento = EventoOrden.FIN
