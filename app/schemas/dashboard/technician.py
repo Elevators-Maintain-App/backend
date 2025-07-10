@@ -21,7 +21,7 @@ class OrdenEnCursoOut(BaseModel):
     unidad: str
     descripcion: str
     observaciones: str
-    estado: Literal["Pendiente", "En ejecución", "En Pausa"]
+    estado: Literal["Pendiente", "En ejecución", "En Pausa", "En validación", "Cerrada"]
     fecha_programada: date
     prioridad: str
     tipo_orden: str

@@ -15,6 +15,7 @@ class EventoOrden(str, Enum):
     REANUDACION = "REANUDACION"
     FIN = "FIN"
     PASO_COMPLETADO = "PASO_COMPLETADO"
+    ENVIAR_A_VALIDACION = "ENVIAR_A_VALIDACION"
 
 
 class SeguimientoCreate(BaseModel):

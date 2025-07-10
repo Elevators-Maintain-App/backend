@@ -218,12 +218,7 @@ class OrdenTrabajoService:
         # 4. Lista de órdenes en curso
         ordenes_stmt = (
             select(OrdenDeTrabajo)
-            .where(
-                and_(
-                    filtro_base,
-                    OrdenDeTrabajo.estado_id.in_(estados_pendientes)
-                )
-            )
+            .where(filtro_base)
             .options(
                 selectinload(OrdenDeTrabajo.unidad).selectinload(Unidad.proyecto),
                 selectinload(OrdenDeTrabajo.estado),
@@ -239,8 +234,10 @@ class OrdenTrabajoService:
         # Asignar prioridad de ordenamiento por estado
         estado_prioridad = {
             "En ejecución": 1,
-            "En pausa": 2,
-            "Pendiente": 3
+            "En Pausa": 2,
+            "Pendiente": 3,
+            "En validación": 4,
+            "Cerrada": 5,
         }
 
         ordenes = []
