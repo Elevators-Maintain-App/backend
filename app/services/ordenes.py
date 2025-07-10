@@ -50,12 +50,8 @@ class OrdenService:
         orden.estado_id = EstadoOrdenID.EN_EJECUCION
         await self._add_tracking(orden, datos)
 
-    async def enviar_a_validacion(self, orden: OrdenDeTrabajo, datos: SeguimientoCreate) -> None:
+    async def enviar_a_validacion(self, orden: OrdenDeTrabajo, datos: FinalizarOrdenPayload) -> None:
         orden.estado_id = EstadoOrdenID.EN_VALIDACION
-        await self._add_tracking(orden, datos)
-
-    async def finalizar(self, orden: OrdenDeTrabajo, datos: FinalizarOrdenPayload) -> None:
-        orden.estado_id = EstadoOrdenID.COMPLETADA
         await self._add_tracking(orden, datos)
         for checklist in orden.checklists:
             if checklist.hora_salida is None:
@@ -64,6 +60,10 @@ class OrdenService:
                 checklist.firma_tecnico = datos.firma_tecnico
             if datos.firma_cliente:
                 checklist.firma_cliente = datos.firma_cliente
+
+    async def finalizar(self, orden: OrdenDeTrabajo, datos: SeguimientoCreate) -> None:
+        orden.estado_id = EstadoOrdenID.COMPLETADA
+        await self._add_tracking(orden, datos)
 
     async def paso_completado(
         self, orden: OrdenDeTrabajo, item_id: UUID, datos: SeguimientoCreate
