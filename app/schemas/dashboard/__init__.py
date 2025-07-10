@@ -1,7 +1,7 @@
 from .admin import AdminDashboard
 from .supervisor import SupervisorDashboard
 from .cliente import ClienteDashboard
-from .technician import TechnicianDashboard
+from .technician import TechnicianDashboard, OrdenEnCursoOut, DashboardTecnicoOut
 from .super_admin import SuperAdminDashboard
 
 __all__ = [
@@ -9,5 +9,7 @@ __all__ = [
     "SupervisorDashboard",
     "ClienteDashboard",
     "TechnicianDashboard",
-    "SuperAdminDashboard"
+    "SuperAdminDashboard",
+    "OrdenEnCursoOut",
+    "DashboardTecnicoOut"
 ]

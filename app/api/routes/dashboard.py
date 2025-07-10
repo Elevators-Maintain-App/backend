@@ -1,12 +1,14 @@
 # app/api/routes/dashboard.py
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Body, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.session import get_db
 from app.services.dashboard import DashboardService
 from app.auth.firebase import require_role
-from app.schemas.dashboard import SuperAdminDashboard, AdminDashboard, SupervisorDashboard, ClienteDashboard, TechnicianDashboard
+from app.schemas.dashboard import SuperAdminDashboard, AdminDashboard, SupervisorDashboard, ClienteDashboard, TechnicianDashboard, DashboardTecnicoOut, SuperAdminDashboard
+from app.schemas.comunes.shared import DateRangeInput
 from app.auth.firebase import get_current_firebase_user
 from app.auth.firebase import FirebaseUser
+from app.services.orden_trabajo import OrdenTrabajoService
 
 router = APIRouter()
 
@@ -49,6 +51,22 @@ async def get_supervisor_dashboard(db: AsyncSession = Depends(get_db), current_u
 async def get_tecnico_dashboard(db: AsyncSession = Depends(get_db), current_user: FirebaseUser = Depends(get_current_firebase_user)):
     service = DashboardService(db)
     return await service.get_tecnico_dashboard(current_user)
+
+#Endpoint para el dashboard del tecnico completo
+
+@router.post(
+    "/technician",
+    response_model=DashboardTecnicoOut,
+    summary="Dashboard técnico con métricas y órdenes en curso"
+)
+async def dashboard_tecnico(
+    payload: DateRangeInput = Body(...),
+    user=Depends(require_role("technician")),
+    db: AsyncSession = Depends(get_db)
+):
+    return await OrdenTrabajoService(db).get_dashboard_data(
+        user.uid, user.company_id, payload.fecha_inicio, payload.fecha_fin
+    )
 
 
 @router.get(
