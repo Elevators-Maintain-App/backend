@@ -73,7 +73,7 @@ async def enviar_orden_a_validacion(
     user=Depends(require_role("technician")),
     db: AsyncSession = Depends(get_db),
 ):
-    body.evento = EventoOrden.ENVIAR_A_VALIDACION
+    body.evento = EventoOrden.PASO_COMPLETADO
     orden = await _get_orden(db, orden_id)
     await OrdenService(db).enviar_a_validacion(orden, body)
     await db.commit()
