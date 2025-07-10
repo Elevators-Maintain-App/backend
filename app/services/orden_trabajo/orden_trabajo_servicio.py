@@ -236,7 +236,7 @@ class OrdenTrabajoService:
             "En ejecución": 1,
             "En Pausa": 2,
             "Pendiente": 3,
-            "En validación": 4,
+            "En Validación": 4,
             "Cerrada": 5,
         }
 
