@@ -1,3 +1,5 @@
+#app/services/orden_trabajo/orden_trabajo_servicio.py
+
 from typing import List, Optional
 from uuid import UUID
 from datetime import datetime, date
@@ -6,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_, extract
 from sqlalchemy.orm import selectinload
 from app.schemas.dashboard.technician import DashboardTecnicoOut, OrdenEnCursoOut
+from app.schemas.dashboard.supervisor import OrdenResumenSupervisor, DashboardSupervisorOut
 
 from app.db.models.ordenes_de_trabajo import OrdenDeTrabajo
 from app.db.models.usuarios import Usuario
@@ -185,7 +188,7 @@ class OrdenTrabajoService:
             observaciones=orden.observaciones or ""
         ) 
     
-
+    # Dashboard Técnico
     async def get_dashboard_data(self, technician_uid: str, company_id, fecha_inicio: date, fecha_fin: date) -> DashboardTecnicoOut:
         # Estados por categoría
         estados_completadas = [4, 5]  # En validación, Cerrada
@@ -273,4 +276,100 @@ class OrdenTrabajoService:
             cumplimiento_str = f"{int(cumplimiento * 100)}%",
             cumplimiento_label=f"{completadas} órdenes completadas de {total} órdenes totales",
             ordenes_en_curso=ordenes_final
+        )
+    
+    # Dashboard Supervisor
+    async def get_dashboard_data_supervisor(
+        self,
+        supervisor_uid: str,
+        company_id: UUID,
+        fecha_inicio: date,
+        fecha_fin: date
+    ) -> DashboardSupervisorOut:
+        estados_cerradas = [4]
+        estados_por_validar = [5]
+        estados_pendientes = [2]
+        estados_ejecucion = [1]
+        estados_atrasadas = [6]
+
+        filtro_base = and_(
+            OrdenDeTrabajo.supervisor_id == supervisor_uid,
+            OrdenDeTrabajo.company_id == company_id,
+            OrdenDeTrabajo.fecha >= fecha_inicio,
+            OrdenDeTrabajo.fecha <= fecha_fin
+        )
+
+        # Query con relaciones
+        ordenes_stmt = (
+            select(OrdenDeTrabajo)
+            .where(filtro_base)
+            .options(
+                selectinload(OrdenDeTrabajo.unidad).selectinload(Unidad.proyecto),
+                selectinload(OrdenDeTrabajo.estado),
+                selectinload(OrdenDeTrabajo.tipo_orden),
+                selectinload(OrdenDeTrabajo.prioridad),
+                selectinload(OrdenDeTrabajo.cliente),
+                selectinload(OrdenDeTrabajo.tecnico)
+            )
+            .order_by(OrdenDeTrabajo.fecha.asc())
+        )
+        res = await self.db.execute(ordenes_stmt)
+
+        estado_prioridad = {
+            "En ejecución": 1,
+            "En Pausa": 2,
+            "Pendiente": 3,
+            "En Validación": 4,
+            "Cerrada": 5
+        }
+
+        ordenes_raw = res.scalars().all()
+        total = len(ordenes_raw)
+        cerradas = por_validar = pendientes = en_ejecucion = atrasadas = 0
+        ordenes: List[tuple[int, OrdenResumenSupervisor]] = []
+
+        for o in ordenes_raw:
+            estado = o.estado.nombre if o.estado else "—"
+
+            match o.estado_id:
+                case 5: cerradas += 1          # Cerrada
+                case 4: por_validar += 1       # En Validación
+                case 1: pendientes += 1        # Pendiente
+                case 3: en_ejecucion += 1      # En ejecución
+                case 6: atrasadas += 1         # En Pausa
+
+            ordenes.append((
+                estado_prioridad.get(estado, 99),
+                OrdenResumenSupervisor(
+                    id=o.id,
+                    cliente=o.cliente.display_name if o.cliente else "—",
+                    tecnico=o.tecnico.display_name if o.tecnico else "—",
+                    proyecto=o.unidad.proyecto.nombre if o.unidad and o.unidad.proyecto else "—",
+                    unidad=o.unidad.nombre if o.unidad else "—",
+                    descripcion=o.descripcion,
+                    observaciones=o.observaciones or "",
+                    estado=estado,
+                    fecha_programada=o.fecha,
+                    prioridad=o.prioridad.nombre if o.prioridad else "—",
+                    tipo_orden=o.tipo_orden.nombre if o.tipo_orden else "—"
+                )
+            ))
+
+        ordenes.sort(key=lambda x: x[0])
+        resumen_final = [o[1] for o in ordenes]
+
+        cumplimiento = cerradas
+        cumplimiento_pct = cumplimiento / total if total else 0.0
+
+        return DashboardSupervisorOut(
+            ordenes_programadas=total,
+            ordenes_cerradas=cerradas,
+            ordenes_por_validar=por_validar,
+            ordenes_pendientes=pendientes,
+            ordenes_en_ejecucion=en_ejecucion,
+            ordenes_atrasadas=atrasadas,
+            cumplimiento_decimal=round(cumplimiento_pct, 4),
+            cumplimiento_label=f"{cumplimiento} órdenes cerradas de {total} órdenes totales",
+            cumplimiento_str=f"{int(cumplimiento_pct * 100)}%",
+            ordenes=resumen_final
         )
