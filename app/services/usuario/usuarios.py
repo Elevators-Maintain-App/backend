@@ -83,22 +83,16 @@ class UsuarioService:
             "compania": compania,
             "tipo_documento": tipo_documento
         })
-
         # crear usuario en firebase
         usuario_firebase = await crear_usuario_firebase(usuario_firebase)
-        print("usuario_firebase", usuario_firebase)
         usuario_a_guardar: Usuario = None
-
         usuario_a_guardar = fabrica_de_usuarios.obtener_usuario_a_guardar({
                 "usuario_actual": usuario_actual,
                 "usuario_nuevo": usuario_in,
                 "firebase_uid": usuario_firebase.uid
             })
-        
-        await fabrica_de_usuarios.enviar_email_de_bienvenida(usuario_a_guardar.email, usuario_a_guardar.display_name, usuario_firebase.password)
-
         usuario_guardado = await usuario_crud.create(self.db, obj_in=usuario_a_guardar)
-
+        await fabrica_de_usuarios.enviar_email_de_bienvenida(usuario_a_guardar.email, usuario_a_guardar.display_name, usuario_firebase.password)
         return usuario_guardado
         
         
