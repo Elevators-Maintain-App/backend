@@ -23,6 +23,8 @@ class CompaniaService:
         """
         fabrica_de_companias = FabricaDeCompanias.get_compania_case(usuario_actual.rol)
         
+        print("compania_id", compania_id)
+        print("usuario_actual", usuario_actual.company_id)
         if not fabrica_de_companias.puede_ver_compania(usuario_actual, compania_id):
             raise ForbiddenException("No tienes permisos para consultar esta compañía")
         

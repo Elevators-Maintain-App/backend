@@ -7,16 +7,18 @@ from app.services.usuario.rol import RolService
 from app.services.compania import CompaniaService
 from app.services.usuario.nivel_tecnico import NivelTecnicoService
 from app.services.secundarios.pais import PaisService
-from app.auth.firebase import require_role
+from app.auth.firebase import require_role, get_current_firebase_user
 from app.db.repositories.tipos_documento import tipo_documento_crud
 from app.services.cliente import ClienteService
 
 router = APIRouter()
 
 @router.get("/roles", response_model=List[LovElemento])
-async def get_roles():
+async def get_roles(
+    usuario_actual=Depends(get_current_firebase_user)
+):
     service = RolService()
-    return await service.get_roles("superAdmin")
+    return await service.get_roles(usuario_actual.rol)
 
 @router.get("/companias",
            response_model=List[LovElemento],)

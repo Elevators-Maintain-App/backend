@@ -25,8 +25,8 @@ class AdminCase(BaseUsuario):
         if usuario_actual.rol not in [Rol.ADMIN]:
             raise HTTPException(status_code=403, detail="No tienes permisos para crear usuarios")
         
-        if usuario_nuevo.rol not in [Rol.TECHNICIAN, Rol.ADMIN, Rol.SUPER_ADMIN]:
-            raise HTTPException(status_code=403, detail="No tienes permisos para crear usuarios")
+        if usuario_nuevo.rol not in [Rol.TECHNICIAN, Rol.ADMIN, Rol.SUPERVISOR]:
+            raise HTTPException(status_code=403, detail="No tienes permisos para crear a este tipo de usuario")
         
         return self.mapear_usuario_dto_a_usuario_firebase(usuario_nuevo, compania, tipo_documento)
     
@@ -38,7 +38,7 @@ class AdminCase(BaseUsuario):
             if usuario_actual.rol not in [Rol.ADMIN]:
                 raise HTTPException(status_code=403, detail="No tienes permisos para crear usuarios")        
             
-            if usuario_nuevo.rol not in [Rol.TECHNICIAN, Rol.ADMIN, Rol.SUPER_ADMIN]:
+            if usuario_nuevo.rol not in [Rol.TECHNICIAN, Rol.ADMIN, Rol.SUPERVISOR]:
                 raise HTTPException(status_code=403, detail="No tienes permisos para crear usuarios")
             
             usuario = self.mapear_usuario_dto_a_usuario_create(usuario_nuevo, params["firebase_uid"])        

@@ -37,8 +37,8 @@ class AdminCompaniaCase(CompaniaCaseInterface):
         
     def puede_ver_compania(self, usuario_actual: Usuario, compania_id: str) -> bool:
         """Admin can only view their own company"""
-        return str(usuario_actual.company_id) == compania_id
+        return usuario_actual.company_id == compania_id
         
     def puede_gestionar_companias(self, usuario_actual: Usuario) -> bool:
         """Admin can only manage their own company"""
-        return True 
+        return False 
