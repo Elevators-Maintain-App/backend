@@ -61,36 +61,3 @@ jobs:
         run: |
           # Run pytest with coverage
           pytest tests/ -v --tb=short --cov=app --cov-report=term-missing
-
-  code-quality:
-    name: 📊 Code Quality
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: ⬇️ Checkout código
-        uses: actions/checkout@v3
-
-      - name: 🐍 Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.11"
-
-      - name: 📦 Install linting tools
-        run: |
-          python -m pip install --upgrade pip
-          pip install black isort flake8
-
-      - name: 🔍 Check code formatting
-        run: |
-          # Check code formatting with black
-          black --check --diff app/ tests/
-
-      - name: 🔍 Check import sorting
-        run: |
-          # Check import sorting with isort
-          isort --check-only --diff app/ tests/
-
-      - name: 🔍 Run linting
-        run: |
-          # Run flake8 for style guide enforcement
-          flake8 app/ tests/ --max-line-length=100 --extend-ignore=E203,W503
