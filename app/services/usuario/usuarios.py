@@ -22,15 +22,7 @@ class UsuarioService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_usuarios_con_paginacion(
-            self,
-            usuario_actual: Usuario,
-            skip: Optional[int] = 0,
-            limit: Optional[int] = 20,
-            search: Optional[str] = None,
-            company_id: Optional[str] = None,
-            rol: Optional[str] = None
-        ) -> PaginacionResponse[UsuarioOut]:
+    async def get_usuarios_con_paginacion(self, usuario_actual: Usuario, skip: Optional[int], limit: Optional[int] = None, search: Optional[str] = None, company_id: Optional[str] = None, rol: Optional[str] = None) -> PaginacionResponse[UsuarioOut]:
         try:
             fabrica_de_usuarios = FabricaDeUsuarios.get_user_case(usuario_actual.rol)
             filtros = fabrica_de_usuarios.obtener_filtros_para_listar_usuarios(usuario_actual, search, company_id, rol)

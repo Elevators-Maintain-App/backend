@@ -25,10 +25,9 @@ class TestSuperAdminCase:
             email="newuser@example.com",
             display_name="New User",
             rol=Rol.ADMIN,
-            company_id="12345678-1234-5678-9012-123456789abc",
-            document_id="123456789",
-            document_type_id=1,
-            phone_number="+1234567890"
+            company_id="test-company-id",
+            document_type_id="doc-type-id",
+            document="123456789"
         )
 
     @pytest.fixture
@@ -146,7 +145,7 @@ class TestSuperAdminCase:
         rol = "ADMIN"
 
         # Act
-        result = super_admin_case.obtener_filtros_para_listar_usuarios(
+        result = super_admin_case.obtener_filtros(
             mock_usuario_actual, 
             search, 
             company_id, 
@@ -172,7 +171,7 @@ class TestSuperAdminCase:
         search = "jane"
 
         # Act
-        result = super_admin_case.obtener_filtros_para_listar_usuarios(
+        result = super_admin_case.obtener_filtros(
             mock_usuario_actual, 
             search, 
             None, 
@@ -196,7 +195,7 @@ class TestSuperAdminCase:
         rol = "TECHNICAL"
 
         # Act
-        result = super_admin_case.obtener_filtros_para_listar_usuarios(
+        result = super_admin_case.obtener_filtros(
             mock_usuario_actual, 
             None, 
             company_id, 
@@ -217,7 +216,7 @@ class TestSuperAdminCase:
     def test_obtener_filtros_no_parameters(self, super_admin_case, mock_usuario_actual):
         """Test obtener_filtros with no search parameters."""
         # Act
-        result = super_admin_case.obtener_filtros_para_listar_usuarios(
+        result = super_admin_case.obtener_filtros(
             mock_usuario_actual, 
             None, 
             None, 
@@ -235,7 +234,7 @@ class TestSuperAdminCase:
     def test_obtener_filtros_empty_strings(self, super_admin_case, mock_usuario_actual):
         """Test obtener_filtros with empty string parameters."""
         # Act
-        result = super_admin_case.obtener_filtros_para_listar_usuarios(
+        result = super_admin_case.obtener_filtros(
             mock_usuario_actual, 
             "", 
             "", 
@@ -256,7 +255,7 @@ class TestSuperAdminCase:
         search = "  john doe  "
 
         # Act
-        result = super_admin_case.obtener_filtros_para_listar_usuarios(
+        result = super_admin_case.obtener_filtros(
             mock_usuario_actual, 
             search, 
             None, 
