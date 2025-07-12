@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.session import get_db
 from app.services.dashboard import DashboardService
 from app.auth.firebase import require_role
-from app.schemas.dashboard import SuperAdminDashboard, AdminDashboard, SupervisorDashboard, ClienteDashboard, TechnicianDashboard, DashboardTecnicoOut, SuperAdminDashboard
+from app.schemas.dashboard import SuperAdminDashboard, AdminDashboard, SupervisorDashboard, ClienteDashboard, TechnicianDashboard, DashboardTecnicoOut, SuperAdminDashboard, OrdenEnCursoOut, DashboardSupervisorOut
 from app.schemas.comunes.shared import DateRangeInput
 from app.auth.firebase import get_current_firebase_user
 from app.auth.firebase import FirebaseUser
@@ -43,6 +43,34 @@ async def get_admin_dashboard(db: AsyncSession = Depends(get_db), current_user: 
 async def get_supervisor_dashboard(db: AsyncSession = Depends(get_db), current_user: FirebaseUser = Depends(get_current_firebase_user)):
     service = DashboardService(db)
     return await service.get_supervisor_dashboard(current_user)
+
+#Endpoint para el dashboard del tecnico completo
+
+@router.get(
+    "/supervisorV2",
+    response_model=DashboardSupervisorOut,
+    summary="Dashboard del supervisor con métricas y listado de órdenes"
+)
+async def dashboard_supervisor(
+    fecha_inicio: Optional[date] = Query(None),
+    fecha_fin: Optional[date] = Query(None),
+    user=Depends(require_role("supervisor")),
+    db: AsyncSession = Depends(get_db)
+):
+    today = date.today()
+    fecha_inicio = fecha_inicio or (today - timedelta(days=7))
+    fecha_fin = fecha_fin or today
+
+    if fecha_inicio > fecha_fin:
+        raise HTTPException(status_code=400, detail="La fecha de inicio no puede ser posterior a la fecha final.")
+
+    return await OrdenTrabajoService(db).get_dashboard_data_supervisor(
+        supervisor_uid=user.uid,
+        company_id=user.company_id,
+        fecha_inicio=fecha_inicio,
+        fecha_fin=fecha_fin
+    )
+
 
 @router.get(
     "/tecnico",

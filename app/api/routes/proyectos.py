@@ -89,15 +89,15 @@ async def count_company_proyectos(
     total: int = result.scalar_one()
     return {"count": total}
 
-# 4) admin: lista proyectos de su compañía
+# 4) admin y supervisor: lista proyectos de su compañía
 @router.get(
     "/company/all",
     response_model=List[ProyectoListOut],
     status_code=status.HTTP_200_OK,
-    summary="(admin) Lista proyectos de su compañía"
+    summary="(admin, supervisor) Lista proyectos de su compañía"
 )
 async def list_company_proyectos(
-    user=Depends(require_role("admin")),
+    user=Depends(require_role("admin", "supervisor")),
     db: AsyncSession = Depends(get_db)
 ):
     proyectos = await ProyectoService(db).get_by_company(user.company_id)
