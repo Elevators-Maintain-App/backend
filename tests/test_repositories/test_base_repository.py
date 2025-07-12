@@ -6,25 +6,13 @@ from sqlalchemy.sql import Select
 
 from app.db.repositories.base import CRUDBaseRepository
 from app.db.models.usuarios import Usuario
-from app.db.session import Base
-from sqlalchemy import Column, String
-from sqlalchemy.dialects.postgresql import UUID
-import uuid
 
 
-class TestModel(Base):
-    """Test model for repository testing."""
-    __tablename__ = 'test_models'
-    
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name = Column(String, nullable=True)
-    email = Column(String, nullable=True)
-    # Additional fields used in tests
-    status = Column(String, nullable=True)
-    company_id = Column(String, nullable=True)
-    display_name = Column(String, nullable=True)
-    description = Column(String, nullable=True)
-    rol = Column(String, nullable=True)
+class TestModel:
+    """Mock model for testing purposes."""
+    id = "test-id"
+    name = "test-name"
+    email = "test@example.com"
 
 
 class TestCRUDBaseRepository:
@@ -38,24 +26,9 @@ class TestCRUDBaseRepository:
     @pytest.fixture
     def mock_result(self):
         """Create a mock result object."""
-        # Create test model instances with proper attributes
-        test_model1 = TestModel()
-        test_model1.id = "test-id-1"
-        test_model1.name = "test-name-1"
-        test_model1.email = "test1@example.com"
-        
-        test_model2 = TestModel()
-        test_model2.id = "test-id-2"
-        test_model2.name = "test-name-2"
-        test_model2.email = "test2@example.com"
-        
-        # Create properly configured mock result
-        mock_scalars = MagicMock()
-        mock_scalars.first.return_value = test_model1
-        mock_scalars.all.return_value = [test_model1, test_model2]
-        
-        result = MagicMock()
-        result.scalars.return_value = mock_scalars
+        result = AsyncMock()
+        result.scalars.return_value.first.return_value = TestModel()
+        result.scalars.return_value.all.return_value = [TestModel(), TestModel()]
         return result
 
     @pytest.mark.asyncio
@@ -76,11 +49,8 @@ class TestCRUDBaseRepository:
     async def test_get_not_found(self, repository, mock_db_session):
         """Test get operation when record is not found."""
         # Arrange
-        mock_scalars = MagicMock()
-        mock_scalars.first.return_value = None
-        
-        mock_result = MagicMock()
-        mock_result.scalars.return_value = mock_scalars
+        mock_result = AsyncMock()
+        mock_result.scalars.return_value.first.return_value = None
         mock_db_session.execute.return_value = mock_result
 
         # Act
@@ -222,7 +192,7 @@ class TestCRUDBaseRepository:
         with pytest.raises(Exception) as exc_info:
             await repository.create(mock_db_session, mock_obj_in)
         
-        assert "Error al crear TestModel" in str(exc_info.value.detail)
+        assert "Error al crear usuario" in str(exc_info.value.detail)
 
     @pytest.mark.asyncio
     async def test_update_with_dict(self, repository, mock_db_session):
