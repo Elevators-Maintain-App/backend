@@ -7,7 +7,6 @@ class RolService:
     async def get_roles(current_role: Rol | None = None) -> List[LovElemento]:
         """Get all available roles"""
         roles = []
-        print(current_role)
         if current_role == Rol.SUPER_ADMIN:
             roles = [
                 {"id": "superAdmin", "name": "Super admin"},
