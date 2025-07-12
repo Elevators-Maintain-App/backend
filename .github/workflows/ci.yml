@@ -1,59 +1,63 @@
-name: CI - CD
+name: CI - Tests
 
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
+    types: [opened, synchronize, reopened]
 
 jobs:
-  build:
-    name: 🐳 Build & Push Docker
+  test:
+    name: 🧪 Run Tests
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:14-alpine
+        env:
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_USER: test_user
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
 
     steps:
       - name: ⬇️ Checkout código
         uses: actions/checkout@v3
 
-      - name: 🔐 Configurar GCP
-        uses: ./.github/actions/setup-gcp
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v4
         with:
-          gpc_credentials: ${{ secrets.VERTIONE_APPLICATION_CREDENTIALS }}
-          gpc_project_id: ${{ secrets.VERTIONE_PROJECT_ID }}
+          python-version: "3.11"
 
-      - name: 🐳 Construir y subir imagen Docker
-        env:
-          GOOGLE_PROJECT: ${{ secrets.VERTIONE_PROJECT_ID }}
+      - name: 📦 Install dependencies
         run: |
-          gcloud auth configure-docker us-central1-docker.pkg.dev
-          IMAGE=us-central1-docker.pkg.dev/${{ secrets.VERTIONE_PROJECT_ID }}/artifact-registry-vertione/api
-          docker build -t $IMAGE .
-          docker push $IMAGE
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-  deploy:
-    name: 🚀 Deploy
-    runs-on: ubuntu-latest
-    needs: build
-    if: github.event_name == 'push'
-
-    steps:
-      - name: ⬇️ Checkout código
-        uses: actions/checkout@v3
-
-      - name: 🔐 Configurar GCP
-        uses: ./.github/actions/setup-gcp
-        with:
-          gpc_credentials: ${{ secrets.VERTIONE_APPLICATION_CREDENTIALS }}
-          gpc_project_id: ${{ secrets.VERTIONE_PROJECT_ID }}
-
-      - name: 🚀 Desplegar imagen Docker
+      - name: 🔧 Set up test environment
         env:
-          GOOGLE_PROJECT: ${{ secrets.VERTIONE_PROJECT_ID }}
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
+          ENVIRONMENT: test
+          CLOUD_PROJECT_ID: test-project
+          FIREBASE_SERVICE_ACCOUNT_B64: dGVzdA==
         run: |
-          gcloud run deploy vertione \
-            --image=us-central1-docker.pkg.dev/${{ secrets.VERTIONE_PROJECT_ID }}/artifact-registry-vertione/api \
-            --platform=managed \
-            --region=us-central1 \
-            --allow-unauthenticated \
-            --max-instances=2 \
-            --set-env-vars="DATABASE_URL=${{ secrets.DATABASE_URL }},CLOUD_PROJECT_ID=${{ secrets.CLOUD_PROJECT_ID }},FIREBASE_SERVICE_ACCOUNT_B64=${{ secrets.FIREBASE_CREDENTIALS }}",ENVIRONMENT=production
+          # Create test environment file
+          echo "DATABASE_URL=$DATABASE_URL" >> .env.test
+          echo "ENVIRONMENT=$ENVIRONMENT" >> .env.test
+          echo "CLOUD_PROJECT_ID=$CLOUD_PROJECT_ID" >> .env.test
+          echo "FIREBASE_SERVICE_ACCOUNT_B64=$FIREBASE_SERVICE_ACCOUNT_B64" >> .env.test
+
+      - name: 🚀 Run tests
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
+          ENVIRONMENT: test
+          CLOUD_PROJECT_ID: test-project
+          FIREBASE_SERVICE_ACCOUNT_B64: dGVzdA==
+        run: |
+          # Run pytest with coverage
+          pytest tests/ -v --tb=short --cov=app --cov-report=term-missing

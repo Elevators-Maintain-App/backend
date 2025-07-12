@@ -1,0 +1,131 @@
+name: Deploy - Cloud Run
+
+on:
+  repository_dispatch:
+    types: [deploy-image]
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Image tag to deploy"
+        required: true
+        type: string
+      force_deploy:
+        description: "Force deployment (skip checks)"
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  deploy:
+    name: 🚀 Deploy to Cloud Run
+    runs-on: ubuntu-latest
+    # environment: production  # Uncomment if you have a production environment configured in GitHub
+
+    steps:
+      - name: ⬇️ Checkout código
+        uses: actions/checkout@v3
+
+      - name: 🔐 Configurar GCP
+        uses: ./.github/actions/setup-gcp
+        with:
+          gpc_credentials: ${{ secrets.VERTIONE_APPLICATION_CREDENTIALS }}
+          gpc_project_id: ${{ secrets.VERTIONE_PROJECT_ID }}
+
+      - name: 📥 Download build artifacts
+        if: github.event_name == 'repository_dispatch'
+        uses: actions/download-artifact@v3
+        with:
+          name: build-info
+          path: artifacts/
+
+      - name: 🏷️ Set image tag
+        id: image-info
+        run: |
+          if [ "${{ github.event_name }}" == "repository_dispatch" ]; then
+            IMAGE_TAG="${{ github.event.client_payload.image_tag }}"
+            # Try to get image URL from client payload first, then from artifacts, then construct it
+            if [ -n "${{ github.event.client_payload.image_url }}" ]; then
+              IMAGE_URL="${{ github.event.client_payload.image_url }}"
+            elif [ -f artifacts/image-url.txt ]; then
+              IMAGE_URL=$(cat artifacts/image-url.txt)
+            else
+              IMAGE_URL="us-central1-docker.pkg.dev/${{ secrets.VERTIONE_PROJECT_ID }}/artifact-registry-vertione/api:${IMAGE_TAG}"
+            fi
+          else
+            IMAGE_TAG="${{ inputs.image_tag }}"
+            IMAGE_URL="us-central1-docker.pkg.dev/${{ secrets.VERTIONE_PROJECT_ID }}/artifact-registry-vertione/api:${IMAGE_TAG}"
+          fi
+
+          echo "image-tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
+          echo "image-url=${IMAGE_URL}" >> $GITHUB_OUTPUT
+          echo "Deploying image: ${IMAGE_URL}"
+
+      - name: 🔍 Verify image exists
+        if: ${{ !inputs.force_deploy }}
+        run: |
+          echo "Verificando que la imagen existe en el registro..."
+          gcloud container images describe ${{ steps.image-info.outputs.image-url }}
+
+      - name: 🌐 Deploy to Cloud Run
+        env:
+          GOOGLE_PROJECT: ${{ secrets.VERTIONE_PROJECT_ID }}
+          IMAGE_URL: ${{ steps.image-info.outputs.image-url }}
+        run: |
+          echo "Desplegando imagen: ${IMAGE_URL}"
+
+          gcloud run deploy vertione \
+            --image="${IMAGE_URL}" \
+            --platform=managed \
+            --region=us-central1 \
+            --allow-unauthenticated \
+            --max-instances=2 \
+            --memory=1Gi \
+            --cpu=1 \
+            --timeout=300 \
+            --concurrency=80 \
+            --set-env-vars="DATABASE_URL=${{ secrets.DATABASE_URL }},CLOUD_PROJECT_ID=${{ secrets.CLOUD_PROJECT_ID }},FIREBASE_SERVICE_ACCOUNT_B64=${{ secrets.FIREBASE_CREDENTIALS }},ENVIRONMENT=production" \
+            --labels="version=${{ steps.image-info.outputs.image-tag }},deployed-by=github-actions"
+
+      - name: 🌐 Get service URL
+        id: service-url
+        run: |
+          SERVICE_URL=$(gcloud run services describe vertione --region=us-central1 --format='value(status.url)')
+          echo "url=${SERVICE_URL}" >> $GITHUB_OUTPUT
+          echo "Service deployed at: ${SERVICE_URL}"
+
+      - name: 🔍 Health check
+        run: |
+          echo "Realizando health check del servicio..."
+          SERVICE_URL=${{ steps.service-url.outputs.url }}
+
+          # Wait for service to be ready
+          sleep 30
+
+          # Simple health check
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "${SERVICE_URL}/health" || echo "000")
+
+          if [ "$HTTP_CODE" == "200" ]; then
+            echo "✅ Health check passed! Service is responding."
+          else
+            echo "❌ Health check failed. HTTP code: $HTTP_CODE"
+            echo "Service may still be starting up..."
+          fi
+
+      - name: 📝 Deployment summary
+        run: |
+          cat << EOF >> $GITHUB_STEP_SUMMARY
+          ## 🚀 Deployment Successful
+
+          **Service**: vertione
+          **Image**: \`${{ steps.image-info.outputs.image-url }}\`
+          **Region**: us-central1
+          **URL**: ${{ steps.service-url.outputs.url }}
+          **Deployed at**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+
+          ### 🔧 Configuration
+          - Max instances: 2
+          - Memory: 1Gi
+          - CPU: 1
+          - Timeout: 300s
+          - Concurrency: 80
+          EOF

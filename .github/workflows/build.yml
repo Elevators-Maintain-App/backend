@@ -1,0 +1,84 @@
+name: Build - Docker Image
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    name: 🐳 Build & Push Docker
+    runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.image-tag.outputs.tag }}
+      image-url: ${{ steps.image-tag.outputs.full-image }}
+
+    steps:
+      - name: ⬇️ Checkout código
+        uses: actions/checkout@v3
+
+      - name: 🔐 Configurar GCP
+        uses: ./.github/actions/setup-gcp
+        with:
+          gpc_credentials: ${{ secrets.VERTIONE_APPLICATION_CREDENTIALS }}
+          gpc_project_id: ${{ secrets.VERTIONE_PROJECT_ID }}
+
+      - name: 🏷️ Generate image tag
+        id: image-tag
+        run: |
+          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+          SHORT_SHA=${GITHUB_SHA::8}
+          TAG="${TIMESTAMP}-${SHORT_SHA}"
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "full-image=us-central1-docker.pkg.dev/${{ secrets.VERTIONE_PROJECT_ID }}/artifact-registry-vertione/api:${TAG}" >> $GITHUB_OUTPUT
+
+      - name: 🐳 Construir y subir imagen Docker
+        env:
+          GOOGLE_PROJECT: ${{ secrets.VERTIONE_PROJECT_ID }}
+          IMAGE_TAG: ${{ steps.image-tag.outputs.tag }}
+        run: |
+          # Configure Docker to use gcloud as credential helper
+          gcloud auth configure-docker us-central1-docker.pkg.dev
+
+          # Build the image with multiple tags
+          BASE_IMAGE=us-central1-docker.pkg.dev/${{ secrets.VERTIONE_PROJECT_ID }}/artifact-registry-vertione/api
+
+          docker build -t ${BASE_IMAGE}:${IMAGE_TAG} -t ${BASE_IMAGE}:latest .
+
+          # Push both tags
+          docker push ${BASE_IMAGE}:${IMAGE_TAG}
+          docker push ${BASE_IMAGE}:latest
+
+          # Output the image URL for the next workflow
+          echo "Built and pushed image: ${BASE_IMAGE}:${IMAGE_TAG}"
+
+      - name: 💾 Save image info for deployment
+        run: |
+          mkdir -p artifacts
+          echo "${{ steps.image-tag.outputs.full-image }}" > artifacts/image-url.txt
+          echo "${{ steps.image-tag.outputs.tag }}" > artifacts/image-tag.txt
+
+      - name: 📤 Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-info
+          path: artifacts/
+          retention-days: 7
+
+  notify-deploy:
+    name: 🔔 Trigger Deploy
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: 🚀 Dispatch deployment workflow
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          event-type: deploy-image
+          client-payload: |
+            {
+              "image_tag": "${{ needs.build.outputs.image-tag }}",
+              "image_url": "${{ needs.build.outputs.image-url }}",
+              "commit_sha": "${{ github.sha }}",
+              "ref": "${{ github.ref }}"
+            }
