@@ -22,47 +22,6 @@ from app.core.config import settings
 
 router = APIRouter()
 
-@router.get("/send-email")
-async def send_email():
-    """Endpoint de prueba para enviar notificaciones por email usando template HTML."""
-    try:
-        # Crear servicio auto-configurado (lee desde variables de entorno)
-        notificacion_service = NotificacionService(TipoNotificacion.EMAIL)
-        
-        # Verificar si email está disponible
-        if not notificacion_service.is_canal_disponible(TipoNotificacion.EMAIL):
-            return {
-                "message": "Email not configured", 
-                "error": "Please configure NOTIFICATION_EMAIL and EMAIL_PWD environment variables"
-            }
-        
-        # Crear template manager para email profesional
-        template_manager = TemplateManager()
-        
-        # Crear notificación usando template HTML
-        notificacion = template_manager.create_notification_from_template(
-            template_name='bienvenida_usuario.html',
-            destinatarios=[
-                DestinatarioModel(
-                    email="ccdelgadop@gmail.com",
-                    nombre="Usuario de Prueba"
-                )
-            ],
-            asunto="Test Verti-one - Sistema de Notificaciones",
-            context={
-            }
-        )
-
-        resultado = await notificacion_service.enviar_notificacion(notificacion)
-        
-        if resultado.exito:
-            return {"message": "Email sent successfully", "details": resultado.mensaje}
-        else:
-            return {"message": "Email failed", "error": resultado.mensaje}
-            
-    except Exception as e:
-        return {"message": "Error sending email", "error": str(e)}
-
 @router.get("/{uid}", response_model=UsuarioOut)
 async def obtener_usuario(uid: str = Path(...), db: AsyncSession = Depends(get_db)):
     service = UsuarioService(db)

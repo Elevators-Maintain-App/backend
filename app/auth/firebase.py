@@ -49,6 +49,8 @@ def get_firestore_client():
 class UsuarioFirebaseCreate(BaseModel):
     company_id: UUID | None = None
     company_name: str | None = None
+    client_id: UUID | None = None
+    client_name: str | None = None
     display_name: str
     document_id: str | None = None
     document_type: str | None = None
@@ -56,7 +58,6 @@ class UsuarioFirebaseCreate(BaseModel):
     email: str
     photo_url: Optional[str] = None
     rol: Rol
-    cliente_id: UUID | None = None
     password: Optional[str] = None
 
 class FirebaseUser(UsuarioFirebaseCreate):
@@ -112,6 +113,8 @@ async def crear_usuario_firebase(usuario_dto: UsuarioFirebaseCreate, password: O
             "email": usuario_dto.email,
             "photo_url": usuario_dto.photo_url,
             "rol": usuario_dto.rol.value if hasattr(usuario_dto.rol, 'value') else str(usuario_dto.rol),
+            "client_id": str(usuario_dto.client_id) if usuario_dto.client_id else None,
+            "client_name": usuario_dto.client_name,
             "created_at": datetime.now(timezone.utc),
             "updated_at": datetime.now(timezone.utc),
             "is_active": True
@@ -132,6 +135,8 @@ async def crear_usuario_firebase(usuario_dto: UsuarioFirebaseCreate, password: O
             password=contraseña_temporal,
             photo_url=usuario_dto.photo_url,
             rol=usuario_dto.rol,
+            client_id=usuario_dto.client_id,
+            client_name=usuario_dto.client_name,
         )
         
     except firebase_auth.EmailAlreadyExistsError as e:

@@ -15,6 +15,7 @@ class UsuarioBase(BaseModel):
     email: str = Field(..., description="Correo electrónico")
     phone_number: str = Field(..., description="Número de teléfono")
     rol: Rol = Field(..., description="Rol del usuario")
+    client_id: Optional[UUID] = Field(None, description="ID del cliente")
     nivel: Optional[str] = Field(None, description="Nivel del usuario")
     zona_geografica_id: Optional[UUID] = Field(None, description="ID de la zona geográfica")
     photo_url: Optional[str] = Field(None, description="URL de la foto del usuario")

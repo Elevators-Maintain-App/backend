@@ -16,6 +16,9 @@ from app.auth.firebase import crear_usuario_firebase
 from app.db.models.usuarios import Rol
 from app.schemas.comunes import PaginacionResponse
 from app.services.usuario.usuarios_mapper import usuario_to_usuario_out, usuarios_to_usuarios_out
+from app.db.repositories.clientes import cliente_crud
+from app.db.models.clientes import Cliente
+from app.services.usuario.interfaces.usuario_case import CrearUsuarioParams, CrearUsuarioFirebaseParams
 
 
 class UsuarioService:
@@ -73,26 +76,36 @@ class UsuarioService:
         usuario = await usuario_crud.get_by_field(self.db, "email", usuario_in.email)
         if usuario:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El usuario ya existe")
-    
+
+        cliente: Cliente | None = None        
+        if usuario_in.client_id and usuario_in.rol == Rol.CLIENT:
+            cliente = await cliente_crud.get_by_field(self.db, "id", usuario_in.client_id)
+            if not cliente:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El cliente no existe")
+
         compania = await CompaniaService(self.db).get_compania(usuario_in.company_id, usuario_actual)
         tipo_documento = await tipo_documento_crud.get(self.db, usuario_in.document_type_id)
         fabrica_de_usuarios = FabricaDeUsuarios.get_user_case(usuario_actual.rol)
-        usuario_firebase = fabrica_de_usuarios.obtener_firebase_usuario({
-            "usuario_actual": usuario_actual,
-            "usuario_nuevo": usuario_in,
-            "compania": compania,
-            "tipo_documento": tipo_documento
-        })
+        usuario_firebase = fabrica_de_usuarios.obtener_firebase_usuario(CrearUsuarioFirebaseParams(
+            usuario_actual=usuario_actual,
+            usuario_nuevo=usuario_in,
+            compania=compania,
+            tipo_documento=tipo_documento,
+            cliente=cliente
+        ))
+
         # crear usuario en firebase
-        usuario_firebase = await crear_usuario_firebase(usuario_firebase)
+        usuario_firebase = await crear_usuario_firebase(usuario_firebase)        
         usuario_a_guardar: Usuario = None
-        usuario_a_guardar = fabrica_de_usuarios.obtener_usuario_a_guardar({
-                "usuario_actual": usuario_actual,
-                "usuario_nuevo": usuario_in,
-                "firebase_uid": usuario_firebase.uid
-            })
+        usuario_a_guardar = fabrica_de_usuarios.obtener_usuario_a_guardar(CrearUsuarioParams(
+            usuario_actual=usuario_actual,
+            usuario_nuevo=usuario_in,
+            firebase_uid=usuario_firebase.uid
+        ))
         usuario_guardado = await usuario_crud.create(self.db, obj_in=usuario_a_guardar)
+
         await fabrica_de_usuarios.enviar_email_de_bienvenida(usuario_a_guardar.email, usuario_a_guardar.display_name, usuario_firebase.password)
+
         return usuario_guardado
         
         

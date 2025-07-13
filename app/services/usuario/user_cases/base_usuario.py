@@ -8,6 +8,7 @@ import string
 from app.services.notificaciones import NotificacionService, TipoNotificacion
 from app.services.notificaciones.templates import TemplateManager
 from app.services.notificaciones.models import DestinatarioModel
+from app.db.models.clientes import Cliente
 
 class BaseUsuario(UsuarioCaseInterface):    
     def obtener_contraseña_temporal(self, length: int = 12) -> str:
@@ -20,7 +21,7 @@ class BaseUsuario(UsuarioCaseInterface):
 
         return ''.join(secrets.choice(alphabet) for _ in range(length))
     
-    def mapear_usuario_dto_a_usuario_firebase(self, usuario_nuevo: UsuarioCreate, compania: Compania, tipo_documento: TipoDocumento) -> UsuarioFirebaseCreate:
+    def mapear_usuario_dto_a_usuario_firebase(self, usuario_nuevo: UsuarioCreate, compania: Compania, tipo_documento: TipoDocumento, cliente: Cliente | None) -> UsuarioFirebaseCreate:
         password = self.obtener_contraseña_temporal(length=12)
         usuario_firebase = UsuarioFirebaseCreate(
                 company_id=compania.id,
@@ -33,6 +34,8 @@ class BaseUsuario(UsuarioCaseInterface):
                 email=usuario_nuevo.email.lower(),
                 photo_url= usuario_nuevo.photo_url if usuario_nuevo.photo_url else None,
                 rol=usuario_nuevo.rol.value,
+                client_id=cliente.id if cliente else None,
+                client_name=cliente.nombre if cliente else None,
             )
                     
         return usuario_firebase
@@ -51,6 +54,7 @@ class BaseUsuario(UsuarioCaseInterface):
                     zona_geografica_id=usuario_nuevo.zona_geografica_id if usuario_nuevo.zona_geografica_id else None,
                     is_active=usuario_nuevo.is_active,
                     company_id=usuario_nuevo.company_id,
+                    client_id=usuario_nuevo.client_id if usuario_nuevo.client_id else None,
                 )
 
         return usuario

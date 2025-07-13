@@ -2,7 +2,7 @@ from abc import ABC
 from app.auth.firebase import FirebaseUser
 from app.schemas.usuarios import UsuarioCreate
 from app.db.models.usuarios import Usuario
-from app.db.models import Compania, TipoDocumento
+from app.db.models import Compania, TipoDocumento, Cliente
 from dataclasses import dataclass
 from typing import Optional
 from uuid import UUID
@@ -20,13 +20,13 @@ class CrearUsuarioFirebaseParams:
     usuario_nuevo: UsuarioCreate
     compania: Compania
     tipo_documento: TipoDocumento
-    firebase_uid: str
+    cliente: Cliente | None
 
 class UsuarioCaseInterface(ABC):
     def obtener_firebase_usuario(self, usuario_nuevo: UsuarioCreate) -> FirebaseUser:
         ...
 
-    def obtener_usuario_a_guardar(self, usuario_nuevo: UsuarioCreate) -> UsuarioCreate:
+    def obtener_usuario_a_guardar(self, params: CrearUsuarioParams) -> UsuarioCreate:
         ...
 
     def obtener_filtros_para_listar_usuarios(self, usuario_actual: Usuario, search: Optional[str], company_id: Optional[str], rol: Optional[str]) -> dict:
