@@ -10,6 +10,7 @@ from app.db.models.usuarios import Rol
 from typing import Optional
 from uuid import UUID
 from .base_usuario import BaseUsuario
+from app.db.models.clientes import Cliente
 
 
 VERTIONE_COMPANY_ID = "00000000-0000-0000-0000-000000000000"
@@ -17,33 +18,35 @@ VERTIONE_NAME = "VertiOne"
 
 class AdminCase(BaseUsuario):
     def obtener_firebase_usuario(self, params: CrearUsuarioFirebaseParams) -> FirebaseUser:
-        usuario_actual: Usuario = params["usuario_actual"]
-        usuario_nuevo: UsuarioCreate = params["usuario_nuevo"]
-        compania: Compania = params["compania"]
-        tipo_documento: TipoDocumento = params["tipo_documento"]
-        
+        usuario_actual: Usuario = params.usuario_actual
+        usuario_nuevo: UsuarioCreate = params.usuario_nuevo
+        compania: Compania = params.compania
+        tipo_documento: TipoDocumento = params.tipo_documento
+        cliente: Cliente | None = params.cliente
+
         if usuario_actual.rol not in [Rol.ADMIN]:
             raise HTTPException(status_code=403, detail="No tienes permisos para crear usuarios")
         
-        if usuario_nuevo.rol not in [Rol.TECHNICIAN, Rol.ADMIN, Rol.SUPERVISOR]:
+        if usuario_nuevo.rol not in [Rol.TECHNICIAN, Rol.ADMIN, Rol.SUPERVISOR, Rol.CLIENT]:
             raise HTTPException(status_code=403, detail="No tienes permisos para crear a este tipo de usuario")
         
-        return self.mapear_usuario_dto_a_usuario_firebase(usuario_nuevo, compania, tipo_documento)
+        return self.mapear_usuario_dto_a_usuario_firebase(usuario_nuevo, compania, tipo_documento, cliente)
     
     def obtener_usuario_a_guardar(self, params: CrearUsuarioParams) -> UsuarioCreate:
         try:
-            usuario_actual: Usuario = params["usuario_actual"]
-            usuario_nuevo: UsuarioCreate = params["usuario_nuevo"]
-            
+            usuario_actual: Usuario = params.usuario_actual
+            usuario_nuevo: UsuarioCreate = params.usuario_nuevo
+            firebase_uid: str = params.firebase_uid
+
             if usuario_actual.rol not in [Rol.ADMIN]:
                 raise HTTPException(status_code=403, detail="No tienes permisos para crear usuarios")        
             
-            if usuario_nuevo.rol not in [Rol.TECHNICIAN, Rol.ADMIN, Rol.SUPERVISOR]:
+            if usuario_nuevo.rol not in [Rol.TECHNICIAN, Rol.ADMIN, Rol.SUPERVISOR, Rol.CLIENT]:
                 raise HTTPException(status_code=403, detail="No tienes permisos para crear usuarios")
             
-            usuario = self.mapear_usuario_dto_a_usuario_create(usuario_nuevo, params["firebase_uid"])        
+            usuario = self.mapear_usuario_dto_a_usuario_create(usuario_nuevo, firebase_uid)
             usuario.company_id = usuario_actual.company_id
-            
+                
             return usuario
         except Exception as e:
             print("**** error", e)

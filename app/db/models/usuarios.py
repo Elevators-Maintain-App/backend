@@ -24,6 +24,7 @@ class Usuario(Base):
     company_id = Column(UUID(as_uuid=True), ForeignKey("companias.id"), nullable=False)
     document_id = Column(String, nullable=False)
     document_type_id = Column(Integer, ForeignKey("tipos_documento.id"), nullable=False)
+    client_id = Column(UUID(as_uuid=True), ForeignKey("clientes.id"), nullable=True)
     email = Column(String, unique=True, nullable=False)
     phone_number = Column(String, nullable=True)
     photo_url = Column(String, nullable=True)    
@@ -38,3 +39,4 @@ class Usuario(Base):
     company = relationship("Compania", back_populates="usuarios", foreign_keys=[company_id])
     document_type = relationship("TipoDocumento", back_populates="usuarios", foreign_keys=[document_type_id])
     zona_geografica = relationship("ZonaGeografica", back_populates="usuarios", foreign_keys=[zona_geografica_id])
+    client = relationship("Cliente", back_populates="usuarios", foreign_keys=[client_id])
