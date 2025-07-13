@@ -113,7 +113,7 @@ async def crear_usuario_firebase(usuario_dto: UsuarioFirebaseCreate, password: O
             "email": usuario_dto.email,
             "photo_url": usuario_dto.photo_url,
             "rol": usuario_dto.rol.value if hasattr(usuario_dto.rol, 'value') else str(usuario_dto.rol),
-            "client_id": str(usuario_dto.client_id),
+            "client_id": str(usuario_dto.client_id) if usuario_dto.client_id else None,
             "client_name": usuario_dto.client_name,
             "created_at": datetime.now(timezone.utc),
             "updated_at": datetime.now(timezone.utc),
