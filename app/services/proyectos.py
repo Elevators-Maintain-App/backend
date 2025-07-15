@@ -11,6 +11,8 @@ from app.db.repositories.proyectos import proyecto_crud
 from app.db.repositories.zonas_geograficas import zona_geografica_crud
 from app.schemas.proyectos import ProyectoCreate, ProyectoUpdate, ProyectoInDBBase, ProyectoCreateInDB
 from app.services.proyecto.user_cases import FabricaDeProyectos
+from app.schemas.comunes import PaginacionResponse
+from app.schemas.proyectos import ProyectoOut
 
 class ProyectoService:
     def __init__(self, db: AsyncSession):
@@ -143,3 +145,54 @@ class ProyectoService:
                 detail="Proyecto no encontrado o fuera de tu compañía."
             )
         await proyecto_crud.remove(self.db, proyecto_id)
+
+
+    async def get_proyectos_con_paginacion(
+        self,
+        usuario_actual: Usuario,
+        skip: int = 0,
+        limit: int = 20,
+        search: Optional[str] = None,
+        company_id: Optional[UUID] = None,
+    ) -> PaginacionResponse[ProyectoOut]:
+        """
+        Lista proyectos filtrados por permisos del usuario.
+        - superAdmin: ve todos (opcionalmente filtra por company_id)
+        - admin / supervisor: solo los de su compañía
+        """
+        try:
+            exact_filters = {}
+            ilike_filters = {}
+
+            # Restricciones por rol
+            if usuario_actual.rol in ("admin", "supervisor"):
+                exact_filters["compania_id"] = str(usuario_actual.compania_id)
+            elif company_id:
+                exact_filters["compania_id"] = str(company_id)
+
+            # Búsqueda por nombre
+            if search:
+                ilike_filters["nombre"] = f"%{search}%"
+
+            proyectos = await proyecto_crud.get_multi(
+                self.db,
+                skip=skip,
+                limit=limit,  
+            )
+            total = await proyecto_crud.get_total_with_advanced_filters(
+                self.db,
+                exact_filters=exact_filters or None,
+                ilike_filters=ilike_filters or None,
+            )
+            return PaginacionResponse(
+                data=proyectos,
+                total=total,
+                skip=skip,
+                limit=limit
+            )
+        except Exception as e:
+            import traceback, sys
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=str(e)            # opcional: devuelve el mensaje real
+            )

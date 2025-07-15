@@ -10,6 +10,7 @@ from app.services.secundarios.pais import PaisService
 from app.auth.firebase import require_role, get_current_firebase_user
 from app.db.repositories.tipos_documento import tipo_documento_crud
 from app.services.cliente import ClienteService
+from app.services.proyectos import ProyectoService
 
 router = APIRouter()
 
@@ -66,3 +67,16 @@ async def get_clientes(
     clientes = await service.get_clientes_con_paginacion(usuario_actual=usuario_actual, limit=1000, skip=0)
     return [LovElemento(id=cliente.id, name=cliente.nombre) for cliente in clientes.data]
 
+@router.get("/proyectos", response_model=List[LovElemento])
+async def get_proyectos(
+    db: AsyncSession = Depends(get_db),
+    usuario_actual=Depends(require_role("superAdmin", "admin", "supervisor")),
+):
+    service = ProyectoService(db)
+    # 1000 es suficiente para autocompletados; ajusta si lo necesitas
+    proyectos = await service.get_proyectos_con_paginacion(
+        usuario_actual=usuario_actual,
+        limit=1000,
+        skip=0
+    )
+    return [LovElemento(id=p.id, name=p.nombre) for p in proyectos.data]

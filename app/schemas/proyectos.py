@@ -64,3 +64,17 @@ class ProyectoListOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+class ProyectoOut(BaseModel):
+    id: UUID
+    nombre: str
+    direccion: str | None = None
+    estado: Optional[ProyectoEstado] = None
+    zona_geografica_id: Optional[UUID] = None
+    cliente_id: str
+    company_id: UUID        
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
