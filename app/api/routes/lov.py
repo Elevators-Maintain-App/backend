@@ -71,7 +71,6 @@ async def get_proyectos(
     usuario_actual=Depends(require_role("superAdmin", "admin", "supervisor")),
 ):
     service = ProyectoService(db)
-    # 1000 es suficiente para autocompletados; ajusta si lo necesitas
     proyectos = await service.get_proyectos_con_paginacion(
         usuario_actual=usuario_actual,
         limit=1000,
