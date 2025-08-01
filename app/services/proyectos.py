@@ -194,5 +194,5 @@ class ProyectoService:
             import traceback, sys
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=str(e)            # opcional: devuelve el mensaje real
+                detail=str(e)           
             )
