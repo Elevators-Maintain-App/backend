@@ -11,6 +11,7 @@ from app.auth.firebase import require_role, get_current_firebase_user
 from app.db.repositories.tipos_documento import tipo_documento_crud
 from app.services.cliente import ClienteService
 from app.services.proyectos import ProyectoService
+from app.services.unidades import UnidadService
 
 router = APIRouter()
 
@@ -79,3 +80,17 @@ async def get_proyectos(
         skip=0
     )
     return [LovElemento(id=p.id, name=p.nombre) for p in proyectos.data]
+
+@router.get("/unidades", response_model=List[LovElemento])
+async def get_unidades(
+    db: AsyncSession = Depends(get_db),
+    usuario_actual=Depends(require_role("superAdmin", "admin", "supervisor")),
+):
+    service = UnidadService(db)
+    unidades = await service.get_unidades_con_paginacion(
+        usuario_actual=usuario_actual,
+        limit=1000,
+        skip=0
+    )
+    return [LovElemento(id=u.id, name=u.nombre) for u in unidades.data]
+
