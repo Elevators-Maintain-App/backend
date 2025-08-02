@@ -12,6 +12,7 @@ from app.db.repositories.tipos_documento import tipo_documento_crud
 from app.services.cliente import ClienteService
 from app.services.proyectos import ProyectoService
 from app.services.unidades import UnidadService
+from app.services.tecnico import TecnicoService
 
 router = APIRouter()
 
@@ -91,4 +92,17 @@ async def get_unidades(
         skip=0
     )
     return [LovElemento(id=u.id, name=u.nombre) for u in unidades.data]
+
+@router.get("/tecnicos", response_model=List[LovElemento])
+async def get_tecnicos(
+    db: AsyncSession = Depends(get_db),
+    usuario_actual=Depends(require_role("superAdmin", "admin", "supervisor")),
+):
+    service = TecnicoService(db)
+    tecnicos = await service.get_tecnicos_con_paginacion(
+        usuario_actual=usuario_actual,
+        limit=1000,
+        skip=0
+    )
+    return [LovElemento(id=t.id, name=t.display_name) for t in tecnicos.data]
 

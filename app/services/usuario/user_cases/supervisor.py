@@ -44,7 +44,7 @@ class SupervisorCase(BaseUsuario):
         filters = {
             "exact_filters": {
                 "company_id": usuario_actual.company_id,
-                "rol": Rol.TECHNICIAN.value
+                "rol": Rol.TECHNICIAN.name
             },
             "ilike_filters": {},
             "like_filters": {}
