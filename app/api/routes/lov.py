@@ -104,5 +104,5 @@ async def get_tecnicos(
         limit=1000,
         skip=0
     )
-    return [LovElemento(id=t.id, name=t.display_name) for t in tecnicos.data]
+    return [LovElemento(id=t.uid, name=t.display_name) for t in tecnicos.data]
 
