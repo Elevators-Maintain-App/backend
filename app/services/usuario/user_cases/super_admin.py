@@ -55,16 +55,15 @@ class SuperAdminCase(BaseUsuario):
             
         return filters
     
-    def obtener_filtro_para_totalizar_usuarios(self, usuario_actual: Usuario, company_id: Optional[UUID], rol: Optional[Rol]) -> dict:
-        compania_id = company_id or usuario_actual.company_id
+    def obtener_filtro_para_totalizar_usuarios(self, usuario_actual: Usuario, company_id: Optional[UUID], rol: Optional[Rol]) -> dict:        
         filters = {
             "exact_filters": {
-                "company_id": compania_id,
             },
             "ilike_filters": {},
             "like_filters": {}
         }
-
+        if company_id:
+            filters["exact_filters"]["company_id"] = company_id
         if rol:
             filters["exact_filters"]["rol"] = rol
 

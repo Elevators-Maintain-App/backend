@@ -54,7 +54,11 @@ class UsuarioService:
     async def get_total_usuarios(self, usuario_actual: Usuario, company_id: Optional[UUID] = None, rol: Optional[Rol] = None) -> int:
         try:
             fabrica_de_usuarios = FabricaDeUsuarios.get_user_case(usuario_actual.rol)
-            filtro_para_totalizar_usuarios = fabrica_de_usuarios.obtener_filtro_para_totalizar_usuarios(usuario_actual, company_id, rol)
+            filtro_para_totalizar_usuarios = fabrica_de_usuarios.obtener_filtro_para_totalizar_usuarios(
+                usuario_actual=usuario_actual, 
+                company_id=company_id, 
+                rol=rol
+            )
             cantidad_de_usuarios = await usuario_crud.get_total_with_advanced_filters(
                 self.db, 
                 exact_filters=filtro_para_totalizar_usuarios.get("exact_filters", None), 
