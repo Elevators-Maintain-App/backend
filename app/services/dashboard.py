@@ -90,6 +90,7 @@ class DashboardService:
         usuario_service = UsuarioService(self.db)
         proyecto_service = ProyectoService(self.db)
         compania_service = CompaniaService(self.db)
+                
         total_usuarios = await usuario_service.get_total_usuarios(usuario_actual=current_user)
         total_proyectos = await proyecto_service.get_total_proyectos(usuario_actual=current_user)
         total_companias = await compania_service.get_total_companias(usuario_actual=current_user)
