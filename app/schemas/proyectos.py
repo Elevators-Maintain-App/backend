@@ -15,20 +15,22 @@ class ProyectoBase(BaseModel):
     direccion: Optional[str] = None
     estado: Optional[ProyectoEstado] = None
     zona_geografica_id: Optional[UUID] = None
-    cliente_id: str
+    cliente_id: Optional[UUID] = None
 
 class ProyectoCreate(ProyectoBase):
-    pass
+    company_id: Optional[UUID] = None
 
 class ProyectoUpdate(BaseModel):
     nombre: Optional[str] = None
     direccion: Optional[str] = None
     zona_geografica_id: Optional[UUID] = None
-    cliente_id: str | None
+    cliente_id: Optional[UUID] = None
 
 class ProyectoInDBBase(ProyectoBase):
     id: UUID
     company_id: UUID
+    cliente_nombre: Optional[str] = None
+    company_nombre: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 
@@ -45,9 +47,11 @@ class ProyectoDetailOut(BaseModel):
     id: UUID
     nombre: str
     direccion: str | None
-    zona_geografica: str | None
-    cliente: str
-    compania: str
+    zona_geografica_id: UUID | None
+    cliente_id: UUID | None
+    cliente_nombre: str | None
+    company_id: UUID | None
+    company_nombre: str | None
     created_at: datetime
     updated_at: datetime
 
@@ -55,12 +59,16 @@ class ProyectoDetailOut(BaseModel):
         from_attributes = True
 
 class ProyectoListOut(BaseModel):
-    id: UUID
+    id: str
     nombre: str
     direccion: str | None
     zona_geografica: str | None
-    cliente: str
-    compania: str
+    cliente_id: UUID | None
+    cliente_nombre: str | None
+    company_id: str | None
+    company_nombre: str | None
+    created_at: datetime
+    updated_at: datetime
 
     class Config:
         from_attributes = True
@@ -71,8 +79,10 @@ class ProyectoOut(BaseModel):
     direccion: str | None = None
     estado: Optional[ProyectoEstado] = None
     zona_geografica_id: Optional[UUID] = None
-    cliente_id: str
-    company_id: UUID        
+    cliente_id: Optional[UUID] = None
+    cliente_nombre: Optional[str] = None
+    company_id: UUID
+    company_nombre: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 

@@ -29,4 +29,5 @@ class Cliente(Base):
     compania = relationship("Compania", back_populates="clientes", foreign_keys=[compania_id])
     tipos_documento = relationship("TipoDocumento", foreign_keys=[tipo_documento_id])
     usuarios = relationship("Usuario", back_populates="client", cascade="all, delete-orphan")
+    proyectos = relationship("Proyecto", back_populates="cliente", cascade="all, delete-orphan")
 

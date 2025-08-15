@@ -10,7 +10,7 @@ from app.services.secundarios.pais import PaisService
 from app.auth.firebase import require_role, get_current_firebase_user
 from app.db.repositories.tipos_documento import tipo_documento_crud
 from app.services.cliente import ClienteService
-from app.services.proyectos import ProyectoService
+from app.services.proyectos.proyectos import ProyectoService
 from app.services.unidades import UnidadService
 from app.services.tecnico import TecnicoService
 

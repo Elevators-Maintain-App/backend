@@ -10,9 +10,11 @@ from app.db.models.usuarios import Usuario
 from app.db.repositories.proyectos import proyecto_crud
 from app.db.repositories.zonas_geograficas import zona_geografica_crud
 from app.schemas.proyectos import ProyectoCreate, ProyectoUpdate, ProyectoInDBBase, ProyectoCreateInDB
-from app.services.proyecto.user_cases import FabricaDeProyectos
+from app.services.proyectos.user_cases import FabricaDeProyectos
 from app.schemas.comunes import PaginacionResponse
 from app.schemas.proyectos import ProyectoOut
+from app.services.proyectos.proyectos_mappers import map_proyecto_to_proyecto_out
+from app.auth.firebase import FirebaseUser
 
 class ProyectoService:
     def __init__(self, db: AsyncSession):
@@ -55,11 +57,12 @@ class ProyectoService:
         """
         return await proyecto_crud.get_multi(self.db)
 
-    async def get_by_id(self, proyecto_id: UUID) -> ProyectoInDBBase:
-        proyecto = await proyecto_crud.get(self.db, proyecto_id)
+    async def get_by_id(self, proyecto_id: UUID) -> Proyecto:
+        proyecto = await proyecto_crud.get_with_relationships(self.db, proyecto_id)
         if not proyecto:
             raise HTTPException(status_code=404, detail="Proyecto no encontrado")
-        return proyecto
+        
+        return proyecto 
 
     async def get_by_company(self, company_id: UUID) -> List[ProyectoInDBBase]:
         """
@@ -87,40 +90,11 @@ class ProyectoService:
     async def create(
         self,
         proyecto_in: ProyectoCreate,
-        company_id: UUID
+        user: FirebaseUser
     ) -> ProyectoInDBBase:
-        # 1) Validar zona geográfica
-        if proyecto_in.zona_geografica_id:
-            zona = await zona_geografica_crud.get(
-                self.db, proyecto_in.zona_geografica_id
-            )
-            if not zona:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="La zona geográfica especificada no existe."
-                )
+        fabrica_de_proyectos = FabricaDeProyectos.get_proyecto_case(user.rol)
+        proyecto_payload = fabrica_de_proyectos.obtener_payload_para_crear_proyecto(proyecto_in, user)
 
-        # 2) Validar unicidad de nombre por compañía
-        existing = await proyecto_crud.get_multi_by_filters(
-            self.db,
-            filters=[
-                Proyecto.company_id == company_id,
-                Proyecto.nombre       == proyecto_in.nombre
-            ],
-            skip=0,
-            limit=1
-        )
-        if existing:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="Ya existe un proyecto con este nombre en tu compañía."
-            )
-
-        # 3) Crear proyecto incluyendo company_id
-        proyecto_payload = ProyectoCreateInDB(
-        **proyecto_in.dict(exclude_unset=True),
-        company_id=company_id
-        )
         return await proyecto_crud.create(self.db, obj_in=proyecto_payload)
 
     async def update(
@@ -150,49 +124,50 @@ class ProyectoService:
     async def get_proyectos_con_paginacion(
         self,
         usuario_actual: Usuario,
-        skip: int = 0,
-        limit: int = 20,
+        skip: Optional[int] = 0,
+        limit: Optional[int] = 20,
         search: Optional[str] = None,
-        company_id: Optional[UUID] = None,
+        company_id: Optional[str] = None,
+        cliente_id: Optional[str] = None,
     ) -> PaginacionResponse[ProyectoOut]:
         """
-        Lista proyectos filtrados por permisos del usuario.
-        - superAdmin: ve todos (opcionalmente filtra por company_id)
-        - admin / supervisor: solo los de su compañía
+        Obtiene proyectos con filtros basados en el rol del usuario.
         """
         try:
-            exact_filters = {}
-            ilike_filters = {}
+            fabrica_de_proyectos = FabricaDeProyectos.get_proyecto_case(usuario_actual.rol)
+            filtros = fabrica_de_proyectos.obtener_filtros_para_listar_proyectos(
+                usuario_actual,
+                search,
+                company_id,
+                cliente_id,
+            )
 
-            # Restricciones por rol
-            if usuario_actual.rol in ("admin", "supervisor"):
-                exact_filters["compania_id"] = str(usuario_actual.compania_id)
-            elif company_id:
-                exact_filters["compania_id"] = str(company_id)
-
-            # Búsqueda por nombre
-            if search:
-                ilike_filters["nombre"] = f"%{search}%"
-
-            proyectos = await proyecto_crud.get_multi(
+            proyectos = await proyecto_crud.get_multi_with_advanced_filters(
                 self.db,
                 skip=skip,
-                limit=limit,  
+                limit=limit,
+                exact_filters=filtros.get("exact_filters", None),
+                ilike_filters=filtros.get("ilike_filters", None),
+                like_filters=filtros.get("like_filters", None),
             )
+            
+            proyectos_out = [map_proyecto_to_proyecto_out(proyecto) for proyecto in proyectos]
+
             total = await proyecto_crud.get_total_with_advanced_filters(
                 self.db,
-                exact_filters=exact_filters or None,
-                ilike_filters=ilike_filters or None,
+                exact_filters=filtros.get("exact_filters", None),
+                ilike_filters=filtros.get("ilike_filters", None),
+                like_filters=filtros.get("like_filters", None),
             )
+
             return PaginacionResponse(
-                data=proyectos,
+                data=proyectos_out,
                 total=total,
                 skip=skip,
-                limit=limit
+                limit=limit,
             )
         except Exception as e:
-            import traceback, sys
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=str(e)           
+                detail="Error al obtener los proyectos",
             )

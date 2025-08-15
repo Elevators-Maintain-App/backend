@@ -1,8 +1,8 @@
-from app.services.proyecto.user_cases.super_admin import SuperAdminProyectoCase
-from app.services.proyecto.user_cases.admin import AdminProyectoCase
-from app.services.proyecto.user_cases.supervisor import SupervisorProyectoCase
+from app.services.proyectos.user_cases.super_admin import SuperAdminProyectoCase
+from app.services.proyectos.user_cases.admin import AdminProyectoCase
+from app.services.proyectos.user_cases.supervisor import SupervisorProyectoCase
 from app.db.models.usuarios import Rol
-from app.services.proyecto.interfaces import ProyectoCaseInterface
+from app.services.proyectos.interfaces import ProyectoCaseInterface
 
 class FabricaDeProyectos:
     @staticmethod
