@@ -17,7 +17,7 @@ from app.schemas.proyectos import ProyectoEstado
 from app.schemas.dashboard.supervisor import SupervisorDashboard
 from app.schemas.dashboard.technician import TechnicianDashboard
 from app.schemas.dashboard.cliente import ClienteDashboard, ClienteDashboardProyecto
-from app.services.proyectos import ProyectoService
+from app.services.proyectos.proyectos import ProyectoService
 from app.services.unidades import UnidadService
 from app.services.ordenes_de_trabajo import OrdenDeTrabajoService
 from app.services.usuario.usuarios import UsuarioService
