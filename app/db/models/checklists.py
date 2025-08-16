@@ -52,6 +52,8 @@ class Checklist(Base):
     check_metadata  = Column(JSON, nullable=True, default={})
     created_at      = Column(TIMESTAMP, server_default=func.now())
     updated_at      = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
+    reporte_prerevision_url = Column(String, nullable=True)
+    reporte_final_url = Column(String, nullable=True)
 
     items           = relationship(
         "ChecklistItem",

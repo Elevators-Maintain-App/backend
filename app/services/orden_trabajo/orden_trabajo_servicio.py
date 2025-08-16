@@ -287,10 +287,10 @@ class OrdenTrabajoService:
         fecha_fin: date
     ) -> DashboardSupervisorOut:
         estados_cerradas = [4]
-        estados_por_validar = [5]
-        estados_pendientes = [2]
-        estados_ejecucion = [1]
-        estados_atrasadas = [6]
+        estados_por_validar = [1]
+        estados_pendientes = [3]
+        estados_ejecucion = [2]
+        estados_atrasadas = [5]
 
         filtro_base = and_(
             OrdenDeTrabajo.supervisor_id == supervisor_uid,

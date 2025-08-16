@@ -56,4 +56,4 @@ jobs:
             --region=us-central1 \
             --allow-unauthenticated \
             --max-instances=2 \
-            --set-env-vars="DATABASE_URL=${{ secrets.DATABASE_URL }},CLOUD_PROJECT_ID=${{ secrets.CLOUD_PROJECT_ID }},FIREBASE_SERVICE_ACCOUNT_B64=${{ secrets.FIREBASE_CREDENTIALS }},NOTIFICATION_EMAIL=${{ secrets.NOTIFICATION_EMAIL }},EMAIL_PWD=${{ secrets.EMAIL_PWD }},SMTP_SERVER=${{ secrets.SMTP_SERVER }},SMTP_PORT=${{ secrets.SMTP_PORT }},EMAIL_TIMEOUT=${{ secrets.EMAIL_TIMEOUT }},ENVIRONMENT=production"
+            --set-env-vars="STORAGE_BUCKET=${{ secrets.STORAGE_BUCKET }},DATABASE_URL=${{ secrets.DATABASE_URL }},CLOUD_PROJECT_ID=${{ secrets.CLOUD_PROJECT_ID }},FIREBASE_SERVICE_ACCOUNT_B64=${{ secrets.FIREBASE_CREDENTIALS }},NOTIFICATION_EMAIL=${{ secrets.NOTIFICATION_EMAIL }},EMAIL_PWD=${{ secrets.EMAIL_PWD }},SMTP_SERVER=${{ secrets.SMTP_SERVER }},SMTP_PORT=${{ secrets.SMTP_PORT }},EMAIL_TIMEOUT=${{ secrets.EMAIL_TIMEOUT }},ENVIRONMENT=production"
