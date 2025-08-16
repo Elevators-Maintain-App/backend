@@ -1,7 +1,7 @@
 # app/api/routes/ordenes_seguimiento.py
 from uuid import UUID
 
-from fastapi import APIRouter, Body, Depends, status, HTTPException
+from fastapi import APIRouter, Body, Depends, status, HTTPException, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.ordenes import OrdenService
@@ -12,7 +12,9 @@ from app.schemas.seguimiento import SeguimientoCreate, EventoOrden, FinalizarOrd
 from app.auth.firebase import require_role  
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
+from app.schemas.reportes import UrlReporteOut
 
+from app.services.reportes.generar_pdf_service import generar_y_subir_pdf
 
 router = APIRouter()
 
@@ -69,6 +71,7 @@ async def reanudar_orden(
 @router.post("/{orden_id}/validar", status_code=status.HTTP_204_NO_CONTENT)
 async def enviar_orden_a_validacion(
     orden_id: UUID,
+    background_tasks: BackgroundTasks,
     body: FinalizarOrdenPayload = Body(...),
     user=Depends(require_role("technician")),
     db: AsyncSession = Depends(get_db),
@@ -77,6 +80,8 @@ async def enviar_orden_a_validacion(
     orden = await _get_orden(db, orden_id)
     await OrdenService(db).enviar_a_validacion(orden, body)
     await db.commit()
+    # Generar PDF de prereporte en background
+    background_tasks.add_task(generar_y_subir_pdf, orden_id, db, "prereporte")
 
 
 @router.post("/{orden_id}/finalizar", status_code=status.HTTP_204_NO_CONTENT)
@@ -137,3 +142,19 @@ async def completar_paso_por_orden(
 
     await OrdenService(db).paso_completado(orden, item_id, body)
     await db.commit()
+
+@router.get("/{orden_id}/reporte-prerevision", response_model=UrlReporteOut)
+async def obtener_url_reporte_prerevision(
+    orden_id: UUID,
+    user=Depends(require_role("supervisor")),  
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(Checklist.reporte_prerevision_url)
+        .where(Checklist.orden_trabajo_id == orden_id)
+    )
+    url = result.scalar()
+    if not url:
+        raise HTTPException(status_code=404, detail="No se ha generado un prereporte para esta orden.")
+    
+    return UrlReporteOut(url=url)

@@ -19,5 +19,7 @@ firebase_cred_path = os.getenv("FIREBASE_CREDENTIALS_PATH", default_path)
 
 if not firebase_admin._apps:
     cred = credentials.Certificate(firebase_cred_path)
-    firebase_admin.initialize_app(cred)
+    firebase_admin.initialize_app(cred, {
+        'storageBucket': os.getenv("STORAGE_BUCKET")
+    })
 
