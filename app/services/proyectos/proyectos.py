@@ -141,7 +141,7 @@ class ProyectoService:
                 company_id,
                 cliente_id,
             )
-
+            
             proyectos = await proyecto_crud.get_multi_with_advanced_filters(
                 self.db,
                 skip=skip,
@@ -150,7 +150,7 @@ class ProyectoService:
                 ilike_filters=filtros.get("ilike_filters", None),
                 like_filters=filtros.get("like_filters", None),
             )
-            
+
             proyectos_out = [map_proyecto_to_proyecto_out(proyecto) for proyecto in proyectos]
 
             total = await proyecto_crud.get_total_with_advanced_filters(
@@ -159,7 +159,7 @@ class ProyectoService:
                 ilike_filters=filtros.get("ilike_filters", None),
                 like_filters=filtros.get("like_filters", None),
             )
-
+        
             return PaginacionResponse(
                 data=proyectos_out,
                 total=total,
