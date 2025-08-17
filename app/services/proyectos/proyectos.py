@@ -134,14 +134,16 @@ class ProyectoService:
         Obtiene proyectos con filtros basados en el rol del usuario.
         """
         try:
+            print("**** 1")
             fabrica_de_proyectos = FabricaDeProyectos.get_proyecto_case(usuario_actual.rol)
+            print("**** 2",)
             filtros = fabrica_de_proyectos.obtener_filtros_para_listar_proyectos(
                 usuario_actual,
                 search,
                 company_id,
                 cliente_id,
             )
-
+            print("**** 3", filtros)
             proyectos = await proyecto_crud.get_multi_with_advanced_filters(
                 self.db,
                 skip=skip,
@@ -150,7 +152,7 @@ class ProyectoService:
                 ilike_filters=filtros.get("ilike_filters", None),
                 like_filters=filtros.get("like_filters", None),
             )
-            
+            print("**** 4", proyectos)
             proyectos_out = [map_proyecto_to_proyecto_out(proyecto) for proyecto in proyectos]
 
             total = await proyecto_crud.get_total_with_advanced_filters(
@@ -159,7 +161,7 @@ class ProyectoService:
                 ilike_filters=filtros.get("ilike_filters", None),
                 like_filters=filtros.get("like_filters", None),
             )
-
+        
             return PaginacionResponse(
                 data=proyectos_out,
                 total=total,

@@ -7,7 +7,7 @@ from app.auth.firebase import FirebaseUser
 
 
 class SupervisorProyectoCase(ProyectoCaseInterface):
-    def obtener_filtros_para_listar_proyectos(self, usuario_actual: Usuario, search: Optional[str]) -> dict:
+    def obtener_filtros_para_listar_proyectos(self, usuario_actual: Usuario, search: Optional[str], company_id: Optional[str] = None, cliente_id: Optional[str] = None) -> dict:
         filters = {
             "exact_filters": {
                 "company_id": usuario_actual.company_id,
@@ -21,7 +21,7 @@ class SupervisorProyectoCase(ProyectoCaseInterface):
 
         return filters
     
-    def obtener_filtro_para_totalizar_proyectos(self, usuario_actual: Usuario) -> dict:
+    def obtener_filtro_para_totalizar_proyectos(self, usuario_actual: Usuario, company_id: Optional[str] = None, cliente_id: Optional[str] = None) -> dict:
         filters = {
             "exact_filters": {
                 "company_id": usuario_actual.company_id,
