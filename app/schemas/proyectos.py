@@ -15,7 +15,7 @@ class ProyectoBase(BaseModel):
     direccion: Optional[str] = None
     estado: Optional[ProyectoEstado] = None
     zona_geografica_id: Optional[UUID] = None
-    cliente_id: Optional[UUID] = None
+    cliente_id: UUID
 
 class ProyectoCreate(ProyectoBase):
     company_id: Optional[UUID] = None
@@ -41,7 +41,7 @@ class CountOut(BaseModel):
     count: int
 
 class ProyectoCreateInDB(ProyectoCreate):
-    company_id: UUID
+    ...
 
 class ProyectoDetailOut(BaseModel):
     id: UUID

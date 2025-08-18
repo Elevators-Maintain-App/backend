@@ -1,7 +1,6 @@
 from app.db.models.usuarios import Usuario
 from app.services.proyectos.interfaces import ProyectoCaseInterface
 from typing import Optional
-from uuid import UUID
 from app.schemas.proyectos import ProyectoCreate, ProyectoCreateInDB
 from app.auth.firebase import FirebaseUser
 

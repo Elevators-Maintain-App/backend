@@ -68,9 +68,11 @@ async def create_proyecto(
 ):
     return await ProyectoService(db).create(proyecto_in, user)
 
-@router.put(
+@router.patch(
     "/{proyecto_id}",
-    response_model=ProyectoDetailOut
+    response_model=ProyectoDetailOut,
+    status_code=status.HTTP_200_OK,
+    summary="Actualizar proyecto parcialmente"
 )
 async def update_proyecto(
     proyecto_id: UUID,
