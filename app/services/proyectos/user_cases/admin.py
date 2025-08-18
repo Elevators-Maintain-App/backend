@@ -2,7 +2,7 @@ from app.db.models.usuarios import Usuario
 from app.services.proyectos.interfaces import ProyectoCaseInterface
 from typing import Optional
 from uuid import UUID
-from app.schemas.proyectos import ProyectoCreate, ProyectoCreateInDB
+from app.schemas.proyectos import ProyectoCreate, ProyectoCreateInDB, ProyectoEstado
 from app.auth.firebase import FirebaseUser
 
 class AdminProyectoCase(ProyectoCaseInterface):
@@ -32,7 +32,7 @@ class AdminProyectoCase(ProyectoCaseInterface):
         return filters 
     
     def obtener_payload_para_crear_proyecto(self, proyecto_in: ProyectoCreate, user: FirebaseUser) -> ProyectoCreateInDB:
-        return ProyectoCreateInDB(
-            **proyecto_in.model_dump(exclude_unset=True),
-            company_id=user.company_id
-        )
+        data = proyecto_in.model_dump(exclude_unset=True)
+        data['company_id'] = user.company_id
+        data['estado'] = ProyectoEstado.ACTIVO if not data.get('estado') else data['estado']
+        return ProyectoCreateInDB(**data)

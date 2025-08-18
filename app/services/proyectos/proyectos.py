@@ -101,14 +101,16 @@ class ProyectoService:
         self,
         proyecto_id: UUID,
         proyecto_in: ProyectoUpdate,
-        company_id: UUID
+        user: FirebaseUser
     ) -> ProyectoInDBBase:
         proyecto = await proyecto_crud.get(self.db, proyecto_id)
-        if not proyecto or proyecto.company_id != company_id:
+        if not proyecto or proyecto.company_id != user.company_id:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Proyecto no encontrado o fuera de tu compañía."
             )
+        
+        print("**** proyecto_in", proyecto_in)
         return await proyecto_crud.update(self.db, db_obj=proyecto, obj_in=proyecto_in)
 
     async def delete(self, proyecto_id: UUID, company_id: UUID) -> None:
