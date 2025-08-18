@@ -110,7 +110,6 @@ class ProyectoService:
                 detail="Proyecto no encontrado o fuera de tu compañía."
             )
         
-        print("**** proyecto_in", proyecto_in)
         return await proyecto_crud.update(self.db, db_obj=proyecto, obj_in=proyecto_in)
 
     async def delete(self, proyecto_id: UUID, company_id: UUID) -> None:
