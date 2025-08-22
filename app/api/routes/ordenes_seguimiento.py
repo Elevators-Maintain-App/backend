@@ -143,23 +143,7 @@ async def completar_paso_por_orden(
     await OrdenService(db).paso_completado(orden, item_id, body)
     await db.commit()
 
-@router.get("/{orden_id}/reporte-prerevision", response_model=UrlReporteOut)
-async def obtener_url_reporte_prerevision(
-    orden_id: UUID,
-    user=Depends(require_role("supervisor")),  
-    db: AsyncSession = Depends(get_db),
-):
-    result = await db.execute(
-        select(Checklist.reporte_prerevision_url)
-        .where(Checklist.orden_trabajo_id == orden_id)
-    )
-    url = result.scalar()
-    if not url:
-        raise HTTPException(status_code=404, detail="No se ha generado un prereporte para esta orden.")
-    
-    return UrlReporteOut(url=url)
-
-@router.get("/{orden_id}/reporte-prerevision2", response_model=ReportePrerevisionOut)
+@router.get("/{orden_id}/reporte-prerevision", response_model=ReportePrerevisionOut)
 async def obtener_url_reporte_prerevision(
     orden_id: UUID,
     user=Depends(require_role("supervisor")),  
