@@ -366,24 +366,23 @@ class OrdenDeTrabajoService:
     ) -> List[OrdenDeTrabajoListOut]:
         """Lista órdenes del supervisor con filtros opcionales"""
         
-        query = select(
-            OrdenDeTrabajo.id.label('orden_id'),
-            Proyecto.nombre.label('proyecto'),
-            Unidad.nombre.label('unidad'),
-            OrdenDeTrabajo.created_at.label('fecha'),
-            EstadoOrden.nombre.label('estado'),
-            OrdenDeTrabajo.descripcion,
-            OrdenDeTrabajo.observaciones,
-            Checklist.reporte_final_url.label('url_reporte_final'),
-            Checklist.reporte_prerevision_url.label('url_prereporte')
-        ).select_from(
-            OrdenDeTrabajo
+        query = (
+            select(
+                OrdenDeTrabajo.id.label('orden_id'),
+                Proyecto.nombre.label('proyecto'),
+                Unidad.nombre.label('unidad'),
+                OrdenDeTrabajo.created_at.label('fecha'),
+                EstadoOrden.nombre.label('estado'),
+                OrdenDeTrabajo.descripcion,
+                OrdenDeTrabajo.observaciones,
+                Checklist.reporte_final_url.label('url_reporte_final'),
+                Checklist.reporte_prerevision_url.label('url_prereporte')
+            )
             .join(Unidad, OrdenDeTrabajo.unidad_id == Unidad.id)
             .join(Proyecto, Unidad.proyecto_id == Proyecto.id)
             .join(EstadoOrden, OrdenDeTrabajo.estado_id == EstadoOrden.id)
             .outerjoin(Checklist, Checklist.orden_trabajo_id == OrdenDeTrabajo.id)
-        ).where(
-            OrdenDeTrabajo.supervisor_id == supervisor_uid
+            .where(OrdenDeTrabajo.supervisor_id == supervisor_uid)
         )
         
         # Aplicar filtros opcionales
@@ -420,8 +419,8 @@ class OrdenDeTrabajoService:
                 estado=row.estado,
                 descripcion=row.descripcion,
                 observaciones=row.observaciones,
-                url_reporte_final=row.url_reporte_final if row.estado == "COMPLETADA" else None,
-                url_prereporte=row.url_prereporte if row.estado == "EN_VALIDACION" else None
+                url_reporte_final=row.url_reporte_final if row.estado == "Cerrada" else None,
+                url_prereporte=row.url_prereporte if row.estado == "En Validación" else None
             )
             for row in rows
         ]
