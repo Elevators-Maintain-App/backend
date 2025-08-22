@@ -87,6 +87,7 @@ async def enviar_orden_a_validacion(
 @router.post("/{orden_id}/finalizar", status_code=status.HTTP_204_NO_CONTENT)
 async def finalizar_orden(
     orden_id: UUID,
+    background_tasks: BackgroundTasks,
     body: SeguimientoCreate = Body(...),
     user=Depends(require_role("supervisor")),  
     db: AsyncSession = Depends(get_db),
@@ -95,6 +96,8 @@ async def finalizar_orden(
     orden = await _get_orden(db, orden_id)
     await OrdenService(db).finalizar(orden, body)
     await db.commit()
+    # Generar PDF de reporte final en background
+    background_tasks.add_task(generar_y_subir_pdf, orden_id, db, "final")
 
 
 @router.post("/{orden_id}/items/{item_id}/completar", status_code=status.HTTP_204_NO_CONTENT)
