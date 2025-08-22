@@ -12,7 +12,7 @@ from app.schemas.seguimiento import SeguimientoCreate, EventoOrden, FinalizarOrd
 from app.auth.firebase import require_role  
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
-from app.schemas.reportes import UrlReporteOut
+from app.schemas.reportes import UrlReporteOut, ReportePrerevisionOut
 
 from app.services.reportes.generar_pdf_service import generar_y_subir_pdf
 
@@ -88,7 +88,7 @@ async def enviar_orden_a_validacion(
 async def finalizar_orden(
     orden_id: UUID,
     body: SeguimientoCreate = Body(...),
-    user=Depends(require_role("supervisor")),  # asegúrate que tenga rol correcto
+    user=Depends(require_role("supervisor")),  
     db: AsyncSession = Depends(get_db),
 ):
     body.evento = EventoOrden.FIN
@@ -158,3 +158,17 @@ async def obtener_url_reporte_prerevision(
         raise HTTPException(status_code=404, detail="No se ha generado un prereporte para esta orden.")
     
     return UrlReporteOut(url=url)
+
+@router.get("/{orden_id}/reporte-prerevision2", response_model=ReportePrerevisionOut)
+async def obtener_url_reporte_prerevision(
+    orden_id: UUID,
+    user=Depends(require_role("supervisor")),  
+    db: AsyncSession = Depends(get_db),
+):
+    orden_service = OrdenService(db)
+    reporte_data = await orden_service.obtener_datos_reporte_prerevision(orden_id)
+    
+    if not reporte_data:
+        raise HTTPException(status_code=404, detail="No se ha generado un prereporte para esta orden.")
+    
+    return reporte_data
