@@ -81,13 +81,17 @@ async def generar_y_subir_pdf(orden_id, db: AsyncSession, tipo: str = "prereport
             "seguimiento": meta,
         })
 
-    # ---- Cabecera extendida ----
-    odt = getattr(checklist, "orden_de_trabajo", None)
+    # Cargar orden_de_trabajo de forma ASYNC-SAFE
+    try:
+        odt = await checklist.awaitable_attrs.orden_de_trabajo
+    except Exception:
+        odt = None
+
     cabecera = {
         "tecnico": _pick_first(
             _resolve_attr_chain(odt, "tecnico_asignado.nombre"),
             _resolve_attr_chain(odt, "tecnico.nombre"),
-            getattr(odt, "tecnico_asignado", None),  # si ya es string
+            getattr(odt, "tecnico_asignado", None),
             getattr(odt, "tecnico", None),
             (checklist.check_metadata or {}).get("tecnico")
         ),
