@@ -248,7 +248,7 @@
   {% for item in items %}
     <article class="paso">
       <div class="paso-header">
-        <h3 class="paso-title">Paso {{ "%02d"|format(item.step_number) }} — {{ item.titulo }}</h3>
+        <h3 class="paso-title">Paso {{ "%02d" % item.step_number }} — {{ item.titulo }}</h3>
         {% if item.seguimiento %}
           <span class="chip">GPS & Hora capturados</span>
         {% else %}
@@ -278,7 +278,9 @@
               {# Si tienes lista de urls: evidencia_data.urls = ["...","..."] #}
               {% if item.evidencia_data.urls %}
                 {% for u in item.evidencia_data.urls %}
-                  {% if u %}<img src="{{ u }}" alt="Evidencia">{{% endif %}}
+                  {% if u %}
+                    <img src="{{ u }}" alt="Evidencia">
+                  {% endif %}
                 {% endfor %}
               {% endif %}
             {% endif %}
