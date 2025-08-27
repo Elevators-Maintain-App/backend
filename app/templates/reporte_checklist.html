@@ -1,258 +1,3 @@
-<!-- app/templates/reporte_checklist.html
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <title>Reporte de Mantenimiento</title>
-  <style>
-    :root{
-      --primary:#004aad;
-      --accent:#0071ad;
-      --text:#333;
-      --muted:#666;
-      --border:#ddd;
-      --bg:#f7f9fc;
-      --chip:#eef5ff;
-    }
-    *{ box-sizing:border-box; }
-    html, body{
-      font-family: 'DejaVu Sans', sans-serif;
-      color: var(--text);
-      margin:0; padding:0;
-    }
-    body{ padding:28px; background:#fff; }
-    h1{ color:var(--primary); margin:0 0 8px 0; text-align:center; }
-    h2{ color:var(--accent); margin:24px 0 8px 0; }
-    .subtle{ color:var(--muted); font-size:12px; }
-
-    /* Encabezado */
-    .header{
-      border:1px solid var(--border);
-      border-radius:10px;
-      padding:16px;
-      background:var(--bg);
-      display:grid;
-      grid-template-columns: 1.2fr 1fr 1fr;
-      gap:12px;
-      margin:12px 0 22px 0;
-    }
-    .kv{
-      border:1px solid var(--border);
-      border-radius:8px;
-      padding:10px 12px;
-      background:#fff;
-    }
-    .kv b{ display:block; font-size:12px; color:var(--muted); margin-bottom:4px; }
-    .kv span{ font-size:14px; }
-
-    /* Paso (card) */
-    .paso{
-      border:1px solid var(--border);
-      border-radius:12px;
-      margin:16px 0;
-      overflow:hidden;
-    }
-    .paso-header{
-      border-bottom:1px solid var(--border);
-      padding:12px 14px;
-      background:linear-gradient(180deg,#ffffff 0%,#fafcff 100%);
-      display:flex; align-items:center; justify-content:space-between;
-    }
-    .paso-title{
-      margin:0; font-size:16px; color:var(--accent);
-    }
-    .paso-body{
-      display:grid;
-      grid-template-columns: 1fr 240px; /* contenido | meta lateral */
-      gap:12px;
-      padding:14px;
-    }
-    .paso-content p{
-      margin:6px 0;
-    }
-    .instrucciones{
-      font-style:italic; color:#222;
-      background:#fff; border:1px dashed var(--border);
-      border-radius:8px; padding:8px 10px;
-    }
-
-    /* Aside meta */
-    .meta{
-      border-left:1px solid var(--border);
-      padding-left:12px;
-    }
-    .chip{
-      display:inline-block;
-      padding:2px 8px;
-      font-size:12px;
-      background:var(--chip);
-      border:1px solid #d2e6ff;
-      border-radius:999px;
-      color:#1d4ed8;
-      margin-bottom:6px;
-    }
-    .meta .kv{
-      margin-top:6px;
-    }
-
-    /* Evidencias */
-    .evidencias{
-      margin-top:8px;
-      display:flex; flex-wrap:wrap; gap:10px;
-    }
-    .evidencias img{
-      width:220px; height:auto;
-      border:1px solid var(--border);
-      border-radius:8px;
-    }
-
-    /* Firmas */
-    .firmas{
-      margin-top:30px;
-      display:flex;
-      justify-content:space-around;
-      gap:24px;
-    }
-    .firma-block{
-      text-align:center;
-      flex:1;
-    }
-    .firma-img{
-      width:260px; height:90px; object-fit:contain;
-      border-bottom:1px solid #333;
-    }
-
-    /* Pequeños helpers */
-    .muted{ color:var(--muted); font-size:12px; }
-  </style>
-</head>
-<body>
-
-  <h1>Informe de Rutina de Mantenimiento</h1>
-  <p class="subtle">Documento generado automáticamente por el sistema.</p>
-
-  <section class="header">
-    <div class="kv">
-      <b>Orden de Trabajo</b>
-      <span>{{ checklist.orden_trabajo_id }}</span>
-    </div>
-    <div class="kv">
-      <b>Hora de entrada</b>
-      <span>{{ checklist.hora_entrada or "-" }}</span>
-    </div>
-    <div class="kv">
-      <b>Hora de salida</b>
-      <span>{{ checklist.hora_salida or "-" }}</span>
-    </div>
-  </section>
-
-  {% if checklist.observaciones %}
-    <h2>Observaciones generales</h2>
-    <div class="kv"><span>{{ checklist.observaciones }}</span></div>
-  {% endif %}
-
-  <h2>Pasos ejecutados</h2>
-
-  {# NOTA: Aquí iteramos los items ya enriquecidos y ordenados #}
-  {% for item in items %}
-    <article class="paso">
-      <div class="paso-header">
-        <h3 class="paso-title">Paso {{ "%02d" % item.step_number }} — {{ item.titulo }}</h3>
-        {% if item.seguimiento %}
-          <span class="chip">GPS & Hora capturados</span>
-        {% else %}
-          <span class="chip" style="opacity:.6">Sin datos de GPS</span>
-        {% endif %}
-      </div>
-
-      <div class="paso-body">
-        <div class="paso-content">
-          <p class="instrucciones">{{ item.instrucciones }}</p>
-
-          {% if item.comentario %}
-            <p><b>Comentario:</b> {{ item.comentario }}</p>
-          {% endif %}
-
-          <div class="evidencias">
-            {# Manejo flexible de evidencia_data #}
-            {% if item.evidencia_data %}
-              {% if item.evidencia_data.url %}
-                <img src="{{ item.evidencia_data.url }}" alt="Evidencia">
-              {% endif %}
-              {% if item.evidencia_data.url1 %}
-                {% if item.evidencia_data.url1 %}<img src="{{ item.evidencia_data.url1 }}" alt="Evidencia 1">{% endif %}
-                {% if item.evidencia_data.url2 %}<img src="{{ item.evidencia_data.url2 }}" alt="Evidencia 2">{% endif %}
-                {% if item.evidencia_data.url3 %}<img src="{{ item.evidencia_data.url3 }}" alt="Evidencia 3">{% endif %}
-              {% endif %}
-              {# Si tienes lista de urls: evidencia_data.urls = ["...","..."] #}
-              {% if item.evidencia_data.urls %}
-                {% for u in item.evidencia_data.urls %}
-                  {% if u %}
-                    <img src="{{ u }}" alt="Evidencia">
-                  {% endif %}
-                {% endfor %}
-              {% endif %}
-            {% endif %}
-          </div>
-        </div>
-
-        <aside class="meta">
-          <div class="kv">
-            <b>Coordenadas</b>
-            {% if item.seguimiento %}
-              <span>
-                Lat: {{ "%.6f"|format(item.seguimiento.lat) }}<br>
-                Lon: {{ "%.6f"|format(item.seguimiento.lon) }}
-              </span>
-            {% else %}
-              <span>—</span>
-            {% endif %}
-          </div>
-          <div class="kv">
-            <b>Hora (tz origen)</b>
-            <span>
-              {% if item.seguimiento and item.seguimiento.timestamp %}
-                {{ item.seguimiento.timestamp }}
-              {% else %}
-                —
-              {% endif %}
-            </span>
-          </div>
-
-          {# --- FUTURO: mini-mapa estático (activar cuando coord/orden estén OK) ---
-          <div class="kv">
-            <b>Mapa</b>
-            {% if item.seguimiento %}
-              <img src="{{ item.seguimiento.static_map_url }}" alt="Mapa del paso">
-            {% else %}
-              <span class="muted">Sin datos</span>
-            {% endif %}
-          </div>
-          ------------------------------------------------------------------------- #}
-        </aside>
-      </div>
-    </article>
-  {% endfor %}
-
-  <h2>Firmas</h2>
-  <section class="firmas">
-    {% if checklist.firma_tecnico %}
-      <div class="firma-block">
-        <p><b>Técnico</b></p>
-        <img class="firma-img" src="{{ checklist.firma_tecnico }}" alt="Firma técnico">
-      </div>
-    {% endif %}
-    {% if checklist.firma_cliente %}
-      <div class="firma-block">
-        <p><b>Cliente</b></p>
-        <img class="firma-img" src="{{ checklist.firma_cliente }}" alt="Firma cliente">
-      </div>
-    {% endif %}
-  </section>
-
-</body>
-</html> -->
-
 <!-- app/templates/reporte_checklist.html -->
 <!DOCTYPE html>
 <html lang="es">
@@ -420,8 +165,12 @@
   <section class="header">
     <!-- Fila 1 (ya existente) -->
     <div class="kv">
-      <b>Orden de Trabajo</b>
-      <span>{{ checklist.orden_trabajo_id }}</span>
+      <b>Orden (Referencia)</b>
+      <span>{{ (cabecera.orden_ref if cabecera else None) or "-" }}</span>
+    </div>
+    <div class="kv">
+      <b>Orden (ID)</b>
+      <span>{{ (cabecera.orden_id if cabecera else None) or "-" }}</span>
     </div>
     <div class="kv">
       <b>Hora de entrada</b>
@@ -452,6 +201,18 @@
     <div class="kv">
       <b>Cliente</b>
       <span>{{ (cabecera.cliente if cabecera else None) or "-" }}</span>
+    </div>
+    <div class="kv">
+      <b>Compañía</b>
+      <span>{{ (cabecera.compania if cabecera else None) or "-" }}</span>
+    </div>
+    <div class="kv">
+      <b>Prioridad</b>
+      <span>{{ (cabecera.prioridad if cabecera else None) or "-" }}</span>
+    </div>
+    <div class="kv">
+      <b>Estado</b>
+      <span>{{ (cabecera.estado if cabecera else None) or "-" }}</span>
     </div>
   </section>
 
