@@ -20,13 +20,13 @@
       color: var(--text);
       margin:0; padding:0;
     }
-    /* Márgenes de página y pie de página para WeasyPrint (más compactos) */
+    /* Márgenes de página y pie de página para WeasyPrint */
     @page{
       size: A4;
-      margin: 12mm 10mm 14mm 10mm; /* ← reducido */
+      margin: 12mm 10mm 14mm 10mm; 
       @bottom-center{
         content: "Reporte generado automáticamente por VertiOne® — Todos los derechos reservados 2025.";
-        font-size: 9px; /* un pelín más chico */
+        font-size: 9px; 
         color: #999;
       }
     }
@@ -37,7 +37,7 @@
     /* Barra de logos compacta */
     .brandbar{
       display:flex; align-items:center; justify-content:space-between;
-      gap:8px; margin-bottom:6px;
+      gap:8px; margin-bottom:6px; margin-left: 20px; margin-right: 20px;
     }
     .brandbar .brand{
       display:flex; align-items:center; justify-content:center;
@@ -63,24 +63,45 @@
 
     /* Encabezado condensado */
     .header{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr)); /* ← siempre 2 columnas */
+      gap:6px;
       border:1px solid var(--border);
       border-radius:8px;
-      padding:10px;                /* ← menos padding */
-      background:#fff;             /* más limpio que el bloque azul claro */
-      display:grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* ← cards más angostas */
-      gap:6px;                     /* ← menos gap */
-      margin:8px 0 12px 0;         /* ← menos margen */
+      padding:8px;
+      background:#fff;
       break-inside: avoid; page-break-inside: avoid;
     }
     .kv{
+      display:flex;
+      align-items:baseline;
+      gap:6px;
       border:1px solid var(--border);
       border-radius:6px;
-      padding:6px 8px;             /* ← menos padding */
+      padding:4px 6px;             /* más compacto */
       background:var(--bg);
     }
-    .kv b{ display:block; font-size:10px; color:var(--muted); margin-bottom:2px; line-height:1.1; }
-    .kv span{ font-size:11.5px; line-height:1.2; word-break: break-word; }
+    .kv b{
+      color:var(--muted);           /* gris del título */
+      font-size:10px;
+      font-weight:600;
+      display:inline;
+      margin:0;
+      white-space:nowrap;           /* evita salto del título */
+    }
+    .kv b::after{
+      content: ":";                 /* separador visual */
+      margin: 0 4px 0 2px;
+      color: var(--muted);
+    }
+    .kv span{
+      font-size:10px;               /* contenido en negro (var(--text)) */
+      line-height:1.2;
+      color: var(--text);
+      flex:1 1 auto;
+      min-width:0;
+      overflow-wrap:anywhere;       /* permite romper palabras largas si es necesario */
+    }
 
     /* Paso (card) */
     .paso{
@@ -156,10 +177,6 @@
       <span>{{ (cabecera.orden_ref if cabecera else None) or "-" }}</span>
     </div>
     <div class="kv">
-      <b>Orden (ID)</b>
-      <span>{{ (cabecera.orden_id if cabecera else None) or "-" }}</span>
-    </div>
-    <div class="kv">
       <b>Hora de entrada</b>
       <span>{{ checklist.hora_entrada or "-" }}</span>
     </div>
@@ -194,10 +211,6 @@
     <div class="kv">
       <b>Prioridad</b>
       <span>{{ (cabecera.prioridad if cabecera else None) or "-" }}</span>
-    </div>
-    <div class="kv">
-      <b>Estado</b>
-      <span>{{ (cabecera.estado if cabecera else None) or "-" }}</span>
     </div>
   </section>
 

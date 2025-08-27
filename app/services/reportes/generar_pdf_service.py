@@ -162,8 +162,8 @@ async def generar_y_subir_pdf(orden_id, tipo: str = "prereporte") -> str:
             "logo_w": 100,
             "logo_h": 60,
             "logo2_url": "app/templates/logo2.png",  
-            "logo2_w": 110,
-            "logo2_h": 42,
+            "logo2_w": 140,
+            "logo2_h": 60,
         }
 
         env = Environment(loader=FileSystemLoader("app/templates"))
