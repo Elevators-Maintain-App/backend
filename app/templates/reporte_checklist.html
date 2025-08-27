@@ -20,80 +20,88 @@
       color: var(--text);
       margin:0; padding:0;
     }
-    /* Márgenes de página y pie de página para WeasyPrint */
+    /* Márgenes de página y pie de página para WeasyPrint (más compactos) */
     @page{
       size: A4;
-      margin: 22mm 16mm 22mm 16mm;
+      margin: 12mm 10mm 14mm 10mm; /* ← reducido */
       @bottom-center{
         content: "Reporte generado automáticamente por VertiOne® — Todos los derechos reservados 2025.";
-        font-size: 10px;
+        font-size: 9px; /* un pelín más chico */
         color: #999;
       }
     }
 
-    body{ padding:24px 16px; background:#fff; }
-    h1{ color:var(--primary); margin:0 0 8px 0; text-align:center; }
-    h2{ color:var(--accent); margin:24px 0 8px 0; }
-    .subtle{ color:var(--muted); font-size:12px; text-align:center; margin-top:4px; }
+    /* Body más compacto */
+    body{ padding:12px 8px; background:#fff; }
 
-    /* Logo superior */
-    .logo{
-      text-align:center;
-      margin-bottom:10px;
+    /* Barra de logos compacta */
+    .brandbar{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:8px; margin-bottom:6px;
     }
-    .logo img{
-      max-width: 100%;
-      display:inline-block;
-      /* El ancho/alto se parametrizan desde branding (si vienen) */
-      {% if branding and branding.logo_w %} width: {{ branding.logo_w }}px; {% endif %}
-      {% if branding and branding.logo_h %} height: {{ branding.logo_h }}px; {% endif %}
-      object-fit: contain;
+    .brandbar .brand{
+      display:flex; align-items:center; justify-content:center;
+      min-width:80px;
+    }
+    .brandbar img{
+      max-width:100%; display:block; object-fit:contain;
+    }
+    /* Permite parametrizar tamaños por cada logo */
+    .logo1{
+      {% if branding and branding.logo_w %} width: {{ branding.logo_w }}px; {% else %} width:110px; {% endif %}
+      {% if branding and branding.logo_h %} height: {{ branding.logo_h }}px; {% else %} height:42px; {% endif %}
+    }
+    .logo2{
+      {% if branding and branding.logo2_w %} width: {{ branding.logo2_w }}px; {% else %} width:110px; {% endif %}
+      {% if branding and branding.logo2_h %} height: {{ branding.logo2_h }}px; {% else %} height:42px; {% endif %}
     }
 
-    /* Encabezado: bloques clave/valor auto-ajustables */
+    /* Título más discreto */
+    h1{ color:var(--primary); margin:2px 0 4px 0; text-align:center; font-size:18px; }
+    h2{ color:var(--accent); margin:16px 0 6px 0; font-size:14px; }
+    .subtle{ color:var(--muted); font-size:10px; text-align:center; margin-top:2px; }
+
+    /* Encabezado condensado */
     .header{
       border:1px solid var(--border);
-      border-radius:10px;
-      padding:16px;
-      background:var(--bg);
+      border-radius:8px;
+      padding:10px;                /* ← menos padding */
+      background:#fff;             /* más limpio que el bloque azul claro */
       display:grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap:12px;
-      margin:12px 0 22px 0;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* ← cards más angostas */
+      gap:6px;                     /* ← menos gap */
+      margin:8px 0 12px 0;         /* ← menos margen */
+      break-inside: avoid; page-break-inside: avoid;
     }
     .kv{
       border:1px solid var(--border);
-      border-radius:8px;
-      padding:10px 12px;
-      background:#fff;
-      min-height:56px;
+      border-radius:6px;
+      padding:6px 8px;             /* ← menos padding */
+      background:var(--bg);
     }
-    .kv b{ display:block; font-size:12px; color:var(--muted); margin-bottom:4px; }
-    .kv span{ font-size:14px; word-break: break-word; }
+    .kv b{ display:block; font-size:10px; color:var(--muted); margin-bottom:2px; line-height:1.1; }
+    .kv span{ font-size:11.5px; line-height:1.2; word-break: break-word; }
 
     /* Paso (card) */
     .paso{
       border:1px solid var(--border);
-      border-radius:12px;
-      margin:16px 0;
+      border-radius:10px;
+      margin:12px 0;               /* ← un poco menos */
       overflow:hidden;
-      break-inside: avoid;
-      page-break-inside: avoid;
+      break-inside: avoid; page-break-inside: avoid;
     }
     .paso-header{
       border-bottom:1px solid var(--border);
-      padding:12px 14px;
+      padding:10px 12px;
       background:linear-gradient(180deg,#ffffff 0%,#fafcff 100%);
       display:flex; align-items:center; justify-content:space-between;
     }
-    .paso-title{
-      margin:0; font-size:16px; color:var(--accent);
-    }
+    .paso-title{ margin:0; font-size:14px; color:var(--accent); }
     .paso-body{
       display:grid;
-      grid-template-columns: 1fr 240px; /* contenido | meta lateral */
-      gap:12px;
-      padding:14px;
+      grid-template-columns: 1fr 220px; /* ← meta un poco más angosta */
+      gap:10px;
+      padding:12px;
     }
     .paso-content p{ margin:6px 0; }
     .instrucciones{
@@ -103,67 +111,46 @@
     }
 
     /* Aside meta */
-    .meta{
-      border-left:1px solid var(--border);
-      padding-left:12px;
-    }
+    .meta{ border-left:1px solid var(--border); padding-left:10px; }
     .chip{
-      display:inline-block;
-      padding:2px 8px;
-      font-size:12px;
-      background:var(--chip);
-      border:1px solid #d2e6ff;
-      border-radius:999px;
-      color:#1d4ed8;
-      margin-bottom:6px;
+      display:inline-block; padding:2px 8px; font-size:11px;
+      background:var(--chip); border:1px solid #d2e6ff; border-radius:999px; color:#1d4ed8; margin-bottom:6px;
     }
     .meta .kv{ margin-top:6px; }
 
     /* Evidencias */
-    .evidencias{
-      margin-top:8px;
-      display:flex; flex-wrap:wrap; gap:10px;
-    }
-    .evidencias img{
-      width:220px; height:auto;
-      border:1px solid var(--border);
-      border-radius:8px;
-    }
+    .evidencias{ margin-top:6px; display:flex; flex-wrap:wrap; gap:8px; }
+    .evidencias img{ width:210px; height:auto; border:1px solid var(--border); border-radius:8px; }
 
     /* Firmas */
-    .firmas{
-      margin-top:30px;
-      display:flex;
-      justify-content:space-around;
-      gap:24px;
-    }
-    .firma-block{
-      text-align:center;
-      flex:1;
-    }
-    .firma-img{
-      width:260px; height:90px; object-fit:contain;
-      border-bottom:1px solid #333;
-    }
+    .firmas{ margin-top:22px; display:flex; justify-content:space-around; gap:20px; }
+    .firma-block{ text-align:center; flex:1; }
+    .firma-img{ width:240px; height:80px; object-fit:contain; border-bottom:1px solid #333; }
 
-    /* Pequeños helpers */
-    .muted{ color:var(--muted); font-size:12px; }
+    .muted{ color:var(--muted); font-size:11px; }
   </style>
 </head>
 <body>
 
-  {% if branding and branding.logo_url %}
-    <div class="logo">
-      <img src="{{ branding.logo_url }}" alt="Logo">
+  <!-- Barra de dos logos (izquierda/derecha). Muestra el que esté disponible. -->
+  <div class="brandbar">
+    <div class="brand">
+      {% if branding and branding.logo_url %}
+        <img class="logo1" src="{{ branding.logo_url }}" alt="Logo empresa mantenimiento">
+      {% endif %}
     </div>
-  {% endif %}
+    <div class="brand">
+      {% if branding and branding.logo2_url %}
+        <img class="logo2" src="{{ branding.logo2_url }}" alt="Logo empresa software">
+      {% endif %}
+    </div>
+  </div>
 
   <h1>Informe de Rutina de Mantenimiento</h1>
   <p class="subtle">Documento generado automáticamente por el sistema.</p>
 
-  <!-- Cabecera con información operativa y comercial -->
+  <!-- Cabecera con información operativa y comercial (CONDENSADA) -->
   <section class="header">
-    <!-- Fila 1 (ya existente) -->
     <div class="kv">
       <b>Orden (Referencia)</b>
       <span>{{ (cabecera.orden_ref if cabecera else None) or "-" }}</span>
@@ -180,8 +167,6 @@
       <b>Hora de salida</b>
       <span>{{ checklist.hora_salida or "-" }}</span>
     </div>
-
-    <!-- Fila 2 (nueva) -->
     <div class="kv">
       <b>Técnico asignado</b>
       <span>{{ (cabecera.tecnico if cabecera else None) or "-" }}</span>
@@ -307,12 +292,14 @@
       <div class="firma-block">
         <p><b>Técnico</b></p>
         <img class="firma-img" src="{{ checklist.firma_tecnico }}" alt="Firma técnico">
+        <p><b>{{ (cabecera.tecnico if cabecera else None) or "-" }}</b></p>
       </div>
     {% endif %}
     {% if checklist.firma_cliente %}
       <div class="firma-block">
         <p><b>Cliente</b></p>
         <img class="firma-img" src="{{ checklist.firma_cliente }}" alt="Firma cliente">
+        <p><b>{{ (cabecera.cliente if cabecera else None) or "-" }}</b></p>
       </div>
     {% endif %}
   </section>
