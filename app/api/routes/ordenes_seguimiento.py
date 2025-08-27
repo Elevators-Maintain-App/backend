@@ -81,7 +81,7 @@ async def enviar_orden_a_validacion(
     await OrdenService(db).enviar_a_validacion(orden, body)
     await db.commit()
     # Generar PDF de prereporte en background
-    background_tasks.add_task(generar_y_subir_pdf, orden_id, db, "prereporte")
+    background_tasks.add_task(generar_y_subir_pdf, orden_id, "prereporte")
 
 
 @router.post("/{orden_id}/finalizar", status_code=status.HTTP_204_NO_CONTENT)
@@ -97,7 +97,7 @@ async def finalizar_orden(
     await OrdenService(db).finalizar(orden, body)
     await db.commit()
     # Generar PDF de reporte final en background
-    background_tasks.add_task(generar_y_subir_pdf, orden_id, db, "final")
+    background_tasks.add_task(generar_y_subir_pdf, orden_id, "final")
 
 
 @router.post("/{orden_id}/items/{item_id}/completar", status_code=status.HTTP_204_NO_CONTENT)

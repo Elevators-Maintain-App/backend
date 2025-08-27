@@ -1,65 +1,20 @@
 {
-  "nombre": "Garantía Escalera Eléctrica",
-  "tipo_orden_id": 2,
-  "tipo_unidad_id": 2,
+  "nombre": "Reparación Ascensor",
+  "tipo_orden_id": 3,
+  "tipo_unidad_id": 1,
   "pasos": [
     {
       "step_number": 1,
-      "titulo": "Preparación de garantía",
-      "instrucciones": "Diligenciar ART, avisar llegada y revisar términos de garantía.",
+      "titulo": "Preparación de reparación",
+      "instrucciones": "Diligenciar ART, avisar llegada y revisar términos de garantía y reparación.",
       "evidencia_schema": {
         "type": "photo",
         "label": "Foto ART"
       }
     },
     {
-      "step_number": 2,
-      "titulo": "Detección de falla crítica",
-      "instrucciones": "Inspeccionar y documentar el problema de la escalera.",
-      "evidencia_schema": {
-        "type": "photo",
-        "label": "Foto del elemento averiado"
-      }
-    },
-    {
-      "step_number": 3,
-      "titulo": "Aprobación de cliente",
-      "instrucciones": "Informar y recibir aprobación del cliente para la corrección bajo garantía.",
-      "evidencia_schema": {
-        "type": "optional_photo",
-        "label": "Nota de aprobación"
-      }
-    },
-    {
-      "step_number": 4,
-      "titulo": "Reparación bajo garantía",
-      "instrucciones": "Ejecutar la reparación o reemplazo de piezas cubiertas por garantía.",
-      "evidencia_schema": {
-        "type": "photo_pair",
-        "labels": ["Antes", "Después"]
-      }
-    },
-    {
-      "step_number": 5,
-      "titulo": "Verificación de operación segura",
-      "instrucciones": "Probar la escalera en ciclo completo y comprobar paradas de emergencia.",
-      "evidencia_schema": {
-        "type": "photo",
-        "label": "Foto de la prueba"
-      }
-    },
-    {
-      "step_number": 6,
-      "titulo": "Validación de cliente",
-      "instrucciones": "Confirmar que el cliente acepta la solución y está conforme.",
-      "evidencia_schema": {
-        "type": "optional_photo",
-        "label": "Conformidad cliente"
-      }
-    },
-    {
       "step_number": 7,
-      "titulo": "Observaciones finales",
+      "titulo": "Observaciones de la ejecución",
       "instrucciones": "Anotar recomendaciones o condiciones futuras.",
       "evidencia_schema": {
         "type": "optional_photo",
@@ -69,7 +24,7 @@
     {
       "step_number": 8,
       "titulo": "Captura de firmas",
-      "instrucciones": "Firma del técnico y del cliente para cerrar el servicio de garantía.",
+      "instrucciones": "Firma del técnico y del cliente para cerrar el servicio de Reparación.",
       "evidencia_schema": {
         "type": "signatures",
         "labels": ["Firma técnico", "Firma cliente"]
