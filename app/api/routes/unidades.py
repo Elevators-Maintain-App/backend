@@ -10,6 +10,7 @@ from sqlalchemy import select, func
 from app.db.session import get_db
 from app.db.models.unidades import Unidad as UnidadModel
 from app.db.models.proyectos import Proyecto as ProyectoModel
+from app.db.models.clientes import Cliente as ClienteModel
 from app.db.models.enums.tipos_unidad import TipoUnidad as TipoUnidadModel
 from app.schemas.unidades import (
     UnidadCreate,
@@ -31,10 +32,9 @@ async def _map_unidad(
     proyecto = await db.get(ProyectoModel, unidad.proyecto_id)
     proyecto_nombre = proyecto.nombre if proyecto else "—"
 
-    # 2. Nombre de cliente (vía Firestore desde proyecto.cliente_id)
-    #   Asumimos que ProyectoModel tiene cliente_id (UID)
-    doc = get_firestore_client().collection("users").document(str(proyecto.cliente_id)).get()
-    cliente_nombre = doc.to_dict().get("display_name") if doc.exists else "—"
+    # 2. Nombre de cliente
+    cliente = await db.get(ClienteModel, proyecto.cliente_id)
+    cliente_nombre = cliente.nombre if cliente else "—"
 
     # Nombre de tipo de unidad
     tipo = await db.get(TipoUnidadModel, unidad.tipo_unidad_id)
