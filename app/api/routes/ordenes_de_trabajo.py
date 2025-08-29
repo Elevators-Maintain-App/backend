@@ -196,13 +196,13 @@ async def get_orden_detail(
 
 @router.post(
     "/",
-    response_model=OrdenTrabajoDetailOut,
+    response_model=UUID,
     status_code=status.HTTP_201_CREATED,
     summary="(admin/supervisor) Crear orden"
 )
 async def create_company_orden(
     orden_in: OrdenDeTrabajoCreate,
-    user = Depends(require_role("admin", "supervisor")),
+    user = Depends(require_role("admin", "supervisor", "technician", "supervisor")),
     db: AsyncSession = Depends(get_db)
 ):
     return await OrdenDeTrabajoService(db).create(
