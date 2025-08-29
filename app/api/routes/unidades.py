@@ -33,7 +33,7 @@ async def _map_unidad(
 
     # 2. Nombre de cliente (vía Firestore desde proyecto.cliente_id)
     #   Asumimos que ProyectoModel tiene cliente_id (UID)
-    doc = get_firestore_client().collection("users").document(proyecto.cliente_id).get()
+    doc = get_firestore_client().collection("users").document(str(proyecto.cliente_id)).get()
     cliente_nombre = doc.to_dict().get("display_name") if doc.exists else "—"
 
     # Nombre de tipo de unidad
