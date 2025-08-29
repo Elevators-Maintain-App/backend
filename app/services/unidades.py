@@ -75,7 +75,7 @@ class UnidadService:
         payload = UnidadCreateInDB(
             **unidad_in.dict(exclude_unset=True),
             company_id=company_id,
-            cliente_id=cliente_id
+            cliente_id=str(cliente_id)
         )
         return await unidad_crud.create(self.db, obj_in=payload)
 
