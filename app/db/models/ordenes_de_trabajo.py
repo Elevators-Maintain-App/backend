@@ -26,7 +26,7 @@ class OrdenDeTrabajo(Base):
         nullable=False,
         index=True
     )
-    cliente_id = Column(String, nullable=False, index=True)
+    cliente_id = Column(UUID(as_uuid=True), nullable=False, index=True)
     supervisor_id  = Column(String, nullable=False)
     tecnico_id     = Column(String, nullable=False)
     unidad_id      = Column(UUID(as_uuid=True), ForeignKey('unidades.id'), nullable=False)

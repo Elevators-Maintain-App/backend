@@ -288,17 +288,6 @@ class OrdenDeTrabajoService:
         if not cliente_id:
             raise HTTPException(status_code=400, detail="Unidad sin cliente asignado")
 
-        # 2) validar roles en Firestore
-        # técnico
-        tec_doc = get_firestore_client().collection("users").document(orden_in.tecnico_id).get()
-        if not tec_doc.exists or tec_doc.to_dict().get("rol") != "technician":
-            raise HTTPException(status_code=400, detail="Técnico invalido")
-
-        # supervisor
-        sup_doc = get_firestore_client().collection("users").document(orden_in.supervisor_id).get()
-        if not sup_doc.exists or sup_doc.to_dict().get("rol") != "supervisor":
-            raise HTTPException(status_code=400, detail="Supervisor invalido")
-
         # 3) validar enums
         for repo, val, name in [
             (tipo_orden_crud, orden_in.tipo_orden_id, "tipo de orden"),
@@ -331,7 +320,7 @@ class OrdenDeTrabajoService:
         self.db.add(nueva)
         await self.db.commit()
         await self.db.refresh(nueva)
-        return await self.get_detail(nueva.id, user)
+        return nueva.id
     
     async def get_total_ordenes_trabajo_por_compania(self, company_id: UUID) -> int:
         return await orden_de_trabajo_crud.get_total_by_field(
