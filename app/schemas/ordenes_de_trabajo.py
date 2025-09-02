@@ -92,3 +92,17 @@ class OrdenDeTrabajoInDBBase(OrdenDeTrabajoBase):
 
     class Config:
         from_attributes = True
+
+class OrdenDeTrabajoListOut(BaseModel):
+    orden_id: UUID
+    proyecto: str
+    unidad: str
+    fecha: datetime
+    estado: str
+    descripcion: str | None = None
+    observaciones: str | None = None
+    url_reporte_final: str | None = None
+    url_prereporte: str | None = None
+    
+    class Config:
+        from_attributes = True

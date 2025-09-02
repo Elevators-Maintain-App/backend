@@ -1,90 +1,321 @@
+<!-- app/templates/reporte_checklist.html -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <title>Reporte de Mantenimiento</title>
   <style>
-    body {
+    :root{
+      --primary:#004aad;
+      --accent:#0071ad;
+      --text:#333;
+      --muted:#666;
+      --border:#ddd;
+      --bg:#f7f9fc;
+      --chip:#eef5ff;
+    }
+    *{ box-sizing:border-box; }
+    html, body{
       font-family: 'DejaVu Sans', sans-serif;
-      margin: 30px;
-      color: #333;
+      color: var(--text);
+      margin:0; padding:0;
     }
-    h1, h2 {
-      text-align: center;
-      color: #004aad;
+    /* Márgenes de página y pie de página para WeasyPrint */
+    @page{
+      size: A4;
+      margin: 12mm 10mm 14mm 10mm; 
+      @bottom-center{
+        content: "Reporte generado automáticamente por VertiOne® — Todos los derechos reservados 2025.";
+        font-size: 9px; 
+        color: #999;
+      }
     }
-    .info {
-      margin-bottom: 20px;
+
+    /* Body más compacto */
+    body{ padding:12px 8px; background:#fff; }
+
+    /* Barra de logos compacta */
+    .brandbar{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:8px; margin-bottom:6px; margin-left: 20px; margin-right: 20px;
     }
-    .info p {
-      margin: 5px 0;
+    .brandbar .brand{
+      display:flex; align-items:center; justify-content:center;
+      min-width:80px;
     }
-    .paso {
-      border-top: 1px solid #ccc;
-      padding-top: 10px;
-      margin-top: 20px;
+    .brandbar img{
+      max-width:100%; display:block; object-fit:contain;
     }
-    .paso h3 {
-      color: #0071ad;
+    /* Permite parametrizar tamaños por cada logo */
+    .logo1{
+      {% if branding and branding.logo_w %} width: {{ branding.logo_w }}px; {% else %} width:110px; {% endif %}
+      {% if branding and branding.logo_h %} height: {{ branding.logo_h }}px; {% else %} height:42px; {% endif %}
     }
-    .evidencias img {
-      width: 200px;
-      margin: 10px;
-      border: 1px solid #ccc;
+    .logo2{
+      {% if branding and branding.logo2_w %} width: {{ branding.logo2_w }}px; {% else %} width:110px; {% endif %}
+      {% if branding and branding.logo2_h %} height: {{ branding.logo2_h }}px; {% else %} height:42px; {% endif %}
     }
-    .firmas {
-      margin-top: 40px;
-      display: flex;
-      justify-content: space-around;
+
+    /* Título más discreto */
+    h1{ color:var(--primary); margin:2px 0 4px 0; text-align:center; font-size:18px; }
+    h2{ color:var(--accent); margin:16px 0 6px 0; font-size:14px; }
+    .subtle{ color:var(--muted); font-size:10px; text-align:center; margin-top:2px; }
+
+    /* Encabezado condensado */
+    .header{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr)); /* ← siempre 2 columnas */
+      gap:6px;
+      border:1px solid var(--border);
+      border-radius:8px;
+      padding:8px;
+      background:#fff;
+      break-inside: avoid; page-break-inside: avoid;
     }
-    .firmas img {
-      height: 80px;
-      border-bottom: 1px solid #333;
+    .kv{
+      display:flex;
+      align-items:baseline;
+      gap:6px;
+      border:1px solid var(--border);
+      border-radius:6px;
+      padding:4px 6px;             /* más compacto */
+      background:var(--bg);
     }
+    .kv b{
+      color:var(--muted);           /* gris del título */
+      font-size:10px;
+      font-weight:600;
+      display:inline;
+      margin:0;
+      white-space:nowrap;           /* evita salto del título */
+    }
+    .kv b::after{
+      content: ":";                 /* separador visual */
+      margin: 0 4px 0 2px;
+      color: var(--muted);
+    }
+    .kv span{
+      font-size:10px;               /* contenido en negro (var(--text)) */
+      line-height:1.2;
+      color: var(--text);
+      flex:1 1 auto;
+      min-width:0;
+      overflow-wrap:anywhere;       /* permite romper palabras largas si es necesario */
+    }
+
+    /* Paso (card) */
+    .paso{
+      border:1px solid var(--border);
+      border-radius:10px;
+      margin:12px 0;               /* ← un poco menos */
+      overflow:hidden;
+      break-inside: avoid; page-break-inside: avoid;
+    }
+    .paso-header{
+      border-bottom:1px solid var(--border);
+      padding:10px 12px;
+      background:linear-gradient(180deg,#ffffff 0%,#fafcff 100%);
+      display:flex; align-items:center; justify-content:space-between;
+    }
+    .paso-title{ margin:0; font-size:14px; color:var(--accent); }
+    .paso-body{
+      display:grid;
+      grid-template-columns: 1fr 220px; /* ← meta un poco más angosta */
+      gap:10px;
+      padding:12px;
+    }
+    .paso-content p{ margin:6px 0; }
+    .instrucciones{
+      font-style:italic; color:#222;
+      background:#fff; border:1px dashed var(--border);
+      border-radius:8px; padding:8px 10px;
+    }
+
+    /* Aside meta */
+    .meta{ border-left:1px solid var(--border); padding-left:10px; }
+    .chip{
+      display:inline-block; padding:2px 8px; font-size:11px;
+      background:var(--chip); border:1px solid #d2e6ff; border-radius:999px; color:#1d4ed8; margin-bottom:6px;
+    }
+    .meta .kv{ margin-top:6px; }
+
+    /* Evidencias */
+    .evidencias{ margin-top:6px; display:flex; flex-wrap:wrap; gap:8px; }
+    .evidencias img{ width:210px; height:auto; border:1px solid var(--border); border-radius:8px; }
+
+    /* Firmas */
+    .firmas{ margin-top:22px; display:flex; justify-content:space-around; gap:20px; }
+    .firma-block{ text-align:center; flex:1; }
+    .firma-img{ width:240px; height:80px; object-fit:contain; border-bottom:1px solid #333; }
+
+    .muted{ color:var(--muted); font-size:11px; }
   </style>
 </head>
 <body>
 
-  <h1>Informe de Rutina de Mantenimiento</h1>
-
-  <div class="info">
-    <p><strong>Orden ID:</strong> {{ checklist.orden_trabajo_id }}</p>
-    <p><strong>Hora de entrada:</strong> {{ checklist.hora_entrada }}</p>
-    <p><strong>Hora de salida:</strong> {{ checklist.hora_salida }}</p>
+  <!-- Barra de dos logos (izquierda/derecha). Muestra el que esté disponible. -->
+  <div class="brandbar">
+    <div class="brand">
+      {% if branding and branding.logo_url %}
+        <img class="logo1" src="{{ branding.logo_url }}" alt="Logo empresa mantenimiento">
+      {% endif %}
+    </div>
+    <div class="brand">
+      {% if branding and branding.logo2_url %}
+        <img class="logo2" src="{{ branding.logo2_url }}" alt="Logo empresa software">
+      {% endif %}
+    </div>
   </div>
 
-  {% for item in checklist.items %}
-    <div class="paso">
-      <h3>Paso {{ item.step_number }}: {{ item.titulo }}</h3>
-      <p><em>{{ item.instrucciones }}</em></p>
-      {% if item.comentario %}
-        <p><strong>Comentario:</strong> {{ item.comentario }}</p>
-      {% endif %}
-      <div class="evidencias">
-        {% if item.evidencia_data.url %}
-          <img src="{{ item.evidencia_data.url }}">
-        {% elif item.evidencia_data.url1 %}
-          <img src="{{ item.evidencia_data.url1 }}">
-          <img src="{{ item.evidencia_data.url2 }}">
+  <h1>Informe de Rutina de Mantenimiento</h1>
+  <p class="subtle">Documento generado automáticamente por el sistema.</p>
+
+  <!-- Cabecera con información operativa y comercial (CONDENSADA) -->
+  <section class="header">
+    <div class="kv">
+      <b>Orden (Referencia)</b>
+      <span>{{ (cabecera.orden_ref if cabecera else None) or "-" }}</span>
+    </div>
+    <div class="kv">
+      <b>Hora de entrada</b>
+      <span>{{ checklist.hora_entrada or "-" }}</span>
+    </div>
+    <div class="kv">
+      <b>Hora de salida</b>
+      <span>{{ checklist.hora_salida or "-" }}</span>
+    </div>
+    <div class="kv">
+      <b>Técnico asignado</b>
+      <span>{{ (cabecera.tecnico if cabecera else None) or "-" }}</span>
+    </div>
+    <div class="kv">
+      <b>Supervisor asignado</b>
+      <span>{{ (cabecera.supervisor if cabecera else None) or "-" }}</span>
+    </div>
+    <div class="kv">
+      <b>Proyecto</b>
+      <span>{{ (cabecera.proyecto if cabecera else None) or "-" }}</span>
+    </div>
+    <div class="kv">
+      <b>Unidad</b>
+      <span>{{ (cabecera.unidad if cabecera else None) or "-" }}</span>
+    </div>
+    <div class="kv">
+      <b>Cliente</b>
+      <span>{{ (cabecera.cliente if cabecera else None) or "-" }}</span>
+    </div>
+    <div class="kv">
+      <b>Compañía</b>
+      <span>{{ (cabecera.compania if cabecera else None) or "-" }}</span>
+    </div>
+    <div class="kv">
+      <b>Prioridad</b>
+      <span>{{ (cabecera.prioridad if cabecera else None) or "-" }}</span>
+    </div>
+  </section>
+
+  {% if checklist.observaciones %}
+    <h2>Observaciones generales</h2>
+    <div class="kv"><span>{{ checklist.observaciones }}</span></div>
+  {% endif %}
+
+  <h2>Pasos ejecutados</h2>
+
+  {% for item in items %}
+    <article class="paso">
+      <div class="paso-header">
+        <h3 class="paso-title">Paso {{ "%02d" % item.step_number }} — {{ item.titulo }}</h3>
+        {% if item.seguimiento %}
+          <span class="chip">GPS & Hora capturados</span>
+        {% else %}
+          <span class="chip" style="opacity:.6">Sin datos de GPS</span>
         {% endif %}
       </div>
-    </div>
+
+      <div class="paso-body">
+        <div class="paso-content">
+          <p class="instrucciones">{{ item.instrucciones }}</p>
+
+          {% if item.comentario %}
+            <p><b>Comentario:</b> {{ item.comentario }}</p>
+          {% endif %}
+
+          <div class="evidencias">
+            {% if item.evidencia_data %}
+              {% if item.evidencia_data.url %}
+                <img src="{{ item.evidencia_data.url }}" alt="Evidencia">
+              {% endif %}
+              {% if item.evidencia_data.url1 %}
+                {% if item.evidencia_data.url1 %}<img src="{{ item.evidencia_data.url1 }}" alt="Evidencia 1">{% endif %}
+                {% if item.evidencia_data.url2 %}<img src="{{ item.evidencia_data.url2 }}" alt="Evidencia 2">{% endif %}
+                {% if item.evidencia_data.url3 %}<img src="{{ item.evidencia_data.url3 }}" alt="Evidencia 3">{% endif %}
+              {% endif %}
+              {% if item.evidencia_data.urls %}
+                {% for u in item.evidencia_data.urls %}
+                  {% if u %}
+                    <img src="{{ u }}" alt="Evidencia">
+                  {% endif %}
+                {% endfor %}
+              {% endif %}
+            {% endif %}
+          </div>
+        </div>
+
+        <aside class="meta">
+          <div class="kv">
+            <b>Coordenadas</b>
+            {% if item.seguimiento %}
+              <span>
+                Lat: {{ "%.6f"|format(item.seguimiento.lat) }}<br>
+                Lon: {{ "%.6f"|format(item.seguimiento.lon) }}
+              </span>
+            {% else %}
+              <span>—</span>
+            {% endif %}
+          </div>
+          <div class="kv">
+            <b>Hora (tz origen)</b>
+            <span>
+              {% if item.seguimiento and item.seguimiento.timestamp %}
+                {{ item.seguimiento.timestamp }}
+              {% else %}
+                —
+              {% endif %}
+            </span>
+          </div>
+
+          {# --- FUTURO: mini-mapa estático ---
+          <div class="kv">
+            <b>Mapa</b>
+            {% if item.seguimiento and item.seguimiento.static_map_url %}
+              <img src="{{ item.seguimiento.static_map_url }}" alt="Mapa del paso">
+            {% else %}
+              <span class="muted">Sin datos</span>
+            {% endif %}
+          </div>
+          ------------------------------------ #}
+        </aside>
+      </div>
+    </article>
   {% endfor %}
 
-  <div class="firmas">
+  <h2>Firmas</h2>
+  <section class="firmas">
     {% if checklist.firma_tecnico %}
-      <div>
-        <p><strong>Técnico</strong></p>
-        <img src="{{ checklist.firma_tecnico }}">
+      <div class="firma-block">
+        <p><b>Técnico</b></p>
+        <img class="firma-img" src="{{ checklist.firma_tecnico }}" alt="Firma técnico">
+        <p><b>{{ (cabecera.tecnico if cabecera else None) or "-" }}</b></p>
       </div>
     {% endif %}
     {% if checklist.firma_cliente %}
-      <div>
-        <p><strong>Cliente</strong></p>
-        <img src="{{ checklist.firma_cliente }}">
+      <div class="firma-block">
+        <p><b>Cliente</b></p>
+        <img class="firma-img" src="{{ checklist.firma_cliente }}" alt="Firma cliente">
+        <p><b>{{ (cabecera.cliente if cabecera else None) or "-" }}</b></p>
       </div>
     {% endif %}
-  </div>
+  </section>
 
 </body>
 </html>

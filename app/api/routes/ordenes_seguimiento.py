@@ -12,7 +12,7 @@ from app.schemas.seguimiento import SeguimientoCreate, EventoOrden, FinalizarOrd
 from app.auth.firebase import require_role  
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
-from app.schemas.reportes import UrlReporteOut
+from app.schemas.reportes import UrlReporteOut, ReportePrerevisionOut
 
 from app.services.reportes.generar_pdf_service import generar_y_subir_pdf
 
@@ -81,20 +81,23 @@ async def enviar_orden_a_validacion(
     await OrdenService(db).enviar_a_validacion(orden, body)
     await db.commit()
     # Generar PDF de prereporte en background
-    background_tasks.add_task(generar_y_subir_pdf, orden_id, db, "prereporte")
+    background_tasks.add_task(generar_y_subir_pdf, orden_id, "prereporte")
 
 
 @router.post("/{orden_id}/finalizar", status_code=status.HTTP_204_NO_CONTENT)
 async def finalizar_orden(
     orden_id: UUID,
+    background_tasks: BackgroundTasks,
     body: SeguimientoCreate = Body(...),
-    user=Depends(require_role("supervisor")),  # asegúrate que tenga rol correcto
+    user=Depends(require_role("supervisor")),  
     db: AsyncSession = Depends(get_db),
 ):
     body.evento = EventoOrden.FIN
     orden = await _get_orden(db, orden_id)
     await OrdenService(db).finalizar(orden, body)
     await db.commit()
+    # Generar PDF de reporte final en background
+    background_tasks.add_task(generar_y_subir_pdf, orden_id, "final")
 
 
 @router.post("/{orden_id}/items/{item_id}/completar", status_code=status.HTTP_204_NO_CONTENT)
@@ -143,18 +146,16 @@ async def completar_paso_por_orden(
     await OrdenService(db).paso_completado(orden, item_id, body)
     await db.commit()
 
-@router.get("/{orden_id}/reporte-prerevision", response_model=UrlReporteOut)
+@router.get("/{orden_id}/reporte-prerevision", response_model=ReportePrerevisionOut)
 async def obtener_url_reporte_prerevision(
     orden_id: UUID,
     user=Depends(require_role("supervisor")),  
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(
-        select(Checklist.reporte_prerevision_url)
-        .where(Checklist.orden_trabajo_id == orden_id)
-    )
-    url = result.scalar()
-    if not url:
+    orden_service = OrdenService(db)
+    reporte_data = await orden_service.obtener_datos_reporte_prerevision(orden_id)
+    
+    if not reporte_data:
         raise HTTPException(status_code=404, detail="No se ha generado un prereporte para esta orden.")
     
-    return UrlReporteOut(url=url)
+    return reporte_data

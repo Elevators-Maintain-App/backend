@@ -25,4 +25,5 @@ FIREBASE_CREDENTIALS_PATH="/secrets/firebase/firebase-service-account.json",\
 SECRET_KEY="your-secret-key",\
 ALGORITHM="HS256",\
 ACCESS_TOKEN_EXPIRE_MINUTES="30",\
-ENVIRONMENT="production"
+ENVIRONMENT="production",\
+STORAGE_BUCKET="software-mantenimiento-ee2kti.firebasestorage.app"

@@ -1,0 +1,34 @@
+{
+  "nombre": "Reparación Ascensor",
+  "tipo_orden_id": 3,
+  "tipo_unidad_id": 1,
+  "pasos": [
+    {
+      "step_number": 1,
+      "titulo": "Preparación de reparación",
+      "instrucciones": "Diligenciar ART, avisar llegada y revisar términos de garantía y reparación.",
+      "evidencia_schema": {
+        "type": "photo",
+        "label": "Foto ART"
+      }
+    },
+    {
+      "step_number": 7,
+      "titulo": "Observaciones de la ejecución",
+      "instrucciones": "Anotar recomendaciones o condiciones futuras.",
+      "evidencia_schema": {
+        "type": "optional_photo",
+        "label": "Foto opcional"
+      }
+    },
+    {
+      "step_number": 8,
+      "titulo": "Captura de firmas",
+      "instrucciones": "Firma del técnico y del cliente para cerrar el servicio de Reparación.",
+      "evidencia_schema": {
+        "type": "signatures",
+        "labels": ["Firma técnico", "Firma cliente"]
+      }
+    }
+  ]
+}

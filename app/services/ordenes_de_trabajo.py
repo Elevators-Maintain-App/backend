@@ -1,6 +1,6 @@
 # app/services/ordenes_de_trabajo.py
 
-from typing import List
+from typing import List, Optional
 from uuid import UUID, uuid4
 from datetime import datetime, date
 from fastapi import HTTPException, status
@@ -13,6 +13,8 @@ from app.db.models.enums.tipos_orden import TipoOrden
 from app.db.models.enums.estados_orden import EstadoOrden
 from app.db.models.enums.prioridades import Prioridad
 from app.db.models.unidades import Unidad
+from app.db.models.proyectos import Proyecto
+from app.db.models.checklists import Checklist
 from app.db.repositories.ordenes_de_trabajo import orden_de_trabajo_crud
 from app.db.repositories.unidades import unidad_crud
 from app.db.repositories.tipos_orden import tipo_orden_crud
@@ -29,6 +31,7 @@ from app.schemas.ordenes_de_trabajo import (
     OrdenDeTrabajoSummarySupervisorOut,
     OrdenDeTrabajoSummaryTechnicianOut,
     OrdenDeTrabajoWeeklyComplianceOut,
+    OrdenDeTrabajoListOut
 )
 
 logging.basicConfig(
@@ -287,17 +290,6 @@ class OrdenDeTrabajoService:
         if not cliente_id:
             raise HTTPException(status_code=400, detail="Unidad sin cliente asignado")
 
-        # 2) validar roles en Firestore
-        # técnico
-        tec_doc = get_firestore_client().collection("users").document(orden_in.tecnico_id).get()
-        if not tec_doc.exists or tec_doc.to_dict().get("rol") != "technician":
-            raise HTTPException(status_code=400, detail="Técnico invalido")
-
-        # supervisor
-        sup_doc = get_firestore_client().collection("users").document(orden_in.supervisor_id).get()
-        if not sup_doc.exists or sup_doc.to_dict().get("rol") != "supervisor":
-            raise HTTPException(status_code=400, detail="Supervisor invalido")
-
         # 3) validar enums
         for repo, val, name in [
             (tipo_orden_crud, orden_in.tipo_orden_id, "tipo de orden"),
@@ -330,7 +322,7 @@ class OrdenDeTrabajoService:
         self.db.add(nueva)
         await self.db.commit()
         await self.db.refresh(nueva)
-        return await self.get_detail(nueva.id, user)
+        return nueva.id
     
     async def get_total_ordenes_trabajo_por_compania(self, company_id: UUID) -> int:
         return await orden_de_trabajo_crud.get_total_by_field(
@@ -352,3 +344,74 @@ class OrdenDeTrabajoService:
             field="proyecto_id",
             value=proyecto_id
         )
+
+    async def list_ordenes_supervisor_filtradas(
+        self,
+        supervisor_uid: str,
+        estado_id: Optional[int] = None,
+        fecha_inicio: Optional[date] = None,
+        fecha_fin: Optional[date] = None,
+        cliente_id: Optional[str] = None,
+        tecnico_id: Optional[str] = None,
+        proyecto_id: Optional[UUID] = None
+    ) -> List[OrdenDeTrabajoListOut]:
+        """Lista órdenes del supervisor con filtros opcionales"""
+        
+        query = (
+            select(
+                OrdenDeTrabajo.id.label('orden_id'),
+                Proyecto.nombre.label('proyecto'),
+                Unidad.nombre.label('unidad'),
+                OrdenDeTrabajo.created_at.label('fecha'),
+                EstadoOrden.nombre.label('estado'),
+                OrdenDeTrabajo.descripcion,
+                OrdenDeTrabajo.observaciones,
+                Checklist.reporte_final_url.label('url_reporte_final'),
+                Checklist.reporte_prerevision_url.label('url_prereporte')
+            )
+            .join(Unidad, OrdenDeTrabajo.unidad_id == Unidad.id)
+            .join(Proyecto, Unidad.proyecto_id == Proyecto.id)
+            .join(EstadoOrden, OrdenDeTrabajo.estado_id == EstadoOrden.id)
+            .outerjoin(Checklist, Checklist.orden_trabajo_id == OrdenDeTrabajo.id)
+            .where(OrdenDeTrabajo.supervisor_id == supervisor_uid)
+        )
+        
+        # Aplicar filtros opcionales
+        if estado_id:
+            query = query.where(OrdenDeTrabajo.estado_id == estado_id)
+            
+        if fecha_inicio:
+            query = query.where(OrdenDeTrabajo.created_at >= fecha_inicio)
+            
+        if fecha_fin:
+            query = query.where(OrdenDeTrabajo.created_at <= fecha_fin)
+            
+        if cliente_id:
+            query = query.where(OrdenDeTrabajo.cliente_id == cliente_id)
+            
+        if tecnico_id:
+            query = query.where(OrdenDeTrabajo.tecnico_id == tecnico_id)
+            
+        if proyecto_id:
+            query = query.where(Unidad.proyecto_id == proyecto_id)
+        
+        # Ordenar por fecha descendente
+        query = query.order_by(OrdenDeTrabajo.created_at.desc())
+        
+        result = await self.db.execute(query)
+        rows = result.fetchall()
+        
+        return [
+            OrdenDeTrabajoListOut(
+                orden_id=row.orden_id,
+                proyecto=row.proyecto,
+                unidad=row.unidad,
+                fecha=row.fecha,
+                estado=row.estado,
+                descripcion=row.descripcion,
+                observaciones=row.observaciones,
+                url_reporte_final=row.url_reporte_final if row.estado == "Cerrada" else None,
+                url_prereporte=row.url_prereporte if row.estado == "En Validación" else None
+            )
+            for row in rows
+        ]

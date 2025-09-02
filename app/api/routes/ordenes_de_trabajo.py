@@ -1,7 +1,8 @@
 # app/api/routes/ordenes_de_trabajo.py
 
 from fastapi import APIRouter, Depends, HTTPException, status, Path, Query
-from typing import List
+from typing import List, Optional
+from datetime import date
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,6 +16,7 @@ from app.schemas.ordenes_de_trabajo import (
     OrdenDeTrabajoSummaryTechnicianOut,
     OrdenTrabajoDetailOut,
     OrdenDeTrabajoWeeklyComplianceOut,
+    OrdenDeTrabajoListOut
 )
 from app.services.ordenes_de_trabajo import OrdenDeTrabajoService
 from app.auth.firebase import require_role, get_current_firebase_user
@@ -69,14 +71,28 @@ async def count_mis_ordenes(
 
 @router.get(
     "/supervisor/all",
-    response_model=List[OrdenDeTrabajoSummarySupervisorOut],
-    summary="(supervisor) Últimas 10 órdenes"
+    response_model=List[OrdenDeTrabajoListOut],
+    summary="(supervisor) Listar órdenes con filtros"
 )
-async def list_mis_ultimas_10(
+async def list_ordenes_supervisor_filtradas(
+    estado_id: Optional[int] = Query(None, description="ID del estado"),
+    fecha_inicio: Optional[date] = Query(None, description="Fecha inicio del rango"),
+    fecha_fin: Optional[date] = Query(None, description="Fecha fin del rango"),
+    cliente_id: Optional[str] = Query(None, description="UID del cliente"),
+    tecnico_id: Optional[str] = Query(None, description="UID del técnico"),
+    proyecto_id: Optional[UUID] = Query(None, description="ID del proyecto"),
     user=Depends(require_role("supervisor")),
     db: AsyncSession = Depends(get_db)
 ):
-    return await OrdenDeTrabajoService(db).list_summary_by_supervisor(user.uid, full=False)
+    return await OrdenDeTrabajoService(db).list_ordenes_supervisor_filtradas(
+        supervisor_uid=user.uid,
+        estado_id=estado_id,
+        fecha_inicio=fecha_inicio,
+        fecha_fin=fecha_fin,
+        cliente_id=cliente_id,
+        tecnico_id=tecnico_id,
+        proyecto_id=proyecto_id
+    )
 
 
 @router.get(
@@ -196,13 +212,13 @@ async def get_orden_detail(
 
 @router.post(
     "/",
-    response_model=OrdenTrabajoDetailOut,
+    response_model=UUID,
     status_code=status.HTTP_201_CREATED,
     summary="(admin/supervisor) Crear orden"
 )
 async def create_company_orden(
     orden_in: OrdenDeTrabajoCreate,
-    user = Depends(require_role("admin", "supervisor")),
+    user = Depends(require_role("admin", "supervisor", "technician", "supervisor")),
     db: AsyncSession = Depends(get_db)
 ):
     return await OrdenDeTrabajoService(db).create(

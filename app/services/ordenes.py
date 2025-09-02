@@ -9,7 +9,11 @@ from app.db.models.ordenes_de_trabajo import OrdenDeTrabajo
 from app.db.models.seguimiento import OrdenTrabajoSeguimiento, EventoOrden
 from app.schemas.seguimiento import SeguimientoCreate, FinalizarOrdenPayload
 from app.utils.estados_orden import EstadoOrdenID
-
+from app.db.models.proyectos import Proyecto
+from app.db.models.unidades import Unidad
+from app.db.models.checklists import Checklist
+from app.schemas.reportes import UrlReporteOut, ReportePrerevisionOut
+from sqlalchemy import select
 
 class OrdenService:
     def __init__(self, db: AsyncSession) -> None:
@@ -70,3 +74,45 @@ class OrdenService:
     ) -> None:
         
         await self._add_tracking(orden, datos, checklist_item_id=item_id)
+
+    async def obtener_datos_reporte_prerevision(self, orden_id: UUID) -> ReportePrerevisionOut | None:
+        """Obtiene los datos completos del reporte de prerevision para una orden"""
+        result = await self.db.execute(
+            select(
+                Checklist.reporte_prerevision_url,
+                Proyecto.nombre.label('proyecto_nombre'),
+                Unidad.nombre.label('unidad_nombre'),
+                OrdenDeTrabajo.estado_id,
+                OrdenDeTrabajo.fecha
+            )
+            .join(OrdenDeTrabajo, Checklist.orden_trabajo_id == OrdenDeTrabajo.id)
+            .join(Unidad, OrdenDeTrabajo.unidad_id == Unidad.id)
+            .join(Proyecto, Unidad.proyecto_id == Proyecto.id)
+            .where(Checklist.orden_trabajo_id == orden_id)
+        )
+        
+        row = result.first()
+        if not row or not row.reporte_prerevision_url:
+            return None
+        
+        estado_nombre = self._get_estado_nombre(row.estado_id)
+        
+        return ReportePrerevisionOut(
+            url=row.reporte_prerevision_url,
+            proyecto=row.proyecto_nombre,
+            unidad=row.unidad_nombre,
+            estado=estado_nombre,
+            fecha=row.fecha
+        )
+    
+    def _get_estado_nombre(self, estado_id: int) -> str:
+        """Convierte el ID del estado a nombre legible"""
+        # Ajusta según tu mapeo de estados
+        estados = {
+            EstadoOrdenID.PENDIENTE: "Pendiente",
+            EstadoOrdenID.EN_EJECUCION: "En Ejecución", 
+            EstadoOrdenID.EN_PAUSA: "En Pausa",
+            EstadoOrdenID.EN_VALIDACION: "En Validación",
+            EstadoOrdenID.COMPLETADA: "Completada"
+        }
+        return estados.get(estado_id, "Estado desconocido")
