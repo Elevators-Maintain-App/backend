@@ -23,7 +23,7 @@ from app.db.repositories.prioridades import prioridad_crud
 from app.auth.firebase import get_firestore_client
 from app.db.models.compania import Compania
 import logging
-
+from app.services.cliente import ClienteService
 from app.schemas.ordenes_de_trabajo import (
     OrdenDeTrabajoCreate,
     OrdenTrabajoDetailOut,
@@ -126,7 +126,7 @@ class OrdenDeTrabajoService:
             if o.tecnico_id != user.uid:
                 raise HTTPException(status_code=403, detail="Tecnico No autorizado")
 
-        # 3) Cargar unidad + proyecto en una sola consulta
+        # 3) Cargar unidad + proyecto en una sola consulta        
         stmt = (
             select(Unidad)
             .options(selectinload(Unidad.proyecto))
@@ -138,7 +138,7 @@ class OrdenDeTrabajoService:
             raise HTTPException(status_code=500, detail="Error interno: unidad faltante")
         proyecto_nombre = unidad.proyecto.nombre if unidad.proyecto else "—"
 
-        # 4) Cargar nombres de enums
+        # 4) Cargar nombres de enums        
         tipo   = await tipo_orden_crud.get(self.db, o.tipo_orden_id)
         estado = await estado_orden_crud.get(self.db, o.estado_id)
         prioridad = await prioridad_crud.get(self.db, o.prioridad_id)
@@ -159,10 +159,12 @@ class OrdenDeTrabajoService:
         cliente_id = unidad.proyecto.cliente_id if unidad.proyecto else None
         cliente_nombre = "—"
         if cliente_id:
-            cli_doc = get_firestore_client().collection("users").document(cliente_id).get()
-            cliente_nombre = cli_doc.to_dict().get("display_name", "—") if cli_doc.exists else "—"
+            cliente_serv = ClienteService(self.db)
+            cli_doc = await cliente_serv.get_by_id(cliente_id, user)
+            cliente_nombre = cli_doc.nombre if cli_doc else "—"
 
         # 8) Empaquetar solo los campos requeridos
+        
         return OrdenTrabajoDetailOut(
             referencia    = o.referencia,
             descripcion   = o.descripcion,
