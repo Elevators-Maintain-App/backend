@@ -15,7 +15,7 @@ class Unidad(Base):
     proyecto_id        = Column(UUID(as_uuid=True), ForeignKey('proyectos.id'), nullable=False)
     tipo_unidad_id     = Column(Integer, ForeignKey('tipos_unidad.id'), nullable=False)
     company_id         = Column(UUID(as_uuid=True), ForeignKey('companias.id'), nullable=False, index=True)
-    cliente_id = Column(String, nullable=False, index=True)
+    cliente_id = Column(UUID(as_uuid=True), nullable=False, index=True)
     created_at         = Column(TIMESTAMP, server_default=func.now())
     updated_at         = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
 

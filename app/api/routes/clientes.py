@@ -31,7 +31,7 @@ async def get_clientes(
     return await service.get_clientes_con_paginacion(usuario_actual=usuario_actual, skip=skip, limit=limit, search=search, company_id=company_id, tipo_documento_id=tipo_documento_id)
 
 @router.get("/{cliente_id}", response_model=ClienteOut)
-async def get_cliente(cliente_id: UUID, db: AsyncSession = Depends(get_db), usuario_actual: FirebaseUser = Depends(require_role("superAdmin", "admin", "supervisor"))):
+async def get_cliente(cliente_id: UUID, db: AsyncSession = Depends(get_db), usuario_actual: FirebaseUser = Depends(require_role("superAdmin", "admin", "supervisor", "technician"))):
     service = ClienteService(db)
     return await service.get_by_id(cliente_id, usuario_actual=usuario_actual)
 
