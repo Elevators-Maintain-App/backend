@@ -1,6 +1,6 @@
 {
-  "nombre": "Recorte de cables de tracción de Ascensor",
-  "tipo_orden_id": 34,
+  "nombre": "Recorte de cable de gobernador de velocidad",
+  "tipo_orden_id": 35,
   "tipo_unidad_id": 1,
   "pasos": [
     {
@@ -14,29 +14,29 @@
     },
     {
       "step_number": 2,
-      "titulo": "Medida CWT a buffer actual",
-      "instrucciones": "Medir distancia de buffer a contrapeso actual para calcular distancia que se debe recortar.",
+      "titulo": "Medida y nivel actual de la pesa del gobernador",
+      "instrucciones": "Medir distancia de pesa de gobernador actual para calcular distancia que se debe recortar.",
       "evidencia_schema": {
         "type": "photo",
-        "label": "Foto distancia CWT a buffer actual"
+        "label": "Foto distancia pesa de gobernador actual"
       }
     },
     {
       "step_number": 3,
-      "titulo": "Registrar terminales de cables despues de intervenir",
-      "instrucciones": "Tomar foto de los terminales en ambos extremos del cable, validar que esten completos pines, prensacables y kit antigiro.",
+      "titulo": "Revisar accionamiento del micro de seguridad actual",
+      "instrucciones": "Tomar foto del estado del micro de seguridad actual",
       "evidencia_schema": {
-        "type": "photo_pair",
-        "labels": ["Lado cabina", "Lado contrapeso"]
+        "type": "photo",
+        "labels": "Foto de micro de pesa actual"
       }
     },
     {
       "step_number": 4,
-      "titulo": "Medida CWT a buffer final",
-      "instrucciones": "Medir distancia de buffer a contrapeso después de la ejecución de los trabajos, validar que sea por lo menos de 20cms. Verificar que la cabina no choque en la parte superior del pozo.",
+      "titulo": "Medida y nivel final de pesa de gobernador",
+      "instrucciones": "Medir distancia de pesa de gobernador despues de ejecutar el recorte, validar que tenga por lo menos 20cms libre al piso. Verificar que el micro quede activando de forma correcta. Verificar que todos los prensacables esten correctamente instalados",
       "evidencia_schema": {
-        "type": "photo",
-        "label": "Foto distancia CWT a buffer final"
+        "type": "photo_pair",
+        "label": ["Foto pesa y micro", "Foto prensacables"]
       }
     },
     {
