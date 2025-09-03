@@ -14,6 +14,7 @@ from app.db.models.seguimiento import OrdenTrabajoSeguimiento, EventoOrden
 from app.db.models.checklists import Checklist
 from app.db.models.ordenes_de_trabajo import OrdenDeTrabajo
 from app.db.models.usuarios import Usuario
+from app.db.models.clientes import Cliente
 
 LOCAL_TZ = None 
 
@@ -122,6 +123,16 @@ async def generar_y_subir_pdf(orden_id, tipo: str = "prereporte") -> str:
                     or odt.supervisor_id
                 )
 
+        cliente_nombre = None
+        if odt and getattr(odt, "cliente_id", None):
+            cli = await db.scalar(select(Cliente).where(Cliente.id == odt.cliente_id))
+            if cli:
+                cliente_nombre = (
+                    getattr(cli, "nombre", None)
+                    or getattr(cli, "display_name", None)
+                    or odt.cliente_id
+                )
+
         cabecera = {
             # Mostrar el consecutivo si existe; si no, cae al UUID
             "orden_ref": _pick_first(getattr(odt, "referencia", None)),
@@ -147,12 +158,7 @@ async def generar_y_subir_pdf(orden_id, tipo: str = "prereporte") -> str:
                 getattr(odt, "unidad_id", None),
                 (checklist.check_metadata or {}).get("unidad"),
             ),
-            "cliente": _pick_first(
-                _resolve_attr_chain(odt, "cliente.nombre"),
-                _resolve_attr_chain(odt, "cliente.display_name"),
-                getattr(odt, "cliente_id", None),
-                (checklist.check_metadata or {}).get("cliente"),
-            ),
+            "cliente": cliente_nombre,
             "compania": _pick_first(_resolve_attr_chain(odt, "compania.nombre")),
             "prioridad": _pick_first(_resolve_attr_chain(odt, "prioridad.nombre")),
             "estado": _pick_first(_resolve_attr_chain(odt, "estado.nombre")),
