@@ -27,7 +27,7 @@
       "instrucciones": "Tomar foto del estado del micro de seguridad actual",
       "evidencia_schema": {
         "type": "photo",
-        "labels": "Foto de micro de pesa actual"
+        "label": "Foto de micro de pesa actual"
       }
     },
     {
