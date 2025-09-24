@@ -188,6 +188,17 @@ async def generar_y_subir_pdf(orden_id, tipo: str = "prereporte") -> str:
         if getattr(odt, "tipo_orden_id", None) == 67:
             template_name = "reporte_seguridad.html"
 
+        # Tomar el primer timestamp válido como referencia de la inspección
+        primer_ts = next((it["seguimiento"]["timestamp"] for it in items_enriquecidos if it.get("seguimiento") and it["seguimiento"].get("timestamp")), None)
+
+        if primer_ts:
+            ts_panama = primer_ts.astimezone(LOCAL_TZ)
+            cabecera["fecha_ejecucion"] = ts_panama.strftime("%d/%m/%Y")
+            cabecera["hora_ejecucion"] = ts_panama.strftime("%H:%M")
+        else:
+            cabecera["fecha_ejecucion"] = "-"
+            cabecera["hora_ejecucion"] = "-"
+
         env = Environment(loader=FileSystemLoader("app/templates"))
         template = env.get_template(template_name)
         html_content = template.render(

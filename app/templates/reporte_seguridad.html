@@ -77,6 +77,8 @@
   <div class="kv"><b>Supervisor</b><span>{{ (cabecera.supervisor if cabecera else None) or "-" }}</span></div>
   <div class="kv"><b>Unidad</b><span>{{ (cabecera.unidad if cabecera else None) or "-" }}</span></div>
   <div class="kv"><b>Cliente</b><span>{{ (cabecera.cliente if cabecera else None) or "-" }}</span></div>
+  <div class="kv"><b>Fecha de ejecución</b><span>{{ (cabecera.fecha_ejecucion if cabecera else None) or "-" }}</span></div>
+  <div class="kv"><b>Hora de inspección</b><span>{{ (cabecera.hora_ejecucion if cabecera else None) or "-" }}</span></div>
 </section>
 
 <h2>Pasos ejecutados</h2>
@@ -113,7 +115,7 @@
 <section class="firmas">
   {% if checklist.firma_tecnico %}
     <div class="firma-block">
-      <p><b>Supervisor Techvertical</b></p>
+      <p><b>Supervisor</b></p>
       <img class="firma-img" src="{{ checklist.firma_tecnico }}" alt="Firma técnico">
       <p><b>{{ (cabecera.tecnico if cabecera else None) or "-" }}</b></p>
     </div>
