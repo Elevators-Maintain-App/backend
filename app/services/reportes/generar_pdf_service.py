@@ -15,8 +15,9 @@ from app.db.models.checklists import Checklist
 from app.db.models.ordenes_de_trabajo import OrdenDeTrabajo
 from app.db.models.usuarios import Usuario
 from app.db.models.clientes import Cliente
+from zoneinfo import ZoneInfo
 
-LOCAL_TZ = None 
+LOCAL_TZ = ZoneInfo("America/Panama") 
 
 async def _geo_por_item(db: AsyncSession, checklist_item_ids):
     """
@@ -172,8 +173,23 @@ async def generar_y_subir_pdf(orden_id, tipo: str = "prereporte") -> str:
             "logo2_h": 60,
         }
 
+        # Ajustar timestamps al huso horario de Panamá y solo hora:minutos
+        for it in items_enriquecidos:
+            ts = it["seguimiento"]["timestamp"] if it.get("seguimiento") else None
+            if ts:
+                # Convertir a tz Panamá y formatear HH:MM
+                ts_panama = ts.astimezone(LOCAL_TZ)
+                it["hora_local"] = ts_panama.strftime("%H:%M")
+            else:
+                it["hora_local"] = None
+
+        # Selección de plantilla según tipo_orden_id
+        template_name = "reporte_checklist.html"
+        if getattr(odt, "tipo_orden_id", None) == 67:
+            template_name = "reporte_seguridad.html"
+
         env = Environment(loader=FileSystemLoader("app/templates"))
-        template = env.get_template("reporte_checklist.html")
+        template = env.get_template(template_name)
         html_content = template.render(
             checklist=checklist,
             items=items_enriquecidos,

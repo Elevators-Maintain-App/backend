@@ -1,0 +1,61 @@
+{
+  "nombre": "Checklist Seguridad en Campo",
+  "tipo_orden_id": 67,
+  "tipo_unidad_id": 1,
+  "pasos": [
+    {
+      "step_number": 1,
+      "titulo": "AST/ART diligenciado correctamente",
+      "instrucciones": "Verificar que el Análisis Seguro de Trabajo (AST) o el Análisis de Riesgos en el Trabajo (ART) haya sido diligenciado correctamente.",
+      "evidencia_schema": {
+        "type": "photo",
+        "label": "Foto del formato AST/ART diligenciado"
+      }
+    },
+    {
+      "step_number": 2,
+      "titulo": "Riesgos detectados",
+      "instrucciones": "Registrar si existe algún riesgo que deba ser atendido de inmediato.",
+      "evidencia_schema": {
+        "type": "optional_photo",
+        "label": "Foto de riesgo detectado (si aplica)"
+      }
+    },
+    {
+      "step_number": 3,
+      "titulo": "Verificación de EPP",
+      "instrucciones": "Confirmar que todo el personal en campo cuente con los Elementos de Protección Personal (EPP) completos.",
+      "evidencia_schema": {
+        "type": "photo",
+        "label": "Foto del personal con EPP completos"
+      }
+    },
+    {
+      "step_number": 4,
+      "titulo": "Orden y aseo en el área de trabajo",
+      "instrucciones": "Verificar que se cumpla con las condiciones de orden y aseo en el área de trabajo.",
+      "evidencia_schema": {
+        "type": "optional_photo",
+        "label": "Foto del área de trabajo (opcional)"
+      }
+    },
+    {
+      "step_number": 5,
+      "titulo": "Señalización preventiva",
+      "instrucciones": "Verificar si existe señalización preventiva de seguridad instalada en caso de ser requerida.",
+      "evidencia_schema": {
+        "type": "optional_photo",
+        "label": "Foto de señalización preventiva (si aplica)"
+      }
+    },
+    {
+      "step_number": 6,
+      "titulo": "Captura de firmas",
+      "instrucciones": "Firma del supervisor que valida el cumplimiento de las condiciones de seguridad en campo.",
+      "evidencia_schema": {
+        "type": "signatures",
+        "labels": ["Firma supervisor", "Firma cliente"]
+      }
+    }
+  ]
+}
