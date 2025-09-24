@@ -26,12 +26,12 @@
     .brandbar img{ max-height:50px; }
         /* Permite parametrizar tamaños por cada logo */
     .logo1{
-      {% if branding and branding.logo_w %} width: {{ branding.logo_w }}px; {% else %} width:110px; {% endif %}
-      {% if branding and branding.logo_h %} height: {{ branding.logo_h }}px; {% else %} height:42px; {% endif %}
+      {% if branding and branding.logo_w %} width: {{ branding.logo_w }}px; {% else %} width:100px; {% endif %}
+      {% if branding and branding.logo_h %} height: {{ branding.logo_h }}px; {% else %} height:60px; {% endif %}
     }
     .logo2{
-      {% if branding and branding.logo2_w %} width: {{ branding.logo2_w }}px; {% else %} width:110px; {% endif %}
-      {% if branding and branding.logo2_h %} height: {{ branding.logo2_h }}px; {% else %} height:42px; {% endif %}
+      {% if branding and branding.logo2_w %} width: {{ branding.logo2_w }}px; {% else %} width:140px; {% endif %}
+      {% if branding and branding.logo2_h %} height: {{ branding.logo2_h }}px; {% else %} height:60px; {% endif %}
     }
     h1{ text-align:center; color:var(--primary); font-size:18px; margin:4px 0; }
     h2{ color:var(--accent); font-size:14px; margin:14px 0 6px; }
