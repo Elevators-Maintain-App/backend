@@ -24,6 +24,15 @@
     }
     .brandbar{ display:flex; justify-content:space-between; margin-bottom:6px; }
     .brandbar img{ max-height:50px; }
+        /* Permite parametrizar tamaños por cada logo */
+    .logo1{
+      {% if branding and branding.logo_w %} width: {{ branding.logo_w }}px; {% else %} width:110px; {% endif %}
+      {% if branding and branding.logo_h %} height: {{ branding.logo_h }}px; {% else %} height:42px; {% endif %}
+    }
+    .logo2{
+      {% if branding and branding.logo2_w %} width: {{ branding.logo2_w }}px; {% else %} width:110px; {% endif %}
+      {% if branding and branding.logo2_h %} height: {{ branding.logo2_h }}px; {% else %} height:42px; {% endif %}
+    }
     h1{ text-align:center; color:var(--primary); font-size:18px; margin:4px 0; }
     h2{ color:var(--accent); font-size:14px; margin:14px 0 6px; }
     .header{ display:grid; grid-template-columns:repeat(2,1fr); gap:6px; border:1px solid var(--border); border-radius:8px; padding:8px; background:#fff; }
@@ -45,14 +54,19 @@
 </head>
 <body>
 
-<div class="brandbar">
-  {% if branding and branding.logo_url %}
-    <img src="{{ branding.logo_url }}" alt="Logo empresa">
-  {% endif %}
-  {% if branding and branding.logo2_url %}
-    <img src="{{ branding.logo2_url }}" alt="Logo software">
-  {% endif %}
-</div>
+  <!-- Barra de dos logos (izquierda/derecha). Muestra el que esté disponible. -->
+  <div class="brandbar">
+    <div class="brand">
+      {% if branding and branding.logo_url %}
+        <img class="logo1" src="{{ branding.logo_url }}" alt="Logo empresa mantenimiento">
+      {% endif %}
+    </div>
+    <div class="brand">
+      {% if branding and branding.logo2_url %}
+        <img class="logo2" src="{{ branding.logo2_url }}" alt="Logo empresa software">
+      {% endif %}
+    </div>
+  </div>
 
 <h1>Informe de Revisión de Seguridad</h1>
 <p class="subtle">Documento generado automáticamente por el sistema.</p>
@@ -61,7 +75,6 @@
   <div class="kv"><b>Orden (Referencia)</b><span>{{ (cabecera.orden_ref if cabecera else None) or "-" }}</span></div>
   <div class="kv"><b>Técnico</b><span>{{ (cabecera.tecnico if cabecera else None) or "-" }}</span></div>
   <div class="kv"><b>Supervisor</b><span>{{ (cabecera.supervisor if cabecera else None) or "-" }}</span></div>
-  <div class="kv"><b>Proyecto</b><span>{{ (cabecera.proyecto if cabecera else None) or "-" }}</span></div>
   <div class="kv"><b>Unidad</b><span>{{ (cabecera.unidad if cabecera else None) or "-" }}</span></div>
   <div class="kv"><b>Cliente</b><span>{{ (cabecera.cliente if cabecera else None) or "-" }}</span></div>
 </section>
