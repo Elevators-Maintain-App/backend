@@ -23,15 +23,26 @@
       }
     }
     .brandbar{ display:flex; justify-content:space-between; margin-bottom:6px; }
-    .brandbar img{ max-height:50px; }
+    .brandbar img{ max-height:80px; }
         /* Permite parametrizar tamaños por cada logo */
     .logo1{
-      {% if branding and branding.logo_w %} width: {{ branding.logo_w }}px; {% else %} width:100px; {% endif %}
-      {% if branding and branding.logo_h %} height: {{ branding.logo_h }}px; {% else %} height:60px; {% endif %}
+      {% if branding and branding.logo_w %}
+        width: {{ branding.logo_w }}px;
+        height: auto;
+      {% else %}
+        width: 100px;
+        height: auto;
+      {% endif %}
     }
+
     .logo2{
-      {% if branding and branding.logo2_w %} width: {{ branding.logo2_w }}px; {% else %} width:140px; {% endif %}
-      {% if branding and branding.logo2_h %} height: {{ branding.logo2_h }}px; {% else %} height:60px; {% endif %}
+      {% if branding and branding.logo2_w %}
+        width: {{ branding.logo2_w }}px;
+        height: auto;
+      {% else %}
+        width: 140px;
+        height: auto;
+      {% endif %}
     }
     h1{ text-align:center; color:var(--primary); font-size:18px; margin:4px 0; }
     h2{ color:var(--accent); font-size:14px; margin:14px 0 6px; }

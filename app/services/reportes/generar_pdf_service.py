@@ -167,10 +167,10 @@ async def generar_y_subir_pdf(orden_id, tipo: str = "prereporte") -> str:
         branding = {
             "logo_url": "app/templates/logo.png",
             "logo_w": 100,
-            "logo_h": 60,
+            "logo_h": 90,
             "logo2_url": "app/templates/logo2.png",  
-            "logo2_w": 140,
-            "logo2_h": 60,
+            "logo2_w": 180,
+            "logo2_h": 70,
         }
 
         # Ajustar timestamps al huso horario de Panamá y solo hora:minutos
