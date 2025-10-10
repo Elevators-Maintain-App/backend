@@ -187,6 +187,8 @@ async def generar_y_subir_pdf(orden_id, tipo: str = "prereporte") -> str:
         template_name = "reporte_checklist.html"
         if getattr(odt, "tipo_orden_id", None) == 67:
             template_name = "reporte_seguridad.html"
+        if getattr(odt, "tipo_orden_id", None) == 101:
+            template_name = "reporte_checklistV2.html"
 
         # Tomar el primer timestamp válido como referencia de la inspección
         primer_ts = next((it["seguimiento"]["timestamp"] for it in items_enriquecidos if it.get("seguimiento") and it["seguimiento"].get("timestamp")), None)

@@ -1,0 +1,88 @@
+{
+  "nombre": "Supervisión mantenimiento de Ascensor",
+  "tipo_orden_id": 100,
+  "tipo_unidad_id": 1,
+  "pasos": [
+    {
+      "step_number": 1,
+      "titulo": "Control Eléctrico",
+      "instrucciones": "Revisión de estado general.",
+      "evidencia_schema": {
+        "type": "optional_photo",
+        "label": "Foto control eléctrico"
+      }
+    },
+    {
+      "step_number": 2,
+      "titulo": "Techo de cabina",
+      "instrucciones": "Se verifica estado general.",
+      "evidencia_schema": {
+        "type": "optional_photo",
+        "label": "Foto techo de cabina"
+      }
+    },
+    {
+      "step_number": 3,
+      "titulo": "Recorrido de foso",
+      "instrucciones": "Se verifica estado general.",
+      "evidencia_schema": {
+        "type": "optional_photo",
+        "label": "Foto recorrido de foso"
+      }
+    },
+    {
+      "step_number": 4,
+      "titulo": "Entradas de Pasillo",
+      "instrucciones": "Se verifica estado general.",
+      "evidencia_schema": {
+        "type": "optional_photo",
+        "label": "Foto de entradas de pasillo"
+      }
+    },
+    {
+      "step_number": 5,
+      "titulo": "Pit",
+      "instrucciones": "Se verifica estado general.",
+      "evidencia_schema": {
+        "type": "optional_photo",
+        "label": "Foto de pit"
+      }
+    },
+    {
+      "step_number": 6,
+      "titulo": "Interior de cabina",
+      "instrucciones": "Se verifica estado general.",
+      "evidencia_schema": {
+        "type": "optional_photo",
+        "label": "Foto de interior de cabina"
+      }
+    },
+    {
+      "step_number": 7,
+      "titulo": "Contrapeso, cables, terminales",
+      "instrucciones": "Se verifica estado general.",
+      "evidencia_schema": {
+        "type": "optional_photo",
+        "label": "Foto de contrapeso, cables, terminales"
+      }
+    },
+    {
+      "step_number": 8,
+      "titulo": "Otros",
+      "instrucciones": "Se identifican temas adicionales.",
+      "evidencia_schema": {
+        "type": "optional_photo",
+        "label": "Foto de otros"
+      }
+    },
+    {
+      "step_number": 9,
+      "titulo": "Captura de firmas",
+      "instrucciones": "Firma del técnico y del cliente para cerrar el servicio de mantenimiento.",
+      "evidencia_schema": {
+        "type": "signatures",
+        "labels": ["Firma técnico", "Firma cliente"]
+      }
+    }
+  ]
+}
