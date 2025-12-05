@@ -22,10 +22,10 @@ class NotificacionFactory:
         self.registrar_proveedor(TipoNotificacion.EMAIL.value, Office365EmailProvider)
         
         # Configurar email por defecto solo si hay credenciales
-        if settings.notification_email and settings.email_password:
+        if settings.notification_email and settings.email_pwd:
             self.configurar_proveedor(TipoNotificacion.EMAIL.value, {
                 "username": settings.notification_email,
-                "password": settings.email_password,
+                "password": settings.email_pwd,
                 "smtp_server": settings.smtp_server or "smtp.office365.com",
                 "smtp_port": int(settings.smtp_port) if settings.smtp_port else 587,
                 "use_tls": True,

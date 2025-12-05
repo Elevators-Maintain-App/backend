@@ -1,6 +1,6 @@
 # app/api/routes/clientes.py
 
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, File, UploadFile, Form
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 from uuid import UUID
@@ -36,9 +36,38 @@ async def get_cliente(cliente_id: UUID, db: AsyncSession = Depends(get_db), usua
     return await service.get_by_id(cliente_id, usuario_actual=usuario_actual)
 
 @router.post("/", response_model=ClienteOut, status_code=status.HTTP_201_CREATED)
-async def create_cliente(cliente_in: ClienteCreate, db: AsyncSession = Depends(get_db), usuario_actual: FirebaseUser = Depends(require_role("superAdmin", "admin", "supervisor"))):
+async def create_cliente(
+    documento: str = Form(...),
+    tipo_documento_id: int = Form(...),
+    compania_id: UUID = Form(...),
+    nombre: str = Form(...),
+    email: str = Form(...),
+    telefono: str = Form(...),
+    pais_id: int = Form(...),
+    ciudad: str = Form(...),
+    direccion: str = Form(...),
+    logo: Optional[UploadFile] = File(None),
+    db: AsyncSession = Depends(get_db),
+    usuario_actual: FirebaseUser = Depends(require_role("superAdmin", "admin", "supervisor"))
+):
+    """
+    Crea un nuevo cliente. El logo es opcional y se puede subir como archivo.
+    """
     service = ClienteService(db)
-    return await service.create_cliente(cliente_in, usuario_actual=usuario_actual)
+    
+    cliente_data = {
+        "documento": documento,
+        "tipo_documento_id": tipo_documento_id,
+        "compania_id": compania_id,
+        "nombre": nombre,
+        "email": email,
+        "telefono": telefono,
+        "pais_id": pais_id,
+        "ciudad": ciudad,
+        "direccion": direccion
+    }
+    
+    return await service.create_cliente(cliente_data, logo, usuario_actual=usuario_actual)
 
 @router.put("/{cliente_id}", response_model=ClienteOut)
 async def update_cliente(
