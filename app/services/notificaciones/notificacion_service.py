@@ -48,12 +48,12 @@ class NotificacionService:
 
     def _configurar_email(self) -> None:
         """Configura el proveedor de email desde variables de entorno."""
-        if not settings.notification_email or not settings.email_password:
+        if not settings.notification_email or not settings:
             return  # Sin configuración, simplemente no configurar el proveedor
         
         configuracion_email = {
             "username": settings.notification_email,
-            "password": settings.email_password,
+            "password": settings.email_pwd,
             "smtp_server": settings.smtp_server or "smtp.office365.com",
             "smtp_port": int(settings.smtp_port) if settings.smtp_port else 587,
             "use_tls": True,
