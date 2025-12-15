@@ -17,6 +17,9 @@ from app.db.models.usuarios import Usuario
 from app.db.models.clientes import Cliente
 from zoneinfo import ZoneInfo
 
+import logging
+logger = logging.getLogger("pdf_prereporte")
+
 LOCAL_TZ = ZoneInfo("America/Panama") 
 
 async def _geo_por_item(db: AsyncSession, checklist_item_ids):
@@ -69,6 +72,28 @@ def _pick_first(*vals):
 
 async def generar_y_subir_pdf(orden_id, tipo: str = "prereporte") -> str:
     # ← sesión propia para el background task
+
+    logger.info(
+        "PDF_START: orden_id=%s checklist_id=%s items=%s",
+        str(orden_id),
+        str(checklist.id),
+        len(checklist.items or []),
+    )
+
+    # loguea 3 pasos del checklist tal como los lee el PDF
+    for it in sorted(checklist.items, key=lambda x: x.step_number)[:3]:
+        logger.info(
+            "PDF_ITEM: step=%s evidencia_keys=%s comentario_present=%s",
+            it.step_number,
+            list((it.evidencia_data or {}).keys()),
+            bool(it.comentario),
+        )
+
+    logger.info("PDF_GEO: geo_rows=%s item_ids=%s", len(geo or {}), len(item_ids))
+    logger.info("PDF_TEMPLATE: %s", template_name)
+    ...
+    logger.info("PDF_UPLOADED: tipo=%s url=%s", tipo, url)
+
     async with AsyncSessionLocal() as db:
         checklist = await db.scalar(
             select(Checklist)

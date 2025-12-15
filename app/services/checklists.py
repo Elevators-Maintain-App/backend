@@ -19,6 +19,9 @@ from app.schemas.checklists import (
 )
 from app.schemas.checklists_sync import ChecklistSyncPayload
 
+import logging
+logger = logging.getLogger("sync_checklist")
+
 class ChecklistService:
     def __init__(self, db: AsyncSession):
         self.db = db
@@ -71,6 +74,8 @@ class ChecklistService:
             pasos_ids=paso_ids,
             current_step=1
         )
+    
+
 
     async def init_checklist(self, orden_id: UUID) -> None:
         # Verificar si ya existe un checklist para esta orden
@@ -78,8 +83,12 @@ class ChecklistService:
             select(Checklist).where(Checklist.orden_trabajo_id == orden_id)
         )
         existente = result.scalars().first()
+        logger.info("INIT_CHECKLIST: orden_id=%s exists=%s", str(orden_id), bool(existente))
+
         if existente:
             return  # ya existe, no hacer nada
+        
+        logger.info("INIT_CHECKLIST: created checklist for orden_id=%s", str(orden_id))
 
         # Obtener plantilla
         tpl_dto = await self.get_template_for_order(orden_id)
@@ -308,6 +317,37 @@ class ChecklistService:
                     db_item.is_completed = True
                 if db_item.confirmed_at is None:
                     db_item.confirmed_at = now_utc
+        
 
-        await self.db.flush()  # el commit lo hace el endpoint
+
+        # loguea 2 pasos actualizados
+        count = 0
+        for it_in in payload.items:
+            db_item = items_by_step.get(it_in.step_number)
+            if db_item and count < 3:
+                logger.info(
+                    "SYNC_FULL: step=%s -> db_completed=%s evidencia_keys=%s comentario_present=%s",
+                    db_item.step_number,
+                    db_item.is_completed,
+                    list((db_item.evidencia_data or {}).keys()),
+                    bool(db_item.comentario),
+                )
+                count += 1
+
+        await self.db.flush()
+
+        # verificación dura: reconsultar 1 item ya flusheado (misma sesión)
+        sample_step = payload.items[0].step_number if payload.items else None
+        if sample_step:
+            verify = await self.db.scalar(
+                select(ChecklistItem)
+                .where(ChecklistItem.checklist_id == chk.id)
+                .where(ChecklistItem.step_number == sample_step)
+            )
+            logger.info(
+                "SYNC_FULL_VERIFY: step=%s evidencia_keys=%s comentario_present=%s",
+                sample_step,
+                list((verify.evidencia_data or {}).keys()) if verify else None,
+                bool(verify.comentario) if verify else None,
+            )
         return chk
