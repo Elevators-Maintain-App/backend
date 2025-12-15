@@ -1,9 +1,9 @@
 # app/services/clientes.py
 
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from uuid import UUID
 
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.repositories.clientes import cliente_crud
@@ -21,6 +21,7 @@ from app.services.cliente.cliente_mapper import cliente_to_cliente_out
 from app.services.cliente.user_cases import FabricaDeClientes
 from app.core.exceptions import ForbiddenException
 from app.schemas.comunes import PaginacionResponse
+from app.services.firebase_storage.firebase_storage import subir_archivo_a_storage
 
 class ClienteService:
     def __init__(self, db: AsyncSession):
@@ -111,16 +112,65 @@ class ClienteService:
         
         return cliente_to_cliente_out(cliente)
 
-    async def create_cliente(self, cliente_in: ClienteCreate, usuario_actual: Usuario) -> ClienteOut:
+
+    async def create_cliente(
+        self,
+        cliente_data: Dict[str, Any],
+        logo: Optional[UploadFile],
+        usuario_actual: Usuario
+    ) -> ClienteOut:
         """
-        Crea un nuevo cliente basado en los permisos del usuario
+        Crea un nuevo cliente con logo opcional. Si se proporciona un logo,
+        lo sube a Cloud Storage y guarda la URL.
         """
+        compania_id = cliente_data.get("compania_id")
+        if isinstance(compania_id, str):
+            compania_id = UUID(compania_id)
+        
         fabrica_de_clientes = FabricaDeClientes.get_cliente_case(usuario_actual.rol)
         
-        if not fabrica_de_clientes.puede_crear_clientes(usuario_actual=usuario_actual, compania_id=cliente_in.compania_id):
+        if not fabrica_de_clientes.puede_crear_clientes(usuario_actual=usuario_actual, compania_id=compania_id):
             raise ForbiddenException("No tienes permisos para crear clientes")
         
-        return await cliente_crud.create(self.db, obj_in=cliente_in)
+        cliente_create = ClienteCreate(**cliente_data)
+        
+        cliente_creado = await cliente_crud.create(self.db, obj_in=cliente_create)
+        
+        if logo and logo.filename:
+            try:
+                contenido_logo = await logo.read()
+                content_type = logo.content_type or "image/jpeg"
+                
+                logo_url = subir_archivo_a_storage(
+                    archivo_bytes=contenido_logo,
+                    compania_id=compania_id,
+                    entidad="clients",
+                    entidad_id=cliente_creado.id,
+                    nombre_archivo="logo",
+                    tipo_archivo="logo",
+                    content_type=content_type
+                )
+                
+                cliente_update = ClienteUpdate(logo=logo_url)
+                cliente_actualizado = await cliente_crud.update(
+                    self.db,
+                    db_obj=cliente_creado,
+                    obj_in=cliente_update
+                )
+                
+                cliente_con_relaciones = await cliente_crud.get_cliente_con_relaciones(
+                    self.db,
+                    cliente_actualizado.id
+                )
+                
+                return cliente_to_cliente_out(cliente_con_relaciones)
+            except Exception as e:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Error al subir el logo: {str(e)}"
+                )
+        
+        return cliente_to_cliente_out(cliente_creado)
 
     async def update_cliente(self, cliente_id: UUID, cliente_in: ClienteUpdate, usuario_actual: Usuario) -> ClienteOut:
         """
