@@ -1,3 +1,4 @@
+<!-- app/templates/reporte_seguridad.html -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -107,15 +108,12 @@
     <p class="instrucciones">{{ item.instrucciones }}</p>
     {% if item.comentario %}<p><b>Comentario:</b> {{ item.comentario }}</p>{% endif %}
     <div class="evidencias">
-      {% if item.evidencia_data %}
-        {% if item.evidencia_data.url %}<img src="{{ item.evidencia_data.url }}" alt="Evidencia">{% endif %}
-        {% if item.evidencia_data.url1 %}<img src="{{ item.evidencia_data.url1 }}" alt="Evidencia 1">{% endif %}
-        {% if item.evidencia_data.url2 %}<img src="{{ item.evidencia_data.url2 }}" alt="Evidencia 2">{% endif %}
-        {% if item.evidencia_data.urls %}
-          {% for u in item.evidencia_data.urls %}
-            {% if u %}<img src="{{ u }}" alt="Evidencia">{% endif %}
-          {% endfor %}
-        {% endif %}
+      {% if item.evidencia_urls %}
+        {% for u in item.evidencia_urls %}
+          {% if u %}
+            <img src="{{ u }}" alt="Evidencia">
+          {% endif %}
+        {% endfor %}
       {% endif %}
     </div>
   </div>

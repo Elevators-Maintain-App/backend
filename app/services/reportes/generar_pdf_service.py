@@ -62,6 +62,47 @@ def _resolve_attr_chain(obj, chain: str):
         cur = getattr(cur, part, None)
     return cur
 
+def _extract_evidence_urls(evidencia_data: dict) -> list[str]:
+    """
+    Convierte evidencia_data (cualquier formato) en lista de URLs para render.
+    Soporta formatos:
+    - {"photo": "..."}
+    - {"Antes": "...", "Después": "..."}
+    - {"Firma técnico": "...", "Firma cliente": "..."}
+    - {"url": "..."} / {"url1": "...", "url2": "..."} / {"urls": [...]}
+    """
+    if not evidencia_data:
+        return []
+
+    urls: list[str] = []
+
+    # Formatos "legacy" del template
+    if isinstance(evidencia_data.get("url"), str):
+        urls.append(evidencia_data["url"])
+
+    for k in ("url1", "url2", "url3"):
+        v = evidencia_data.get(k)
+        if isinstance(v, str) and v:
+            urls.append(v)
+
+    if isinstance(evidencia_data.get("urls"), list):
+        for u in evidencia_data["urls"]:
+            if isinstance(u, str) and u:
+                urls.append(u)
+
+    # Formatos nuevos RN
+    if isinstance(evidencia_data.get("photo"), str) and evidencia_data["photo"]:
+        urls.append(evidencia_data["photo"])
+
+    # Pares Antes/Después (o cualquier dict con strings)
+    for k, v in evidencia_data.items():
+        if isinstance(v, str) and v and k not in {"url", "url1", "url2", "url3", "photo"}:
+            # evita duplicar si ya estaba
+            if v not in urls:
+                urls.append(v)
+
+    return urls
+
 
 def _pick_first(*vals):
     for v in vals:
@@ -115,6 +156,7 @@ async def generar_y_subir_pdf(orden_id, tipo: str = "prereporte") -> str:
             items_enriquecidos = []
             for it in sorted(checklist.items or [], key=lambda x: x.step_number):
                 meta = geo.get(it.id)
+                evidencia_data = it.evidencia_data or {}
                 items_enriquecidos.append(
                     {
                         "id": it.id,
@@ -122,11 +164,12 @@ async def generar_y_subir_pdf(orden_id, tipo: str = "prereporte") -> str:
                         "titulo": it.titulo,
                         "instrucciones": it.instrucciones,
                         "comentario": it.comentario,
-                        "evidencia_data": it.evidencia_data or {},
+                        "evidencia_schema": it.evidencia_schema or {},   # recomendado
+                        "evidencia_data": evidencia_data,
+                        "evidencia_urls": _extract_evidence_urls(evidencia_data),  # ✅ clave
                         "seguimiento": meta,
                     }
                 )
-
             # Cabecera
             odt = getattr(checklist, "orden_de_trabajo", None)
 
