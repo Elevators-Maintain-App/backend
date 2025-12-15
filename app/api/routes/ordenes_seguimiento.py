@@ -203,7 +203,7 @@ async def sync_checklist_y_enviar_a_validacion(
     ts = payload.hora_salida if isinstance(payload.hora_salida, datetime) else None
 
     finalizar = FinalizarOrdenPayload(
-        evento=EventoOrden.ENVIAR_A_VALIDACION,
+        evento=EventoOrden.PASO_COMPLETADO,
         lat=payload.lat,
         lon=payload.lon,
         timestamp=ts,
