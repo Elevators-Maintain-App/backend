@@ -1,6 +1,7 @@
 # app/services/reportes/generar_pdf_service.py
 
 from jinja2 import Environment, FileSystemLoader
+from app.db.models.unidades import Unidad
 from weasyprint import HTML
 import io
 import logging
@@ -126,6 +127,8 @@ async def generar_y_subir_pdf(orden_id, tipo: str = "prereporte") -> str:
                     selectinload(Checklist.orden_de_trabajo).selectinload(OrdenDeTrabajo.tipo_orden),
                     selectinload(Checklist.orden_de_trabajo).selectinload(OrdenDeTrabajo.estado),
                     selectinload(Checklist.orden_de_trabajo).selectinload(OrdenDeTrabajo.prioridad),
+                    selectinload(Checklist.orden_de_trabajo).selectinload(OrdenDeTrabajo.unidad).selectinload(Unidad.proyecto),
+
                 )
                 .where(Checklist.orden_trabajo_id == orden_id)
             )
@@ -207,7 +210,14 @@ async def generar_y_subir_pdf(orden_id, tipo: str = "prereporte") -> str:
                     (checklist.check_metadata or {}).get("supervisor"),
                     getattr(odt, "supervisor_id", None),
                 ),
-                "proyecto": _pick_first((checklist.check_metadata or {}).get("proyecto")),
+                "proyecto": _pick_first(
+                    _resolve_attr_chain(odt, "proyecto.nombre"),
+                    _resolve_attr_chain(odt, "proyecto.nombre_proyecto"),
+                    _resolve_attr_chain(odt, "proyecto"),
+                    _resolve_attr_chain(odt, "unidad.proyecto.nombre"),
+                    _resolve_attr_chain(odt, "unidad.proyecto.nombre_proyecto"),
+                    (checklist.check_metadata or {}).get("proyecto"),
+                ),
                 "unidad": _pick_first(
                     _resolve_attr_chain(odt, "unidad.codigo"),
                     _resolve_attr_chain(odt, "unidad.nombre"),

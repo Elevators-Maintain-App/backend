@@ -20,21 +20,17 @@
       color: var(--text);
       margin:0; padding:0;
     }
-    /* Márgenes de página y pie de página para WeasyPrint */
     @page{
       size: A4;
-      margin: 12mm 10mm 14mm 10mm; 
+      margin: 12mm 10mm 14mm 10mm;
       @bottom-center{
         content: "Reporte generado automáticamente por VertiOne® — Todos los derechos reservados 2025.";
-        font-size: 9px; 
+        font-size: 9px;
         color: #999;
       }
     }
-
-    /* Body más compacto */
     body{ padding:12px 8px; background:#fff; }
 
-    /* Barra de logos compacta */
     .brandbar{
       display:flex; align-items:center; justify-content:space-between;
       gap:8px; margin-bottom:6px; margin-left: 20px; margin-right: 20px;
@@ -46,7 +42,6 @@
     .brandbar img{
       max-width:100%; display:block; object-fit:contain;
     }
-    /* Permite parametrizar tamaños por cada logo */
     .logo1{
       {% if branding and branding.logo_w %} width: {{ branding.logo_w }}px; {% else %} width:110px; {% endif %}
       {% if branding and branding.logo_h %} height: {{ branding.logo_h }}px; {% else %} height:42px; {% endif %}
@@ -56,15 +51,13 @@
       {% if branding and branding.logo2_h %} height: {{ branding.logo2_h }}px; {% else %} height:42px; {% endif %}
     }
 
-    /* Título más discreto */
     h1{ color:var(--primary); margin:2px 0 4px 0; text-align:center; font-size:18px; }
     h2{ color:var(--accent); margin:16px 0 6px 0; font-size:14px; }
     .subtle{ color:var(--muted); font-size:10px; text-align:center; margin-top:2px; }
 
-    /* Encabezado condensado */
     .header{
       display:grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr)); /* ← siempre 2 columnas */
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap:6px;
       border:1px solid var(--border);
       border-radius:8px;
@@ -78,36 +71,33 @@
       gap:6px;
       border:1px solid var(--border);
       border-radius:6px;
-      padding:4px 6px;             /* más compacto */
+      padding:4px 6px;
       background:var(--bg);
     }
     .kv b{
-      color:var(--muted);           /* gris del título */
+      color:var(--muted);
       font-size:10px;
       font-weight:600;
-      display:inline;
-      margin:0;
-      white-space:nowrap;           /* evita salto del título */
+      white-space:nowrap;
     }
     .kv b::after{
-      content: ":";                 /* separador visual */
+      content: ":";
       margin: 0 4px 0 2px;
       color: var(--muted);
     }
     .kv span{
-      font-size:10px;               /* contenido en negro (var(--text)) */
+      font-size:10px;
       line-height:1.2;
       color: var(--text);
       flex:1 1 auto;
       min-width:0;
-      overflow-wrap:anywhere;       /* permite romper palabras largas si es necesario */
+      overflow-wrap:anywhere;
     }
 
-    /* Paso (card) */
     .paso{
       border:1px solid var(--border);
       border-radius:10px;
-      margin:12px 0;               /* ← un poco menos */
+      margin:12px 0;
       overflow:hidden;
       break-inside: avoid; page-break-inside: avoid;
     }
@@ -119,31 +109,13 @@
     }
     .paso-title{ margin:0; font-size:14px; color:var(--accent); }
     .paso-body{
-      display:grid;
-      grid-template-columns: 1fr 220px; /* ← meta un poco más angosta */
-      gap:10px;
       padding:12px;
     }
-    .paso-content p{ margin:6px 0; }
-    .instrucciones{
-      font-style:italic; color:#222;
-      background:#fff; border:1px dashed var(--border);
-      border-radius:8px; padding:8px 10px;
-    }
+    .paso-body p{ margin:6px 0; }
 
-    /* Aside meta */
-    .meta{ border-left:1px solid var(--border); padding-left:10px; }
-    .chip{
-      display:inline-block; padding:2px 8px; font-size:11px;
-      background:var(--chip); border:1px solid #d2e6ff; border-radius:999px; color:#1d4ed8; margin-bottom:6px;
-    }
-    .meta .kv{ margin-top:6px; }
-
-    /* Evidencias */
     .evidencias{ margin-top:6px; display:flex; flex-wrap:wrap; gap:8px; }
     .evidencias img{ width:210px; height:auto; border:1px solid var(--border); border-radius:8px; }
 
-    /* Firmas */
     .firmas{ margin-top:22px; display:flex; justify-content:space-around; gap:20px; }
     .firma-block{ text-align:center; flex:1; }
     .firma-img{ width:240px; height:80px; object-fit:contain; border-bottom:1px solid #333; }
@@ -153,7 +125,6 @@
 </head>
 <body>
 
-  <!-- Barra de dos logos (izquierda/derecha). Muestra el que esté disponible. -->
   <div class="brandbar">
     <div class="brand">
       {% if branding and branding.logo_url %}
@@ -170,48 +141,36 @@
   <h1>Informe de Rutina de Mantenimiento</h1>
   <p class="subtle">Documento generado automáticamente por el sistema.</p>
 
-  <!-- Cabecera con información operativa y comercial (CONDENSADA) -->
+  {% set gps = checklist.check_metadata.get('gps') if checklist.check_metadata else None %}
+
   <section class="header">
-    <div class="kv">
-      <b>Orden (Referencia)</b>
-      <span>{{ (cabecera.orden_ref if cabecera else None) or "-" }}</span>
+    <div class="kv"><b>Orden (Referencia)</b><span>{{ (cabecera.orden_ref if cabecera else None) or "-" }}</span></div>
+    <div class="kv"><b>Fecha de ejecución</b><span>{{ (cabecera.fecha_ejecucion if cabecera else None) or "-" }}</span></div>
+
+    <div class="kv"><b>Hora de entrada</b><span>{{ checklist.hora_entrada.strftime("%H:%M") if checklist.hora_entrada else "-" }}</span></div>
+    <div class="kv"><b>Hora de salida</b><span>{{ checklist.hora_salida.strftime("%H:%M") if checklist.hora_salida else "-" }}</span></div>
+
+    <div class="kv"><b>Técnico asignado</b><span>{{ (cabecera.tecnico if cabecera else None) or "-" }}</span></div>
+    <div class="kv"><b>Supervisor asignado</b><span>{{ (cabecera.supervisor if cabecera else None) or "-" }}</span></div>
+
+    <div class="kv"><b>Proyecto</b><span>{{ (cabecera.proyecto if cabecera else None) or "-" }}</span></div>
+    <div class="kv"><b>Unidad</b><span>{{ (cabecera.unidad if cabecera else None) or "-" }}</span></div>
+
+    <div class="kv"><b>Cliente</b><span>{{ (cabecera.cliente if cabecera else None) or "-" }}</span></div>
+    <div class="kv"><b>Ubicación GPS</b>
+      <span>
+        {% if gps and gps.lat is not none and gps.lon is not none %}
+          Lat: {{ "%.6f"|format(gps.lat) }} | Lon: {{ "%.6f"|format(gps.lon) }}
+        {% elif gps and gps.get('lat') is not none and gps.get('lon') is not none %}
+          Lat: {{ "%.6f"|format(gps.get('lat')) }} | Lon: {{ "%.6f"|format(gps.get('lon')) }}
+        {% else %}
+          -
+        {% endif %}
+      </span>
     </div>
-    <div class="kv">
-      <b>Hora de entrada</b>
-      <span>{{ checklist.hora_entrada or "-" }}</span>
-    </div>
-    <div class="kv">
-      <b>Hora de salida</b>
-      <span>{{ checklist.hora_salida or "-" }}</span>
-    </div>
-    <div class="kv">
-      <b>Técnico asignado</b>
-      <span>{{ (cabecera.tecnico if cabecera else None) or "-" }}</span>
-    </div>
-    <div class="kv">
-      <b>Supervisor asignado</b>
-      <span>{{ (cabecera.supervisor if cabecera else None) or "-" }}</span>
-    </div>
-    <div class="kv">
-      <b>Proyecto</b>
-      <span>{{ (cabecera.proyecto if cabecera else None) or "-" }}</span>
-    </div>
-    <div class="kv">
-      <b>Unidad</b>
-      <span>{{ (cabecera.unidad if cabecera else None) or "-" }}</span>
-    </div>
-    <div class="kv">
-      <b>Cliente</b>
-      <span>{{ (cabecera.cliente if cabecera else None) or "-" }}</span>
-    </div>
-    <div class="kv">
-      <b>Compañía</b>
-      <span>{{ (cabecera.compania if cabecera else None) or "-" }}</span>
-    </div>
-    <div class="kv">
-      <b>Prioridad</b>
-      <span>{{ (cabecera.prioridad if cabecera else None) or "-" }}</span>
-    </div>
+
+    <div class="kv"><b>Compañía</b><span>{{ (cabecera.compania if cabecera else None) or "-" }}</span></div>
+    <div class="kv"><b>Prioridad</b><span>{{ (cabecera.prioridad if cabecera else None) or "-" }}</span></div>
   </section>
 
   {% if checklist.observaciones %}
@@ -222,25 +181,21 @@
   <h2>Pasos ejecutados</h2>
 
   {% for item in items %}
+    {% set schema_type = (item.evidencia_schema.type if item.evidencia_schema else None) %}
+    {% set is_signatures = (schema_type == "signatures") %}
     <article class="paso">
       <div class="paso-header">
         <h3 class="paso-title">Paso {{ "%02d" % item.step_number }} — {{ item.titulo }}</h3>
-        {% if item.seguimiento %}
-          <span class="chip">GPS & Hora capturados</span>
-        {% else %}
-          <span class="chip" style="opacity:.6">Sin datos de GPS</span>
-        {% endif %}
       </div>
 
       <div class="paso-body">
-        <div class="paso-content">
-          <p class="instrucciones">{{ item.instrucciones }}</p>
+        {% if item.comentario %}
+          <p><b>Comentario:</b> {{ item.comentario }}</p>
+        {% endif %}
 
-          {% if item.comentario %}
-            <p><b>Comentario:</b> {{ item.comentario }}</p>
-          {% endif %}
-
-          <<div class="evidencias">
+        <!-- Evidencias (excepto el paso de firmas) -->
+        {% if not is_signatures %}
+          <div class="evidencias">
             {% if item.evidencia_urls %}
               {% for u in item.evidencia_urls %}
                 {% if u %}
@@ -249,42 +204,7 @@
               {% endfor %}
             {% endif %}
           </div>
-        </div>
-
-        <aside class="meta">
-          <div class="kv">
-            <b>Coordenadas</b>
-            {% if item.seguimiento %}
-              <span>
-                Lat: {{ "%.6f"|format(item.seguimiento.lat) }}<br>
-                Lon: {{ "%.6f"|format(item.seguimiento.lon) }}
-              </span>
-            {% else %}
-              <span>—</span>
-            {% endif %}
-          </div>
-          <div class="kv">
-            <b>Hora (tz origen)</b>
-            <span>
-              {% if item.seguimiento and item.seguimiento.timestamp %}
-                {{ item.seguimiento.timestamp }}
-              {% else %}
-                —
-              {% endif %}
-            </span>
-          </div>
-
-          {# --- FUTURO: mini-mapa estático ---
-          <div class="kv">
-            <b>Mapa</b>
-            {% if item.seguimiento and item.seguimiento.static_map_url %}
-              <img src="{{ item.seguimiento.static_map_url }}" alt="Mapa del paso">
-            {% else %}
-              <span class="muted">Sin datos</span>
-            {% endif %}
-          </div>
-          ------------------------------------ #}
-        </aside>
+        {% endif %}
       </div>
     </article>
   {% endfor %}

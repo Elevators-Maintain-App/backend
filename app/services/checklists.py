@@ -7,6 +7,10 @@ from sqlalchemy.orm import selectinload
 from uuid import UUID, uuid4
 from datetime import datetime, time
 from sqlalchemy.orm import selectinload
+from zoneinfo import ZoneInfo
+from datetime import timezone
+
+LOCAL_TZ = ZoneInfo("America/Panama")
 
 from app.db.models.checklists import (
     ChecklistTemplate,
@@ -285,7 +289,11 @@ class ChecklistService:
 
         if payload.hora_salida is not None:
             if isinstance(payload.hora_salida, datetime):
-                chk.hora_salida = payload.hora_salida.time()
+                dt = payload.hora_salida
+                if dt.tzinfo is None:
+                    dt = dt.replace(tzinfo=timezone.utc)
+                dt_pa = dt.astimezone(LOCAL_TZ)
+                chk.hora_salida = dt_pa.time()
             elif isinstance(payload.hora_salida, time):
                 chk.hora_salida = payload.hora_salida
 
@@ -294,6 +302,12 @@ class ChecklistService:
 
         # Merge de metadata (no borra lo existente)
         chk.check_metadata = {**(chk.check_metadata or {}), **(payload.check_metadata or {})}
+
+        # GPS único (inicio/ejecución) guardado en metadata
+        if payload.lat is not None and payload.lon is not None:
+            md = chk.check_metadata or {}
+            md["gps"] = {"lat": float(payload.lat), "lon": float(payload.lon)}
+            chk.check_metadata = md
 
         items_by_step = {it.step_number: it for it in (chk.items or [])}
         now_utc = datetime.utcnow()
