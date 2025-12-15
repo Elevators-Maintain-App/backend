@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from uuid import UUID, uuid4
-from datetime import datetime
+from datetime import datetime, time
 from sqlalchemy.orm import selectinload
 
 from app.db.models.checklists import (
@@ -17,6 +17,7 @@ from app.db.models.ordenes_de_trabajo import OrdenDeTrabajo
 from app.schemas.checklists import (
     ChecklistTemplateOut, ChecklistTemplateOut2, ChecklistItemOut, ChecklistOut, ChecklistTemplateCreate, ChecklistItemTemplateOut
 )
+from app.schemas.checklists_sync import ChecklistSyncPayload
 
 class ChecklistService:
     def __init__(self, db: AsyncSession):
@@ -260,3 +261,53 @@ class ChecklistService:
             select(Checklist).where(Checklist.orden_trabajo_id == orden_id).options(selectinload(Checklist.items))
         )
         return result.scalar_one_or_none()
+    
+    async def sync_full_checklist(self, orden_id: UUID, payload: ChecklistSyncPayload) -> Checklist:
+        # Garantizar que exista el checklist (si no, lo crea desde plantilla)
+        await self.init_checklist(orden_id)
+
+        chk = await self.db.scalar(
+            select(Checklist)
+            .where(Checklist.orden_trabajo_id == orden_id)
+            .options(selectinload(Checklist.items))
+        )
+        if not chk:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Checklist no encontrado")
+
+        # Cabecera
+        if payload.hora_entrada is not None:
+            chk.hora_entrada = payload.hora_entrada if isinstance(payload.hora_entrada, time) else payload.hora_entrada
+
+        if payload.hora_salida is not None:
+            if isinstance(payload.hora_salida, datetime):
+                chk.hora_salida = payload.hora_salida.time()
+            elif isinstance(payload.hora_salida, time):
+                chk.hora_salida = payload.hora_salida
+
+        if payload.observaciones is not None:
+            chk.observaciones = payload.observaciones
+
+        # Merge de metadata (no borra lo existente)
+        chk.check_metadata = {**(chk.check_metadata or {}), **(payload.check_metadata or {})}
+
+        items_by_step = {it.step_number: it for it in (chk.items or [])}
+        now_utc = datetime.utcnow()
+
+        for it_in in payload.items:
+            db_item = items_by_step.get(it_in.step_number)
+            if not db_item:
+                raise HTTPException(status.HTTP_404_NOT_FOUND, f"Paso {it_in.step_number} no existe en checklist")
+
+            if it_in.evidencia_data is not None:
+                db_item.evidencia_data = it_in.evidencia_data
+            if it_in.comentario is not None:
+                db_item.comentario = it_in.comentario
+
+            if it_in.is_completed:
+                if not db_item.is_completed:
+                    db_item.is_completed = True
+                if db_item.confirmed_at is None:
+                    db_item.confirmed_at = now_utc
+
+        await self.db.flush()  # el commit lo hace el endpoint
+        return chk
