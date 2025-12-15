@@ -74,42 +74,37 @@ class ChecklistService:
             pasos_ids=paso_ids,
             current_step=1
         )
-    
-
 
     async def init_checklist(self, orden_id: UUID) -> None:
-        # Verificar si ya existe un checklist para esta orden
         result = await self.db.execute(
-            select(Checklist).where(Checklist.orden_trabajo_id == orden_id)
+            select(Checklist.id).where(Checklist.orden_trabajo_id == orden_id)
         )
-        existente = result.scalars().first()
-        logger.info("INIT_CHECKLIST: orden_id=%s exists=%s", str(orden_id), bool(existente))
+        existente_id = result.scalar_one_or_none()
 
-        if existente:
-            return  # ya existe, no hacer nada
-        
-        logger.info("INIT_CHECKLIST: created checklist for orden_id=%s", str(orden_id))
+        logger.info("INIT_CHECKLIST: orden_id=%s exists=%s", str(orden_id), bool(existente_id))
+        if existente_id:
+            return
 
         # Obtener plantilla
         tpl_dto = await self.get_template_for_order(orden_id)
 
-        # Crear checklist
         chk = Checklist(orden_trabajo_id=orden_id)
         self.db.add(chk)
-        await self.db.flush()
+        await self.db.flush() 
 
-        # Crear ítems
         for paso in tpl_dto.pasos:
-            item = ChecklistItem(
-                checklist_id=chk.id,
-                step_number=paso.step_number,
-                titulo=paso.titulo,
-                instrucciones=paso.instrucciones,
-                evidencia_schema=paso.evidencia_schema
+            self.db.add(
+                ChecklistItem(
+                    checklist_id=chk.id,
+                    step_number=paso.step_number,
+                    titulo=paso.titulo,
+                    instrucciones=paso.instrucciones,
+                    evidencia_schema=paso.evidencia_schema,
+                )
             )
-            self.db.add(item)
 
-        await self.db.commit()
+        # NO commit aquí
+        logger.info("INIT_CHECKLIST: created checklist_id=%s for orden_id=%s", str(chk.id), str(orden_id))
 
     async def get_checklist(self, orden_id: UUID) -> ChecklistOut:
         # 1) Cargar o inicializar checklist
@@ -120,7 +115,8 @@ class ChecklistService:
         )
         chk = (await self.db.execute(stmt)).scalars().first()
         if not chk:
-            chk = await self.init_checklist(orden_id)
+            await self.init_checklist(orden_id)
+            chk = (await self.db.execute(stmt)).scalars().first()
 
         chk_items_sorted = sorted(chk.items, key=lambda i: i.step_number)
         # 2) Mapear cada item a su DTO
@@ -308,7 +304,7 @@ class ChecklistService:
                 raise HTTPException(status.HTTP_404_NOT_FOUND, f"Paso {it_in.step_number} no existe en checklist")
 
             if it_in.evidencia_data is not None:
-                db_item.evidencia_data = it_in.evidencia_data
+                db_item.evidencia_data = dict(it_in.evidencia_data or {})
             if it_in.comentario is not None:
                 db_item.comentario = it_in.comentario
 
