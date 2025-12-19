@@ -2,61 +2,302 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Reporte de Seguridad</title>
   <style>
     :root{
       --primary:#004aad;
       --accent:#0071ad;
-      --text:#333;
-      --muted:#666;
-      --border:#ddd;
-      --bg:#f7f9fc;
-      --chip:#eef5ff;
+
+      --text:#1f2937;
+      --muted:#6b7280;
+
+      --border:#e5e7eb;
+      --bg:#f8fafc;
+      --card:#ffffff;
+
+      --callout:#f1f5f9;
+      --callout-border:#cbd5e1;
     }
-    body{ font-family: 'DejaVu Sans', sans-serif; margin:0; padding:12px; color:var(--text); }
+
+    *{ box-sizing:border-box; }
+    html,body{ margin:0; padding:0; }
+    body{
+      font-family: "DejaVu Sans", sans-serif;
+      color: var(--text);
+      background:#fff;
+      font-size: 11px;
+      line-height: 1.35;
+      padding: 12px 10px;
+    }
+
     @page{
       size: A4;
       margin: 12mm 10mm 14mm 10mm;
       @bottom-center{
-        content: "Reporte generado automáticamente por VertiOne® — Todos los derechos reservados 2025.";
-        font-size: 9px; color: #999;
+        content: "Reporte generado automáticamente por VertiOne® — Software de gestión de mantenimientos de ascensores y equipos de transporte vertical.";
+        font-size: 9px;
+        color: #9ca3af;
       }
     }
-    .brandbar{ display:flex; justify-content:space-between; margin-bottom:6px; }
-    .brandbar img{ max-height:80px; }
 
+    a{ color: var(--primary); text-decoration: underline; }
+
+    .brandbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin: 2px 0 8px 0;
+      padding: 0 4px;
+    }
+    .brandbar img{ display:block; object-fit:contain; }
     .logo1{
-      {% if branding and branding.logo_w %} width: {{ branding.logo_w }}px; height:auto;
-      {% else %} width: 100px; height:auto; {% endif %}
+      {% if branding and branding.logo_w %} width: {{ branding.logo_w }}px; {% else %} width:110px; {% endif %}
+      {% if branding and branding.logo_h %} height: {{ branding.logo_h }}px; {% else %} height:42px; {% endif %}
     }
     .logo2{
-      {% if branding and branding.logo2_w %} width: {{ branding.logo2_w }}px; height:auto;
-      {% else %} width: 140px; height:auto; {% endif %}
+      {% if branding and branding.logo2_w %} width: {{ branding.logo2_w }}px; {% else %} width:160px; {% endif %}
+      {% if branding and branding.logo2_h %} height: {{ branding.logo2_h }}px; {% else %} height:42px; {% endif %}
     }
 
-    h1{ text-align:center; color:var(--primary); font-size:18px; margin:4px 0; }
-    h2{ color:var(--accent); font-size:14px; margin:14px 0 6px; }
-    .subtle{ color:var(--muted); font-size:10px; text-align:center; margin-top:2px; }
+    .title{
+      text-align:center;
+      margin: 4px 0 2px 0;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--primary);
+      letter-spacing: 0.2px;
+    }
+    .subtitle{
+      text-align:center;
+      margin: 0 0 10px 0;
+      color: var(--muted);
+      font-size: 10px;
+    }
 
-    .header{ display:grid; grid-template-columns:repeat(2,1fr); gap:6px; border:1px solid var(--border); border-radius:8px; padding:8px; background:#fff; }
-    .kv{ display:flex; gap:6px; border:1px solid var(--border); border-radius:6px; padding:4px 6px; background:var(--bg);}
-    .kv b{ color:var(--muted); font-size:10px; font-weight:600; white-space:nowrap;}
-    .kv b::after{ content: ":"; margin:0 4px 0 2px; color:var(--muted); }
-    .kv span{ font-size:10px; color:var(--text); overflow-wrap:anywhere; }
+    .card{
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+    }
 
-    .paso{ border:1px solid var(--border); border-radius:10px; margin:12px 0; }
-    .paso-header{ background:#fafcff; padding:8px 12px; border-bottom:1px solid var(--border);}
-    .paso-title{ margin:0; font-size:14px; color:var(--accent);}
-    .paso-body{ padding:12px; }
-    .evidencias img{ width:210px; margin:6px 6px 0 0; border:1px solid var(--border); border-radius:8px; }
+    .header-grid{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
 
-    .firmas{ margin-top:22px; display:flex; justify-content:space-around; gap:20px; }
-    .firma-block{ text-align:center; flex:1; }
-    .firma-img{ width:240px; height:80px; object-fit:contain; border-bottom:1px solid #333; }
+    .kv{
+      display:flex;
+      gap: 8px;
+      align-items: baseline;
+      padding: 6px 8px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg);
+    }
+    .kv b{
+      font-size: 9.5px;
+      font-weight: 700;
+      color: var(--muted);
+      white-space: nowrap;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      min-width: 120px;
+    }
+    .kv span{
+      font-size: 11px;
+      color: var(--text);
+      overflow-wrap: anywhere;
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    h2{
+      margin: 14px 0 8px 0;
+      font-size: 13.5px;
+      color: var(--accent);
+      letter-spacing: 0.2px;
+    }
+
+    .summary{
+      margin-top: 10px;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+    .summary .line{
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--bg);
+      margin-top: 8px;
+    }
+    .summary .line .k{
+      font-weight: 700;
+      color: var(--muted);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      margin-bottom: 2px;
+    }
+    .summary .line .v{
+      font-size: 11px;
+      color: var(--text);
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .step{
+      margin: 10px 0;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      break-inside: avoid;
+      page-break-inside: avoid;
+      background: #fff;
+    }
+    .step-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap: 10px;
+      padding: 10px 12px;
+      background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+      border-bottom: 1px solid var(--border);
+    }
+    .step-title{
+      margin:0;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .step-meta{
+      color: var(--muted);
+      font-size: 10px;
+      white-space: nowrap;
+      margin-top: 2px;
+    }
+    .step-body{ padding: 12px; }
+
+    .callout{
+      border: 1px solid var(--callout-border);
+      background: var(--callout);
+      border-radius: 10px;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    .callout .k{
+      font-weight: 700;
+      color: var(--muted);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      margin-bottom: 4px;
+    }
+    .callout .v{
+      font-size: 11px;
+      color: var(--text);
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .evidence-grid{
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      align-items: start;
+    }
+    .evidence{
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px;
+      background: #fff;
+    }
+    .evidence img{
+      width: 100%;
+      height: auto;
+      max-height: 260px;
+      object-fit: contain;
+      display:block;
+      border-radius: 8px;
+    }
+
+    .signatures{
+      break-before: page;
+      page-break-before: always;
+      margin-top: 10px;
+    }
+    .sign-grid{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      align-items: start;
+      margin-top: 10px;
+    }
+    .sig-box{
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      background: #fff;
+      text-align: center;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+    .sig-title{
+      margin: 0 0 8px 0;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .sig-img{
+      width: 100%;
+      max-width: 280px;
+      height: 90px;
+      object-fit: contain;
+      display: block;
+      margin: 0 auto 6px auto;
+      border-bottom: 1px solid #111827;
+      padding-bottom: 6px;
+    }
+    .sig-name{
+      margin: 0;
+      font-weight: 700;
+      font-size: 11px;
+      color: var(--text);
+    }
+
+    .final-note{
+      margin-top: 12px;
+      border: 1px dashed var(--callout-border);
+      background: #fff;
+      border-radius: 12px;
+      padding: 10px 12px;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.35;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
   </style>
 </head>
+
 <body>
+
+  {% set ns = namespace(non_sig=[], sig=None) %}
+  {% for item in items %}
+    {% set schema_type = (item.evidencia_schema.type if item.evidencia_schema else None) %}
+    {% if schema_type == "signatures" %}
+      {% set ns.sig = item %}
+    {% else %}
+      {% set _ = ns.non_sig.append(item) %}
+    {% endif %}
+  {% endfor %}
 
   <div class="brandbar">
     <div class="brand">
@@ -66,84 +307,153 @@
     </div>
     <div class="brand">
       {% if branding and branding.logo2_url %}
-        <img class="logo2" src="{{ branding.logo2_url }}" alt="Logo empresa software">
+        <img class="logo2" src="{{ branding.logo2_url }}" alt="Logo VertiOne">
       {% endif %}
     </div>
   </div>
 
-<h1>Informe de Revisión de Seguridad</h1>
-<p class="subtle">Documento generado automáticamente por el sistema.</p>
+  <div class="title">Informe de Revisión de Seguridad</div>
+  <div class="subtitle">Documento generado automáticamente por VertiOne para soporte técnico y trazabilidad de ejecución.</div>
 
-{% set gps = checklist.check_metadata.get('gps') if checklist.check_metadata else None %}
+  <section class="card header-grid">
+    <div class="kv"><b>Orden</b><span>{{ (cabecera.orden_ref if cabecera else None) or "-" }}</span></div>
+    <div class="kv"><b>Fecha ejecución</b><span>{{ (cabecera.fecha_ejecucion if cabecera else None) or "-" }}</span></div>
 
-<section class="header">
-  <div class="kv"><b>Orden (Referencia)</b><span>{{ (cabecera.orden_ref if cabecera else None) or "-" }}</span></div>
-  <div class="kv"><b>Fecha de ejecución</b><span>{{ (cabecera.fecha_ejecucion if cabecera else None) or "-" }}</span></div>
+    <div class="kv"><b>Hora entrada</b><span>{{ checklist.hora_entrada.strftime("%H:%M") if checklist.hora_entrada else "-" }}</span></div>
+    <div class="kv"><b>Hora salida</b><span>{{ checklist.hora_salida.strftime("%H:%M") if checklist.hora_salida else "-" }}</span></div>
 
-  <div class="kv"><b>Hora de entrada</b><span>{{ checklist.hora_entrada.strftime("%H:%M") if checklist.hora_entrada else "-" }}</span></div>
-  <div class="kv"><b>Hora de salida</b><span>{{ checklist.hora_salida.strftime("%H:%M") if checklist.hora_salida else "-" }}</span></div>
+    <div class="kv"><b>Proyecto</b><span>{{ (cabecera.proyecto if cabecera else None) or "-" }}</span></div>
+    <div class="kv"><b>Unidad</b><span>{{ (cabecera.unidad if cabecera else None) or "-" }}</span></div>
 
-  <div class="kv"><b>Técnico</b><span>{{ (cabecera.tecnico if cabecera else None) or "-" }}</span></div>
-  <div class="kv"><b>Supervisor</b><span>{{ (cabecera.supervisor if cabecera else None) or "-" }}</span></div>
+    <div class="kv"><b>Cliente</b><span>{{ (cabecera.cliente if cabecera else None) or "-" }}</span></div>
+    <div class="kv"><b>Ubicación GPS</b>
+      <span>
+        {% if cabecera and cabecera.maps_link %}
+          <a href="{{ cabecera.maps_link }}">Click para ir al mapa</a>
+        {% else %}
+          -
+        {% endif %}
+      </span>
+    </div>
 
-  <div class="kv"><b>Unidad</b><span>{{ (cabecera.unidad if cabecera else None) or "-" }}</span></div>
-  <div class="kv"><b>Cliente</b><span>{{ (cabecera.cliente if cabecera else None) or "-" }}</span></div>
+    <div class="kv"><b>Técnico</b><span>{{ (cabecera.tecnico if cabecera else None) or "-" }}</span></div>
+    <div class="kv"><b>Supervisor</b><span>{{ (cabecera.supervisor if cabecera else None) or "-" }}</span></div>
 
-  <div class="kv"><b>Proyecto</b><span>{{ (cabecera.proyecto if cabecera else None) or "-" }}</span></div>
-  <div class="kv"><b>Ubicación GPS</b>
-    <span>
-      {% if gps and gps.lat is not none and gps.lon is not none %}
-        Lat: {{ "%.6f"|format(gps.lat) }} | Lon: {{ "%.6f"|format(gps.lon) }}
-      {% elif gps and gps.get('lat') is not none and gps.get('lon') is not none %}
-        Lat: {{ "%.6f"|format(gps.get('lat')) }} | Lon: {{ "%.6f"|format(gps.get('lon')) }}
-      {% else %}
-        -
-      {% endif %}
-    </span>
-  </div>
-</section>
+    <div class="kv"><b>Estado</b><span>{{ (cabecera.estado if cabecera else None) or "-" }}</span></div>
+    <div class="kv"><b>Prioridad</b><span>{{ (cabecera.prioridad if cabecera else None) or "-" }}</span></div>
+  </section>
 
-<h2>Pasos ejecutados</h2>
-{% for item in items %}
-  {% set schema_type = (item.evidencia_schema.type if item.evidencia_schema else None) %}
-  {% set is_signatures = (schema_type == "signatures") %}
-<article class="paso">
-  <div class="paso-header">
-    <h3 class="paso-title">Paso {{ "%02d"|format(item.step_number) }} — {{ item.titulo }}</h3>
-  </div>
-  <div class="paso-body">
-    {% if item.comentario %}<p><b>Comentario:</b> {{ item.comentario }}</p>{% endif %}
+  <section class="summary card">
+    <h2>Resumen técnico</h2>
 
-    {% if not is_signatures %}
-      <div class="evidencias">
-        {% if item.evidencia_urls %}
-          {% for u in item.evidencia_urls %}
-            {% if u %}<img src="{{ u }}" alt="Evidencia">{% endif %}
-          {% endfor %}
+    <div class="summary line">
+      <div class="k">Alcance</div>
+      <div class="v">Revisión de seguridad ejecutada según checklist configurado para la orden.</div>
+    </div>
+
+    <div class="summary line">
+      <div class="k">Observaciones generales</div>
+      <div class="v">
+        {% if checklist.observaciones %}
+          {{ checklist.observaciones }}
+        {% else %}
+          No se registraron observaciones generales.
         {% endif %}
       </div>
-    {% endif %}
-  </div>
-</article>
-{% endfor %}
+    </div>
 
-<h2>Firmas</h2>
-<section class="firmas">
-  {% if checklist.firma_tecnico %}
-    <div class="firma-block">
-      <p><b>Técnico</b></p>
-      <img class="firma-img" src="{{ checklist.firma_tecnico }}" alt="Firma técnico">
-      <p><b>{{ (cabecera.tecnico if cabecera else None) or "-" }}</b></p>
+    <div class="summary line">
+      <div class="k">Evidencias</div>
+      <div class="v">Se adjuntan evidencias por paso según registros capturados durante la ejecución.</div>
     </div>
+  </section>
+
+  <h2>Evidencias por paso</h2>
+
+  {% if ns.non_sig|length == 0 %}
+    <div class="card" style="color:var(--muted);">No hay pasos para mostrar.</div>
   {% endif %}
-  {% if checklist.firma_cliente %}
-    <div class="firma-block">
-      <p><b>Cliente</b></p>
-      <img class="firma-img" src="{{ checklist.firma_cliente }}" alt="Firma cliente">
-      <p><b>{{ (cabecera.cliente if cabecera else None) or "-" }}</b></p>
+
+  {% for item in ns.non_sig %}
+    <article class="step">
+      <div class="step-head">
+        <div>
+          <p class="step-title">Paso {{ "%02d"|format(item.step_number) }} — {{ item.titulo }}</p>
+          {% if item.hora_local %}
+            <div class="step-meta">Registro: {{ item.hora_local }}</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="step-body">
+        {% if item.comentario %}
+          <div class="callout">
+            <div class="k">Comentario</div>
+            <div class="v">{{ item.comentario }}</div>
+          </div>
+        {% endif %}
+
+        {% if item.evidencia_urls and item.evidencia_urls|length > 0 %}
+          <div class="evidence-grid">
+            {% for u in item.evidencia_urls %}
+              {% if u %}
+                <div class="evidence">
+                  <img src="{{ u }}" alt="Evidencia">
+                </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+        {% else %}
+          <div style="color:var(--muted); font-size:10px;">Sin evidencias adjuntas en este paso.</div>
+        {% endif %}
+      </div>
+    </article>
+  {% endfor %}
+
+  <section class="signatures">
+    <h2>Firmas y conformidad</h2>
+
+    <div class="sign-grid">
+      <div class="sig-box">
+        <p class="sig-title">Técnico</p>
+        {% if checklist.firma_tecnico %}
+          <img class="sig-img" src="{{ checklist.firma_tecnico }}" alt="Firma técnico">
+        {% else %}
+          <div style="height:90px; display:flex; align-items:center; justify-content:center; color:var(--muted); border-bottom:1px solid #111827; padding-bottom:6px;">
+            No registrada
+          </div>
+        {% endif %}
+        <p class="sig-name">{{ (cabecera.tecnico if cabecera else None) or "-" }}</p>
+      </div>
+
+      <div class="sig-box">
+        <p class="sig-title">Cliente</p>
+        {% if checklist.firma_cliente %}
+          <img class="sig-img" src="{{ checklist.firma_cliente }}" alt="Firma cliente">
+        {% else %}
+          <div style="height:90px; display:flex; align-items:center; justify-content:center; color:var(--muted); border-bottom:1px solid #111827; padding-bottom:6px;">
+            No registrada
+          </div>
+        {% endif %}
+        <p class="sig-name">{{ (cabecera.cliente if cabecera else None) or "-" }}</p>
+      </div>
     </div>
-  {% endif %}
-</section>
+
+    {% if ns.sig and ns.sig.comentario %}
+      <div class="card" style="margin-top:12px; border-color:var(--callout-border); background:var(--callout);">
+        <div style="font-weight:700; color:var(--muted); font-size:10px; text-transform:uppercase; letter-spacing:0.3px; margin-bottom:4px;">
+          Comentario final
+        </div>
+        <div style="white-space:pre-wrap; overflow-wrap:anywhere;">{{ ns.sig.comentario }}</div>
+      </div>
+    {% endif %}
+
+    <div class="final-note">
+      Este documento resume las evidencias y registros capturados durante la ejecución de la revisión.
+      Fue generado automáticamente por VertiOne® como soporte documental de los trabajos realizados, observaciones y recomendaciones registradas.
+      En caso de requerirse certificaciones o inspecciones normativas, este reporte no las sustituye.
+    </div>
+  </section>
 
 </body>
 </html>
