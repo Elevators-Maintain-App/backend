@@ -180,29 +180,11 @@ async def sync_checklist_y_enviar_a_validacion(
     user=Depends(require_role("technician")),
     db: AsyncSession = Depends(get_db),
 ):
-    logger.info(
-        "SYNC_VALIDAR: orden_id=%s payload.orden_trabajo_id=%s items=%s keys=%s",
-        str(orden_id),
-        str(payload.orden_trabajo_id),
-        len(payload.items or []),
-        list(payload.model_dump(exclude_none=True).keys()),
-    )
-
-    for it in (payload.items or [])[:2]:
-        logger.info(
-            "SYNC_VALIDAR: item step=%s completed=%s evidencia_keys=%s comentario_present=%s",
-            it.step_number,
-            it.is_completed,
-            list((it.evidencia_data or {}).keys()),
-            bool(it.comentario),
-        )
-
     if payload.orden_trabajo_id != orden_id:
         raise HTTPException(status_code=400, detail="orden_id no coincide con payload.orden_trabajo_id")
 
     orden = await _get_orden(db, orden_id)
 
-    # 1) Sync checklist completo (sin commit aún)
     await ChecklistService(db).sync_full_checklist(orden_id, payload)
 
     # 2) Firmas: vienen en raíz o dentro del item de firmas
