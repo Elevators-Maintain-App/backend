@@ -1,6 +1,6 @@
 # app/api/routes/usuarios.py
 
-from fastapi import APIRouter, Depends, HTTPException, status, Path, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Path, Query, File, UploadFile, Form
 from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
@@ -19,6 +19,7 @@ from app.services.notificaciones.notificacion_service import NotificacionService
 from app.services.notificaciones.models.notificacion_model import NotificacionModel, DestinatarioModel, TipoNotificacion
 from app.services.notificaciones.templates import TemplateManager
 from app.core.config import settings
+from app.db.models.usuarios import Rol
 
 router = APIRouter()
 
@@ -53,13 +54,49 @@ async def get_usuarios(
 
 @router.post("/", response_model=UsuarioOut, status_code=status.HTTP_201_CREATED)
 async def crear_usuario(
-    usuario_in: UsuarioCreate,
+    company_id: Optional[UUID] = Form(None),
+    display_name: str = Form(...),
+    document_id: str = Form(...),
+    document_type_id: int = Form(...),
+    email: str = Form(...),
+    phone_number: str = Form(...),
+    rol: str = Form(...),
+    client_id: Optional[UUID] = Form(None),
+    nivel: Optional[str] = Form(None),
+    zona_geografica_id: Optional[UUID] = Form(None),
+    is_active: Optional[bool] = Form(None),
+    photo: Optional[UploadFile] = File(None),
     db: AsyncSession = Depends(get_db),
     usuario_actual=Depends(require_role("superAdmin", "admin", "supervisor")),
 ):
+    """
+    Crea un nuevo usuario. La foto es opcional y se puede subir como archivo.
+    El company_id es opcional y será validado/normalizado según las reglas del rol del usuario actual.
+    """
+    try:
+        rol_enum = Rol(rol)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Rol inválido: {rol}. Roles válidos: {[r.value for r in Rol]}"
+        )
+    
+    usuario_data = {
+        "company_id": company_id,
+        "display_name": display_name,
+        "document_id": document_id,
+        "document_type_id": document_type_id,
+        "email": email,
+        "phone_number": phone_number,
+        "rol": rol_enum,
+        "client_id": client_id,
+        "nivel": nivel,
+        "zona_geografica_id": zona_geografica_id,
+        "is_active": is_active
+    }
     
     service = UsuarioService(db)
-    return await service.create(usuario_actual, usuario_in)
+    return await service.create(usuario_actual, usuario_data, photo)
 
 @router.put("/{uid}", response_model=UsuarioOut)
 async def actualizar_usuario(uid: str, usuario_in: UsuarioUpdate, db: AsyncSession = Depends(get_db)):

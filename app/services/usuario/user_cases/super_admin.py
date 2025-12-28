@@ -27,6 +27,22 @@ class SuperAdminCase(BaseUsuario):
             
         return self.mapear_usuario_dto_a_usuario_firebase(usuario_nuevo, compania, tipo_documento, cliente) 
 
+    def validar_y_normalizar_company_id(self, usuario_actual: Usuario, company_id: Optional[UUID]) -> UUID:
+        """
+        Valida y normaliza el company_id para superAdmin.
+        Requiere que se proporcione company_id.
+        """
+        if usuario_actual.rol not in [Rol.SUPER_ADMIN]:
+            raise HTTPException(status_code=403, detail="No tienes permisos para crear usuarios")
+        
+        if company_id is None:
+            raise HTTPException(
+                status_code=400,
+                detail="El company_id es requerido"
+            )
+        
+        return company_id
+
     def obtener_usuario_a_guardar(self, params: CrearUsuarioParams) -> Usuario:
         usuario_actual: Usuario = params.usuario_actual
         usuario_nuevo: UsuarioCreate = params.usuario_nuevo

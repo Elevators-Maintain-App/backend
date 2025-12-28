@@ -32,6 +32,38 @@ class AdminCase(BaseUsuario):
         
         return self.mapear_usuario_dto_a_usuario_firebase(usuario_nuevo, compania, tipo_documento, cliente)
     
+    def validar_y_normalizar_company_id(self, usuario_actual: Usuario, company_id: Optional[UUID]) -> UUID:
+        """
+        Valida y normaliza el company_id para admin.
+        Si no se proporciona company_id, usa el del admin.
+        Valida que el admin tenga company_id asignado.
+        Valida que el company_id proporcionado coincida con el del admin (seguridad).
+        """
+        if usuario_actual.rol not in [Rol.ADMIN]:
+            raise HTTPException(status_code=403, detail="No tienes permisos para crear usuarios")
+        
+        if company_id is None:
+            # Usar el company_id del admin
+            if usuario_actual.company_id is None:
+                raise HTTPException(
+                    status_code=400,
+                    detail="El usuario admin no tiene company_id asignado"
+                )
+            return usuario_actual.company_id
+        else:
+            # Validar que el company_id proporcionado coincida con el del admin (seguridad)
+            if usuario_actual.company_id is None:
+                raise HTTPException(
+                    status_code=400,
+                    detail="El usuario admin no tiene company_id asignado"
+                )
+            if company_id != usuario_actual.company_id:
+                raise HTTPException(
+                    status_code=403,
+                    detail="No puedes crear usuarios en otra compañía"
+                )
+            return company_id
+    
     def obtener_usuario_a_guardar(self, params: CrearUsuarioParams) -> UsuarioCreate:
         try:
             usuario_actual: Usuario = params.usuario_actual
@@ -45,7 +77,7 @@ class AdminCase(BaseUsuario):
                 raise HTTPException(status_code=403, detail="No tienes permisos para crear usuarios")
             
             usuario = self.mapear_usuario_dto_a_usuario_create(usuario_nuevo, firebase_uid)
-            usuario.company_id = usuario_actual.company_id
+            # El company_id ya viene normalizado desde validar_y_normalizar_company_id
                 
             return usuario
         except Exception as e:
