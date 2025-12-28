@@ -78,10 +78,6 @@ class UsuarioService:
         return usuario_out
 
     async def create(self, usuario_actual: Usuario, usuario_data: Dict[str, Any], photo: Optional[UploadFile] = None) -> UsuarioOut:
-        """
-        Crea un nuevo usuario con foto opcional. Si se proporciona una foto,
-        la sube a Cloud Storage y guarda la URL antes de crear el usuario en Firebase.
-        """
         # Upload photo first if provided, before creating Firebase user
         if photo and photo.filename:
             try:

@@ -69,10 +69,6 @@ async def crear_usuario(
     db: AsyncSession = Depends(get_db),
     usuario_actual=Depends(require_role("superAdmin", "admin", "supervisor")),
 ):
-    """
-    Crea un nuevo usuario. La foto es opcional y se puede subir como archivo.
-    El company_id es opcional y será validado/normalizado según las reglas del rol del usuario actual.
-    """
     try:
         rol_enum = Rol(rol)
     except ValueError:
