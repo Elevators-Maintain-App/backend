@@ -193,6 +193,35 @@ async def monthly_compliance_tec(
     return await OrdenDeTrabajoService(db).monthly_compliance_technician(user.uid, user.company_id)
 
 
+# — EDITAR / ELIMINAR (admin, supervisor, super_admin) — #
+
+@router.patch(
+    "/{orden_id}",
+    response_model=OrdenTrabajoDetailOut,
+    summary="(supervisor/admin/super_admin) Editar orden"
+)
+async def update_orden(
+    orden_in: OrdenDeTrabajoUpdate,
+    orden_id: UUID = Path(...),
+    user = Depends(require_role("supervisor", "admin", "super_admin")),
+    db: AsyncSession = Depends(get_db)
+):
+    return await OrdenDeTrabajoService(db).update(orden_id, orden_in, user)
+
+
+@router.delete(
+    "/{orden_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="(supervisor/admin/super_admin) Eliminar orden"
+)
+async def delete_orden(
+    orden_id: UUID = Path(...),
+    user = Depends(require_role("supervisor", "admin", "super_admin")),
+    db: AsyncSession = Depends(get_db)
+):
+    return await OrdenDeTrabajoService(db).delete(orden_id, user)
+
+
 # — DETALLE COMPARTIDO — #
 
 @router.get(

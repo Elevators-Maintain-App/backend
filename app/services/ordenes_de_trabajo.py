@@ -26,6 +26,7 @@ import logging
 from app.services.cliente import ClienteService
 from app.schemas.ordenes_de_trabajo import (
     OrdenDeTrabajoCreate,
+    OrdenDeTrabajoUpdate,
     OrdenTrabajoDetailOut,
     OrdenDeTrabajoSummaryOut,
     OrdenDeTrabajoSummarySupervisorOut,
@@ -273,6 +274,57 @@ class OrdenDeTrabajoService:
             value=pct,
             detail=f"{val} de {tot} Completadas"
         )
+
+    # — Update (Shared) —
+    async def update(
+        self, 
+        orden_id: UUID, 
+        orden_in: OrdenDeTrabajoUpdate, 
+        user
+    ) -> OrdenTrabajoDetailOut:
+        # 1) Obtener orden
+        o = await orden_de_trabajo_crud.get(self.db, orden_id)
+        if not o:
+            raise HTTPException(status_code=404, detail="Orden no encontrada")
+
+        # 2) Validar permisos
+        # super_admin pasa directo (según requerimiento)
+        if user.rol.value == "admin":
+            if str(o.company_id) != str(user.company_id):
+                raise HTTPException(status_code=403, detail="No autorizado para editar esta orden")
+        elif user.rol.value == "supervisor":
+            if o.supervisor_id != user.uid:
+                raise HTTPException(status_code=403, detail="No autorizado para editar esta orden")
+        elif user.rol.value not in ["admin", "supervisor", "super_admin"]:
+             # technician / client
+             raise HTTPException(status_code=403, detail="Rol no autorizado para editar")
+
+        # 3) Actualizar
+        await orden_de_trabajo_crud.update(self.db, db_obj=o, obj_in=orden_in)
+
+        # 4) Retornar detalle actualizado
+        return await self.get_detail(orden_id, user)
+
+    # — Delete (Shared) —
+    async def delete(self, orden_id: UUID, user) -> None:
+        # 1) Obtener orden
+        o = await orden_de_trabajo_crud.get(self.db, orden_id)
+        if not o:
+            raise HTTPException(status_code=404, detail="Orden no encontrada")
+
+        # 2) Validar permisos
+        if user.rol.value == "admin":
+            if str(o.company_id) != str(user.company_id):
+                raise HTTPException(status_code=403, detail="No autorizado para eliminar esta orden")
+        elif user.rol.value == "supervisor":
+            if o.supervisor_id != user.uid:
+                raise HTTPException(status_code=403, detail="No autorizado para eliminar esta orden")
+        elif user.rol.value not in ["admin", "supervisor", "super_admin"]:
+             raise HTTPException(status_code=403, detail="Rol no autorizado para eliminar")
+
+        # 3) Eliminar
+        await orden_de_trabajo_crud.remove(self.db, id=orden_id)
+        return None
 
     # — Crear (admin) —
     async def create(
