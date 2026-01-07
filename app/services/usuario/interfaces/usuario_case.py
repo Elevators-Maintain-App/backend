@@ -29,6 +29,14 @@ class UsuarioCaseInterface(ABC):
     def obtener_usuario_a_guardar(self, params: CrearUsuarioParams) -> UsuarioCreate:
         ...
 
+    def validar_y_normalizar_company_id(self, usuario_actual: Usuario, company_id: Optional[UUID]) -> UUID:
+        """
+        Valida y normaliza el company_id según las reglas del rol del usuario actual.
+        Para admin/supervisor: usa su company_id si no se proporciona.
+        Para superAdmin: requiere que se proporcione company_id.
+        """
+        ...
+
     def obtener_filtros_para_listar_usuarios(self, usuario_actual: Usuario, search: Optional[str], company_id: Optional[str], rol: Optional[str]) -> dict:
         ...
 

@@ -218,9 +218,10 @@ async def get_orden_detail(
 )
 async def create_company_orden(
     orden_in: OrdenDeTrabajoCreate,
-    user = Depends(require_role("admin", "supervisor", "technician", "supervisor")),
+    user = Depends(require_role("superAdmin", "admin", "supervisor", "technician", "supervisor")),
     db: AsyncSession = Depends(get_db)
 ):
+    print(f"user: {user}")
     return await OrdenDeTrabajoService(db).create(
         orden_in=orden_in,
         company_id=user.company_id,

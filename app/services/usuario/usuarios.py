@@ -1,9 +1,9 @@
 # app/services/usuarios.py
 
-from typing import Optional
-from uuid import UUID
+from typing import Optional, Dict, Any
+from uuid import UUID, uuid4
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, UploadFile
 from sqlalchemy import select
 
 from app.db.models.usuarios import Usuario
@@ -19,6 +19,7 @@ from app.services.usuario.usuarios_mapper import usuario_to_usuario_out, usuario
 from app.db.repositories.clientes import cliente_crud
 from app.db.models.clientes import Cliente
 from app.services.usuario.interfaces.usuario_case import CrearUsuarioParams, CrearUsuarioFirebaseParams
+from app.services.firebase_storage.firebase_storage import subir_archivo_a_storage
 
 
 class UsuarioService:
@@ -76,7 +77,46 @@ class UsuarioService:
         usuario_out = usuario_to_usuario_out(usuario)
         return usuario_out
 
-    async def create(self, usuario_actual: Usuario, usuario_in: UsuarioCreate) -> UsuarioOut:
+    async def create(self, usuario_actual: Usuario, usuario_data: Dict[str, Any], photo: Optional[UploadFile] = None) -> UsuarioOut:
+        # Upload photo first if provided, before creating Firebase user
+        if photo and photo.filename:
+            try:
+                contenido_foto = await photo.read()
+                content_type = photo.content_type or "image/jpeg"
+                
+                # Generate a UUID for the photo path (user_id doesn't exist yet)
+                photo_user_id = uuid4()
+                company_id = usuario_data.get("company_id")
+                
+                photo_url = subir_archivo_a_storage(
+                    archivo_bytes=contenido_foto,
+                    compania_id=company_id,
+                    entidad="users",
+                    entidad_id=photo_user_id,
+                    nombre_archivo="photo",
+                    tipo_archivo="photo",
+                    content_type=content_type
+                )
+                
+                usuario_data["photo_url"] = photo_url
+            except Exception as e:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Error al subir la foto: {str(e)}"
+                )
+        
+        # Validar y normalizar company_id según las reglas del rol del usuario actual
+        fabrica_de_usuarios = FabricaDeUsuarios.get_user_case(usuario_actual.rol)
+        company_id_proporcionado = usuario_data.get("company_id")
+        company_id_normalizado = fabrica_de_usuarios.validar_y_normalizar_company_id(
+            usuario_actual, 
+            company_id_proporcionado
+        )
+        usuario_data["company_id"] = company_id_normalizado
+        
+        # Convert dict to UsuarioCreate for validation and use in existing logic
+        usuario_in = UsuarioCreate(**usuario_data)
+        
         usuario = await usuario_crud.get_by_field(self.db, "email", usuario_in.email)
         if usuario:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El usuario ya existe")
@@ -89,7 +129,6 @@ class UsuarioService:
 
         compania = await CompaniaService(self.db).get_compania(usuario_in.company_id, usuario_actual)
         tipo_documento = await tipo_documento_crud.get(self.db, usuario_in.document_type_id)
-        fabrica_de_usuarios = FabricaDeUsuarios.get_user_case(usuario_actual.rol)
         usuario_firebase = fabrica_de_usuarios.obtener_firebase_usuario(CrearUsuarioFirebaseParams(
             usuario_actual=usuario_actual,
             usuario_nuevo=usuario_in,
