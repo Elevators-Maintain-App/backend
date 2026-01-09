@@ -42,7 +42,7 @@ async def get_template(
 )
 async def load_checklist(
     orden_id: UUID = Path(...),
-    user=Depends(require_role("technician")),
+    user=Depends(require_role("technician", "supervisor")),
     db: AsyncSession = Depends(get_db)
 ):
     svc = ChecklistService(db)
@@ -61,7 +61,7 @@ async def load_checklist(
 )
 async def get_checklist(
     orden_id: UUID = Path(...),
-    user=Depends(require_role("technician")),
+    user=Depends(require_role("technician", "supervisor")),
     db: AsyncSession = Depends(get_db)
 ):
     svc = ChecklistService(db)
@@ -76,7 +76,7 @@ async def update_checklist_item(
     orden_id: UUID      = Path(...),
     step_number: int    = Path(..., gt=0),
     data: ChecklistItemUpdate = Body(...),
-    user=Depends(require_role("technician")),
+    user=Depends(require_role("technician", "supervisor")),
     db: AsyncSession = Depends(get_db)
 ):
     svc = ChecklistService(db)
