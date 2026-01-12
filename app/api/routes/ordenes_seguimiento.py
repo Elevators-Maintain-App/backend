@@ -218,3 +218,70 @@ async def sync_checklist_y_enviar_a_validacion(
 
     # 3) PDF prereporte en background
     background_tasks.add_task(generar_y_subir_pdf, orden_id, "prereporte")
+
+# Sync checklist and finalize order (supervisor)
+@router.post("/{orden_id}/sync-finalizar", status_code=status.HTTP_204_NO_CONTENT)
+async def sync_checklist_y_finalizar_orden(
+    orden_id: UUID,
+    background_tasks: BackgroundTasks,
+    payload: ChecklistSyncPayload = Body(...),
+    user=Depends(require_role("supervisor")),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Endpoint para supervisor: sincroniza checklist offline y finaliza la orden.
+    - Valida que orden_id coincida con payload.orden_trabajo_id
+    - Sincroniza checklist completo (items, comentarios, evidencias)
+    - Extrae y persiste firmas (de payload o evidencia_data del último paso)
+    - Finaliza orden (estado COMPLETADA)
+    - Genera PDF final en background
+    """
+    # 1) Validar coincidencia de IDs
+    if payload.orden_trabajo_id != orden_id:
+        raise HTTPException(status_code=400, detail="orden_id no coincide con payload.orden_trabajo_id")
+
+    # 2) Cargar orden con checklists
+    orden = await _get_orden(db, orden_id)
+
+    # 3) Sincronizar checklist completo (no hace commit)
+    await ChecklistService(db).sync_full_checklist(orden_id, payload)
+
+    # 4) Extraer firmas: primero desde raíz del payload, luego desde evidencia_data del último paso
+    firma_tecnico = payload.firma_tecnico
+    firma_cliente = payload.firma_cliente
+
+    if not (firma_tecnico and firma_cliente):
+        # Compatibilidad: buscar firmas en evidencia_data del último paso
+        try:
+            last_step = max([x.step_number for x in payload.items])
+            firmas_item = next((x for x in payload.items if x.step_number == last_step), None)
+            if firmas_item and isinstance(firmas_item.evidencia_data, dict):
+                firma_tecnico = firma_tecnico or firmas_item.evidencia_data.get("Firma técnico")
+                firma_cliente = firma_cliente or firmas_item.evidencia_data.get("Firma cliente")
+        except Exception:
+            pass
+
+    # 5) Persistir firmas en checklists asociados
+    for checklist in orden.checklists:
+        if firma_tecnico:
+            checklist.firma_tecnico = firma_tecnico
+        if firma_cliente:
+            checklist.firma_cliente = firma_cliente
+
+    # 6) Finalizar orden: registrar evento FIN y cambiar estado a COMPLETADA
+    ts = payload.hora_salida if isinstance(payload.hora_salida, datetime) else None
+
+    seguimiento_fin = SeguimientoCreate(
+        evento=EventoOrden.FIN,
+        lat=payload.lat,
+        lon=payload.lon,
+        timestamp=ts,
+    )
+
+    await OrdenService(db).finalizar(orden, seguimiento_fin)
+
+    # 7) Commit
+    await db.commit()
+
+    # 8) Generar PDF final en background
+    background_tasks.add_task(generar_y_subir_pdf, orden_id, "final")
