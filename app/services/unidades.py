@@ -105,7 +105,8 @@ class UnidadService:
         skip: int = 0,
         limit: int = 20,
         search: Optional[str] = None,
-        company_id: Optional[UUID] = None
+        company_id: Optional[UUID] = None,
+        proyecto_id: Optional[UUID] = None
     ) -> PaginacionResponse[UnidadListOut]:
         try:
             # Normalizar rol (soporta Enum .name/.value o string plano)
@@ -128,6 +129,32 @@ class UnidadService:
                 exact_filters["company_id"] = getattr(usuario_actual, "company_id", None)
             elif company_id:
                 exact_filters["company_id"] = company_id
+
+            # Validación y filtro por proyecto_id
+            if proyecto_id is not None:
+                # Validar que el proyecto existe
+                proyecto = await proyecto_crud.get(self.db, proyecto_id)
+                if not proyecto:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Proyecto no encontrado"
+                    )
+                
+                # Validar que el proyecto pertenece a la compañía correcta según el rol
+                expected_company_id = None
+                if role_norm in ("admin", "supervisor"):
+                    expected_company_id = getattr(usuario_actual, "company_id", None)
+                elif company_id:
+                    expected_company_id = company_id
+                
+                if expected_company_id and str(proyecto.company_id) != str(expected_company_id):
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail="El proyecto no pertenece a tu compañía"
+                    )
+                
+                # Aplicar filtro por proyecto_id
+                exact_filters["proyecto_id"] = proyecto_id
 
             # Búsqueda por nombre
             if search:

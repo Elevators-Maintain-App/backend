@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, Security, Query
-from typing import List
+from typing import List, Optional
+from uuid import UUID
 from app.schemas.comunes import LovElemento, PaginacionResponse
 from app.db.session import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -122,10 +123,12 @@ async def get_proyectos(
 async def get_unidades(
     db: AsyncSession = Depends(get_db),
     usuario_actual=Depends(require_role("superAdmin", "admin", "supervisor")),
+    proyecto_id: Optional[UUID] = Query(None, alias="proyecto_id"),
 ):
     service = UnidadService(db)
     unidades = await service.get_unidades_con_paginacion(
         usuario_actual=usuario_actual,
+        proyecto_id=proyecto_id,
         limit=1000,
         skip=0
     )
