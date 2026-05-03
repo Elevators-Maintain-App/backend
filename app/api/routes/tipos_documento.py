@@ -7,6 +7,7 @@ from typing import List
 from app.db.session import get_db
 from app.schemas.tipos_documento import TipoDocumentoCreate, TipoDocumentoUpdate, TipoDocumentoInDBBase
 from app.db.repositories.tipos_documento import tipo_documento_crud
+from app.auth.firebase import require_role
 
 router = APIRouter()
 
@@ -22,7 +23,11 @@ async def get_tipo_documento(tipo_documento_id: int, db: AsyncSession = Depends(
     return tipo_documento_obj
 
 @router.post("/", response_model=TipoDocumentoInDBBase, status_code=status.HTTP_201_CREATED)
-async def create_tipo_documento(tipo_documento_in: TipoDocumentoCreate, db: AsyncSession = Depends(get_db)):
+async def create_tipo_documento(
+    tipo_documento_in: TipoDocumentoCreate,
+    _user=Depends(require_role("superAdmin", "admin")),
+    db: AsyncSession = Depends(get_db),
+):
     existing = await tipo_documento_crud.get_by_field(db, field="nombre", value=tipo_documento_in.nombre)
     if existing:
         raise HTTPException(

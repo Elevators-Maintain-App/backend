@@ -95,7 +95,12 @@ async def crear_usuario(
     return await service.create(usuario_actual, usuario_data, photo)
 
 @router.put("/{uid}", response_model=UsuarioOut)
-async def actualizar_usuario(uid: str, usuario_in: UsuarioUpdate, db: AsyncSession = Depends(get_db)):
+async def actualizar_usuario(
+    uid: str,
+    usuario_in: UsuarioUpdate,
+    _usuario_actual=Depends(require_role("superAdmin", "admin")),
+    db: AsyncSession = Depends(get_db)
+):
     service = UsuarioService(db)
     return await service.update(uid, usuario_in)
 
@@ -517,5 +522,4 @@ async def get_usuario(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error al obtener usuario: {str(e)}"
         )
-
 

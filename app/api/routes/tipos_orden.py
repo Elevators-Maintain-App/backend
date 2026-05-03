@@ -5,6 +5,7 @@ from typing import List
 from app.db.session import get_db
 from app.schemas.tipos_orden import TipoOrdenCreate, TipoOrdenUpdate, TipoOrdenInDBBase
 from app.db.repositories.tipos_orden import tipo_orden_crud
+from app.auth.firebase import require_role
 
 router = APIRouter()
 
@@ -20,7 +21,11 @@ async def get_tipo_orden(tipo_orden_id: int, db: AsyncSession = Depends(get_db))
     return tipo
 
 @router.post("/", response_model=TipoOrdenInDBBase, status_code=status.HTTP_201_CREATED)
-async def create_tipo_orden(tipo_in: TipoOrdenCreate, db: AsyncSession = Depends(get_db)):
+async def create_tipo_orden(
+    tipo_in: TipoOrdenCreate,
+    _user=Depends(require_role("superAdmin", "admin")),
+    db: AsyncSession = Depends(get_db),
+):
     existing = await tipo_orden_crud.get_by_field(db, field="nombre", value=tipo_in.nombre)
     if existing:
         raise HTTPException(status_code=409, detail="Ya existe un tipo de orden con ese nombre.")

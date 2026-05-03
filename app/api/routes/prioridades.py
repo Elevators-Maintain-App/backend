@@ -5,6 +5,7 @@ from typing import List
 from app.db.session import get_db
 from app.schemas.prioridades import PrioridadCreate, PrioridadUpdate, PrioridadInDBBase
 from app.db.repositories.prioridades import prioridad_crud
+from app.auth.firebase import require_role
 
 router = APIRouter()
 
@@ -20,7 +21,11 @@ async def get_prioridad(prioridad_id: int, db: AsyncSession = Depends(get_db)):
     return prioridad
 
 @router.post("/", response_model=PrioridadInDBBase, status_code=status.HTTP_201_CREATED)
-async def create_prioridad(prioridad_in: PrioridadCreate, db: AsyncSession = Depends(get_db)):
+async def create_prioridad(
+    prioridad_in: PrioridadCreate,
+    _user=Depends(require_role("superAdmin", "admin")),
+    db: AsyncSession = Depends(get_db),
+):
     existing = await prioridad_crud.get_by_field(db, field="nombre", value=prioridad_in.nombre)
     if existing:
         raise HTTPException(status_code=409, detail="Ya existe una prioridad con ese nombre.")

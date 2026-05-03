@@ -5,6 +5,7 @@ from typing import List
 from app.db.session import get_db
 from app.schemas.tipos_evidencia import TipoEvidenciaCreate, TipoEvidenciaUpdate, TipoEvidenciaInDBBase
 from app.db.repositories.tipos_evidencia import tipo_evidencia_crud
+from app.auth.firebase import require_role
 
 router = APIRouter()
 
@@ -20,7 +21,11 @@ async def get_tipo_evidencia(tipo_evidencia_id: int, db: AsyncSession = Depends(
     return tipo
 
 @router.post("/", response_model=TipoEvidenciaInDBBase, status_code=status.HTTP_201_CREATED)
-async def create_tipo_evidencia(tipo_in: TipoEvidenciaCreate, db: AsyncSession = Depends(get_db)):
+async def create_tipo_evidencia(
+    tipo_in: TipoEvidenciaCreate,
+    _user=Depends(require_role("superAdmin", "admin")),
+    db: AsyncSession = Depends(get_db),
+):
     existing = await tipo_evidencia_crud.get_by_field(db, field="nombre", value=tipo_in.nombre)
     if existing:
         raise HTTPException(status_code=409, detail="Ya existe un tipo de evidencia con ese nombre.")
