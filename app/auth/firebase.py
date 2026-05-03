@@ -1,6 +1,6 @@
 # app/auth/firebase.py
 
-from fastapi import HTTPException, status, Depends
+from fastapi import HTTPException, status, Depends, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from firebase_admin import auth as firebase_auth, firestore
 from pydantic import BaseModel
@@ -207,6 +207,7 @@ async def actualizar_usuario_firestore(uid: str, data: dict) -> bool:
         )
 
 async def get_current_firebase_user(
+    request: Request,
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ) -> FirebaseUser:
     """
@@ -242,7 +243,7 @@ async def get_current_firebase_user(
         except (ValueError, TypeError):
             company_id = None
         
-        return FirebaseUser(
+        current_user = FirebaseUser(
             uid=uid,
             display_name=data.get("display_name", ""),
             email=data.get("email", ""),
@@ -255,6 +256,8 @@ async def get_current_firebase_user(
             rol=data.get("rol", ""),
             created_time=data.get("created_at", datetime.now())
         )
+        request.state.current_user = current_user
+        return current_user
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

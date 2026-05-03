@@ -6,11 +6,9 @@ import io
 from datetime import timezone
 from zoneinfo import ZoneInfo
 
-from jinja2 import Environment, FileSystemLoader
 from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from weasyprint import HTML
 
 from app.db.models.checklists import Checklist
 from app.db.models.clientes import Cliente
@@ -19,7 +17,6 @@ from app.db.models.seguimiento import EventoOrden, OrdenTrabajoSeguimiento
 from app.db.models.unidades import Unidad
 from app.db.models.usuarios import Usuario
 from app.db.session import AsyncSessionLocal
-from app.services.firebase_storage.firebase_storage import subir_pdf_a_storage
 
 LOCAL_TZ = ZoneInfo("America/Panama")
 
@@ -148,6 +145,11 @@ def _build_maps_link_from_checklist(checklist: Checklist) -> str | None:
 
 async def generar_y_subir_pdf(orden_id, tipo: str = "prereporte") -> str:
     """Genera el PDF (prereporte o final), lo sube a storage y guarda la URL en Checklist."""
+    from jinja2 import Environment, FileSystemLoader
+    from weasyprint import HTML
+
+    from app.services.firebase_storage.firebase_storage import subir_pdf_a_storage
+
     async with AsyncSessionLocal() as db:
         checklist = await db.scalar(
             select(Checklist)

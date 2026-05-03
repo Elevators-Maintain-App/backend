@@ -33,6 +33,7 @@ from app.api.routes import (
 from app.core.config import settings
 from app.db.session import engine, Base
 from app.core.openapi_config import OpenAPIConfig
+from app.middleware.observability import observability_middleware
 
 # Lifespan context manager for startup and shutdown events
 @asynccontextmanager
@@ -60,6 +61,8 @@ app = FastAPI(
     debug=settings.debug
     
 )
+
+app.middleware("http")(observability_middleware)
 
 # Setup CORS middleware
 app.add_middleware(

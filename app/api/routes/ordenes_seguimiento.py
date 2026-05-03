@@ -15,7 +15,6 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from app.schemas.reportes import UrlReporteOut, ReportePrerevisionOut
 
-from app.services.reportes.generar_pdf_service import generar_y_subir_pdf
 from app.services.checklists import ChecklistService
 from app.schemas.checklists_sync import ChecklistSyncPayload
 
@@ -23,6 +22,11 @@ import logging
 logger = logging.getLogger("sync_checklist")
 
 router = APIRouter()
+
+async def generar_y_subir_pdf(orden_id: UUID, tipo: str = "prereporte") -> str:
+    from app.services.reportes.generar_pdf_service import generar_y_subir_pdf as _generar_y_subir_pdf
+
+    return await _generar_y_subir_pdf(orden_id, tipo)
 
 # Helper function to get an order by ID
 async def _get_orden(db: AsyncSession, orden_id: UUID) -> OrdenDeTrabajo:

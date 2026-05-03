@@ -16,8 +16,6 @@ from app.auth.firebase import require_role, get_current_firebase_user
 
 
 from fastapi.responses import StreamingResponse
-from weasyprint import HTML
-from jinja2 import Environment, FileSystemLoader
 import io
 
 router = APIRouter()
@@ -111,6 +109,9 @@ async def generar_reporte_pdf(
     orden_id: UUID,
     db: AsyncSession = Depends(get_db),
 ):
+    from jinja2 import Environment, FileSystemLoader
+    from weasyprint import HTML
+
     checklist = await ChecklistService(db).get_checklist_con_items(orden_id)
     if not checklist:
         raise HTTPException(status_code=404, detail="Checklist no encontrado")
