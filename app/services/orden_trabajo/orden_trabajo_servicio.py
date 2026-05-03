@@ -5,7 +5,7 @@ from uuid import UUID
 from datetime import datetime, date
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, and_, extract
+from sqlalchemy import select, func, and_, extract, case
 from sqlalchemy.orm import selectinload
 from app.schemas.dashboard.technician import DashboardTecnicoOut, OrdenEnCursoOut
 from app.schemas.dashboard.supervisor import OrdenResumenSupervisor, DashboardSupervisorOut
@@ -202,23 +202,24 @@ class OrdenTrabajoService:
             OrdenDeTrabajo.fecha <= fecha_fin,
         )
         
-        # 1. Total de órdenes programadas
-        total_stmt = select(func.count()).where(filtro_base)
-        total = (await self.db.execute(total_stmt)).scalar_one()
+        # 1. Métricas del período en una sola consulta, manteniendo filtros y categorías actuales.
+        metricas_stmt = select(
+            func.count().label("total"),
+            func.coalesce(
+                func.sum(case((OrdenDeTrabajo.estado_id.in_(estados_completadas), 1), else_=0)),
+                0,
+            ).label("completadas"),
+            func.coalesce(
+                func.sum(case((OrdenDeTrabajo.estado_id.in_(estados_pendientes), 1), else_=0)),
+                0,
+            ).label("pendientes"),
+        ).where(filtro_base)
+        metricas = (await self.db.execute(metricas_stmt)).one()
+        total = metricas.total
+        completadas = metricas.completadas
+        pendientes = metricas.pendientes
 
-        # 2. Conteo de órdenes completadas (en validación o cerradas)
-        completadas_stmt = select(func.count()).where(
-            and_(filtro_base, OrdenDeTrabajo.estado_id.in_(estados_completadas))
-        )
-        completadas = (await self.db.execute(completadas_stmt)).scalar_one()
-
-        # 3. Conteo de órdenes pendientes (pendiente, en ejecución o en pausa)
-        pendientes_stmt = select(func.count()).where(
-            and_(filtro_base, OrdenDeTrabajo.estado_id.in_(estados_pendientes))
-        )
-        pendientes = (await self.db.execute(pendientes_stmt)).scalar_one()
-
-        # 4. Lista de órdenes en curso
+        # 2. Lista de órdenes en curso
         ordenes_stmt = (
             select(OrdenDeTrabajo)
             .where(filtro_base)

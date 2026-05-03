@@ -50,8 +50,40 @@ class OrdenDeTrabajoService:
         return (await self.db.execute(stmt)).scalar_one()
 
     async def list_summary_by_company(self, company_id: UUID) -> List[OrdenDeTrabajoSummaryOut]:
-        ords = await orden_de_trabajo_crud.get_multi_by_field(self.db, field="company_id", value=company_id)
-        return [OrdenDeTrabajoSummaryOut.from_orm(o) for o in ords]
+        stmt = (
+            select(
+                OrdenDeTrabajo.id,
+                OrdenDeTrabajo.referencia,
+                OrdenDeTrabajo.fecha,
+                OrdenDeTrabajo.supervisor_id,
+                OrdenDeTrabajo.tecnico_id,
+                OrdenDeTrabajo.unidad_id,
+                OrdenDeTrabajo.company_id,
+                OrdenDeTrabajo.tipo_orden_id,
+                OrdenDeTrabajo.estado_id,
+                OrdenDeTrabajo.prioridad_id,
+            )
+            .where(OrdenDeTrabajo.company_id == company_id)
+            .offset(0)
+            .limit(100)
+        )
+        result = await self.db.execute(stmt)
+        rows = result.all()
+        return [
+            OrdenDeTrabajoSummaryOut(
+                id=row.id,
+                referencia=row.referencia,
+                fecha=row.fecha,
+                supervisor_id=row.supervisor_id,
+                tecnico_id=row.tecnico_id,
+                unidad_id=row.unidad_id,
+                company_id=row.company_id,
+                tipo_orden_id=row.tipo_orden_id,
+                estado_id=row.estado_id,
+                prioridad_id=row.prioridad_id,
+            )
+            for row in rows
+        ]
 
     # — Supervisor —
     async def count_by_supervisor(self, supervisor_uid: str) -> int:

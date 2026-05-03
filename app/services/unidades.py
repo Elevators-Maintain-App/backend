@@ -4,8 +4,13 @@ from typing import List, Optional
 from uuid import uuid4, UUID
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 from app.db.models.usuarios import Usuario
+from app.db.models.unidades import Unidad as UnidadModel
+from app.db.models.proyectos import Proyecto as ProyectoModel
+from app.db.models.clientes import Cliente as ClienteModel
+from app.db.models.enums.tipos_unidad import TipoUnidad as TipoUnidadModel
 from app.db.repositories.unidades import unidad_crud
 from app.db.repositories.proyectos import proyecto_crud
 from app.db.repositories.tipos_unidad import tipo_unidad_crud
@@ -25,6 +30,44 @@ class UnidadService:
             value=company_id
         )
         return res
+
+    async def list_company_unidades_out(self, company_id: UUID) -> List[UnidadListOut]:
+        stmt = (
+            select(
+                UnidadModel.id,
+                UnidadModel.nombre,
+                UnidadModel.kpi_funcionamiento,
+                ProyectoModel.nombre.label("proyecto"),
+                ClienteModel.nombre.label("cliente"),
+                UnidadModel.tipo_unidad_id,
+                TipoUnidadModel.nombre.label("tipo_unidad"),
+                UnidadModel.company_id,
+                UnidadModel.created_at,
+                UnidadModel.updated_at,
+            )
+            .outerjoin(ProyectoModel, UnidadModel.proyecto_id == ProyectoModel.id)
+            .outerjoin(ClienteModel, ProyectoModel.cliente_id == ClienteModel.id)
+            .outerjoin(TipoUnidadModel, UnidadModel.tipo_unidad_id == TipoUnidadModel.id)
+            .where(UnidadModel.company_id == company_id)
+        )
+        result = await self.db.execute(stmt)
+        rows = result.all()
+
+        return [
+            UnidadListOut(
+                id=row.id,
+                nombre=row.nombre,
+                kpi_funcionamiento=row.kpi_funcionamiento,
+                proyecto=row.proyecto if row.proyecto else "—",
+                cliente=row.cliente if row.cliente else "—",
+                tipo_unidad_id=row.tipo_unidad_id,
+                tipo_unidad=row.tipo_unidad if row.tipo_unidad else "—",
+                company_id=row.company_id,
+                created_at=row.created_at,
+                updated_at=row.updated_at,
+            )
+            for row in rows
+        ]
 
     async def get_by_id_and_company(self, unidad_id: UUID, company_id: UUID) -> UnidadInDBBase:
         unidad = await unidad_crud.get(self.db, unidad_id)

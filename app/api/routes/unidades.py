@@ -83,8 +83,7 @@ async def list_company_unidades(
     user=Depends(require_role("admin", "supervisor")),
     db: AsyncSession = Depends(get_db)
 ):
-    unidades = await UnidadService(db).get_by_company(user.company_id)
-    return [await _map_unidad(u, db) for u in unidades]
+    return await UnidadService(db).list_company_unidades_out(user.company_id)
 
 
 # 3) Obtener detalle de una unidad (admin)
@@ -174,4 +173,3 @@ async def enrich_unidad_with_cliente_info(unidad: UnidadModel) -> UnidadListOut:
         created_at=unidad.created_at,
         updated_at=unidad.updated_at
     )
-
