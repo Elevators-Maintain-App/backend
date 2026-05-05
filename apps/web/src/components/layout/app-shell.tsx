@@ -1,6 +1,7 @@
 "use client";
 
-import { Building2, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { AppButton } from "@/components/ui/app-button";
 import { useAuth } from "@/hooks/use-auth";
@@ -19,8 +20,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <header className="border-b bg-card">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-6">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-primary-foreground">
-              <Building2 className="h-5 w-5" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-md border bg-background p-1">
+              <Image
+                src="/logo.png"
+                alt="VertiOne"
+                width={28}
+                height={28}
+                className="h-7 w-7 object-contain"
+                priority
+              />
             </div>
             <div className="min-w-0">
               <p className="text-sm font-semibold">VertiOne</p>
