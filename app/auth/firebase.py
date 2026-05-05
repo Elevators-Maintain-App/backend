@@ -242,6 +242,12 @@ async def get_current_firebase_user(
             company_id = UUID(company_id_str) if company_id_str else None
         except (ValueError, TypeError):
             company_id = None
+
+        client_id_str = data.get("client_id")
+        try:
+            client_id = UUID(client_id_str) if client_id_str else None
+        except (ValueError, TypeError):
+            client_id = None
         
         current_user = FirebaseUser(
             uid=uid,
@@ -249,6 +255,8 @@ async def get_current_firebase_user(
             email=data.get("email", ""),
             company_id=company_id,
             company_name=data.get("company_name", ""),
+            client_id=client_id,
+            client_name=data.get("client_name", ""),
             document_id=data.get("document_id", ""),
             document_type=data.get("document_type", ""),
             document_type_name=data.get("document_type_name", ""),

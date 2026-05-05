@@ -28,6 +28,7 @@ from app.api.routes import (
     tipos_unidad_router,
     unidades_router,
     usuarios_router,
+    web_client_router,
     web_superadmin_router,
     zonas_geograficas
 )
@@ -100,6 +101,7 @@ app.include_router(tipos_orden_router, prefix="/api/tipos-orden", tags=["Enums"]
 app.include_router(tipos_unidad_router, prefix="/api/tipos-unidad", tags=["Enums"])
 app.include_router(unidades_router, prefix="/api/unidades", tags=["Unidades"])
 app.include_router(usuarios_router, prefix="/api/usuarios", tags=["Usuarios"])
+app.include_router(web_client_router, prefix="/api/web/client", tags=["Web Client"])
 app.include_router(web_superadmin_router, prefix="/api/web/superadmin", tags=["Web SuperAdmin"])
 app.include_router(zonas_geograficas, prefix="/api/zonas-geograficas", tags=["Zonas Geograficas"])
 
