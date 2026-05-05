@@ -59,13 +59,22 @@ class WebClientPortalService:
         return (
             Proyecto.cliente_id == client_id,
             Proyecto.company_id == company_id,
-            Unidad.cliente_id == client_id,
             Unidad.company_id == company_id,
         )
 
     def _unit_base_query(self, client_id: UUID, company_id: UUID):
         return (
-            select(Unidad, Proyecto.nombre.label("project_name"), TipoUnidad.nombre.label("unit_type"))
+            select(
+                Unidad.id.label("id"),
+                Unidad.nombre.label("name"),
+                Unidad.proyecto_id.label("project_id"),
+                Unidad.kpi_funcionamiento.label("kpi_functioning"),
+                Unidad.company_id.label("company_id"),
+                Unidad.created_at.label("created_at"),
+                Unidad.updated_at.label("updated_at"),
+                Proyecto.nombre.label("project_name"),
+                TipoUnidad.nombre.label("unit_type"),
+            )
             .join(Proyecto, Unidad.proyecto_id == Proyecto.id)
             .join(TipoUnidad, Unidad.tipo_unidad_id == TipoUnidad.id)
             .where(*self._scope_filters(client_id, company_id))
@@ -79,14 +88,14 @@ class WebClientPortalService:
             query = query.where(Unidad.proyecto_id == project_id)
         return query
 
-    def _to_unit_item(self, unidad: Unidad, project_name: str, unit_type: str | None):
+    def _to_unit_item(self, row):
         return WebClientUnitItem(
-            id=unidad.id,
-            name=unidad.nombre,
-            project_id=unidad.proyecto_id,
-            project=project_name,
-            type=unit_type,
-            kpi_functioning=unidad.kpi_funcionamiento,
+            id=row.id,
+            name=row.name,
+            project_id=row.project_id,
+            project=row.project_name,
+            type=row.unit_type,
+            kpi_functioning=row.kpi_functioning,
         )
 
     async def get_units(
@@ -116,10 +125,7 @@ class WebClientPortalService:
         ).all()
 
         return WebClientUnitsPage.create(
-            data=[
-                self._to_unit_item(unidad, project_name, unit_type)
-                for unidad, project_name, unit_type in rows
-            ],
+            data=[self._to_unit_item(row) for row in rows],
             total=total,
             page=page,
             page_size=page_size,
@@ -138,13 +144,12 @@ class WebClientPortalService:
         if not row:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Unidad no encontrada")
 
-        unidad, project_name, unit_type = row
         return WebClientUnitDetail(
-            **self._to_unit_item(unidad, project_name, unit_type).model_dump(),
-            company_id=unidad.company_id,
-            client_id=unidad.cliente_id,
-            created_at=unidad.created_at,
-            updated_at=unidad.updated_at,
+            **self._to_unit_item(row).model_dump(),
+            company_id=row.company_id,
+            client_id=cliente.id,
+            created_at=row.created_at,
+            updated_at=row.updated_at,
         )
 
     def _order_report_url_expr(self):
@@ -155,7 +160,14 @@ class WebClientPortalService:
         supervisor = aliased(Usuario)
         return (
             select(
-                OrdenDeTrabajo,
+                OrdenDeTrabajo.id.label("id"),
+                OrdenDeTrabajo.referencia.label("reference"),
+                OrdenDeTrabajo.fecha.label("date"),
+                OrdenDeTrabajo.descripcion.label("description"),
+                OrdenDeTrabajo.observaciones.label("observations"),
+                OrdenDeTrabajo.tecnico_id.label("technician_id"),
+                OrdenDeTrabajo.supervisor_id.label("supervisor_id"),
+                OrdenDeTrabajo.created_at.label("created_at"),
                 EstadoOrden.nombre.label("status_name"),
                 TipoOrden.nombre.label("order_type"),
                 Prioridad.nombre.label("priority_name"),
@@ -177,11 +189,17 @@ class WebClientPortalService:
             .outerjoin(supervisor, supervisor.uid == OrdenDeTrabajo.supervisor_id)
             .where(
                 *self._scope_filters(client_id, company_id),
-                OrdenDeTrabajo.cliente_id == client_id,
                 OrdenDeTrabajo.company_id == company_id,
             )
             .group_by(
                 OrdenDeTrabajo.id,
+                OrdenDeTrabajo.referencia,
+                OrdenDeTrabajo.fecha,
+                OrdenDeTrabajo.descripcion,
+                OrdenDeTrabajo.observaciones,
+                OrdenDeTrabajo.tecnico_id,
+                OrdenDeTrabajo.supervisor_id,
+                OrdenDeTrabajo.created_at,
                 EstadoOrden.nombre,
                 TipoOrden.nombre,
                 Prioridad.nombre,
@@ -222,12 +240,11 @@ class WebClientPortalService:
         return query
 
     def _to_order_item(self, row) -> WebClientOrderItem:
-        order = row.OrdenDeTrabajo
         report_url = row.final_report_url if row.status_name == CLOSED_ORDER_STATUS else None
         return WebClientOrderItem(
-            id=order.id,
-            reference=order.referencia,
-            date=order.fecha,
+            id=row.id,
+            reference=row.reference,
+            date=row.date,
             status=row.status_name,
             project_id=row.project_id,
             project=row.project_name,
@@ -293,14 +310,13 @@ class WebClientPortalService:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Orden no encontrada")
 
         item = self._to_order_item(row)
-        order = row.OrdenDeTrabajo
         final_report_url = row.final_report_url if row.status_name == CLOSED_ORDER_STATUS else None
         return WebClientOrderDetail(
             **item.model_dump(),
-            description=order.descripcion,
-            observations=order.observaciones,
-            technician=row.technician_name or order.tecnico_id,
-            supervisor=row.supervisor_name or order.supervisor_id,
+            description=row.description,
+            observations=row.observations,
+            technician=row.technician_name or row.technician_id,
+            supervisor=row.supervisor_name or row.supervisor_id,
             final_report_url=final_report_url,
         )
 

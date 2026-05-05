@@ -7,12 +7,14 @@ from uuid import UUID
 
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.testclient import TestClient
+from sqlalchemy.dialects import postgresql
 
 from app.auth.firebase import get_current_firebase_user
 from app.auth import firebase as firebase_auth_module
 from app.db.models.usuarios import Rol
 from app.db.session import get_db
 from app.middleware.observability import observability_middleware
+from app.services.web.client_portal_service import WebClientPortalService
 
 
 web_client = import_module("app.api.routes.web_client")
@@ -503,3 +505,27 @@ def test_web_client_units_without_client_id_returns_clear_error(monkeypatch):
     assert response.status_code == 403
     assert response.headers["X-Request-ID"] == "web-client-units-no-client-id"
     assert response.json()["detail"] == "El usuario cliente no tiene client_id asociado"
+
+
+def test_web_client_portal_queries_do_not_filter_on_legacy_client_id_columns():
+    service = WebClientPortalService(DummyDB())
+    dialect = postgresql.dialect()
+
+    unit_sql = str(
+        service._unit_base_query(CLIENT_ID, COMPANY_ID).compile(
+            dialect=dialect,
+            compile_kwargs={"literal_binds": False},
+        )
+    )
+    order_sql = str(
+        service._order_base_query(CLIENT_ID, COMPANY_ID).compile(
+            dialect=dialect,
+            compile_kwargs={"literal_binds": False},
+        )
+    )
+
+    assert "proyectos.cliente_id =" in unit_sql
+    assert "proyectos.cliente_id =" in order_sql
+    assert "unidades.cliente_id =" not in unit_sql
+    assert "unidades.cliente_id =" not in order_sql
+    assert "ordenes_de_trabajo.cliente_id =" not in order_sql
