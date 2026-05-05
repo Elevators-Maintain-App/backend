@@ -3,6 +3,18 @@ name: CI - CD
 on:
   push:
     branches: [main]
+    paths:
+      - "app/**"
+      - "migrations/**"
+      - "tests/**"
+      - "Dockerfile"
+      - "requirements.txt"
+      - "test-requirements.txt"
+      - "alembic.ini"
+      - "docker-compose.yml"
+      - "deploy.sh"
+      - ".github/workflows/ci.yml"
+      - ".github/actions/setup-gcp/**"
   #pull_request:
   #  branches: [main]
 
