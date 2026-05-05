@@ -14,6 +14,7 @@ from app.db.models.usuarios import Rol
 from uuid import UUID
 import string
 import secrets
+from sqlalchemy.ext.asyncio import AsyncSession
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -208,7 +209,8 @@ async def actualizar_usuario_firestore(uid: str, data: dict) -> bool:
 
 async def get_current_firebase_user(
     request: Request,
-    credentials: HTTPAuthorizationCredentials = Depends(security)
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: AsyncSession = Depends(get_db),
 ) -> FirebaseUser:
     """
     Verifica el token Firebase y devuelve el usuario autenticado desde la base de datos.
@@ -225,7 +227,27 @@ async def get_current_firebase_user(
             headers={"WWW-Authenticate": "Bearer"}
         )
 
-    # Leer de Firestore
+    usuario_db = await usuario_crud.get_usuario_con_relaciones(db, uid)
+    if usuario_db:
+        current_user = FirebaseUser(
+            uid=usuario_db.uid,
+            display_name=usuario_db.display_name,
+            email=usuario_db.email,
+            company_id=usuario_db.company_id,
+            company_name=usuario_db.company.nombre if usuario_db.company else None,
+            client_id=usuario_db.client_id,
+            client_name=usuario_db.client.nombre if usuario_db.client else None,
+            document_id=usuario_db.document_id,
+            document_type=str(usuario_db.document_type_id),
+            document_type_name=usuario_db.document_type.nombre if usuario_db.document_type else None,
+            photo_url=usuario_db.photo_url,
+            rol=usuario_db.rol,
+            created_time=usuario_db.created_at or datetime.now(timezone.utc),
+        )
+        request.state.current_user = current_user
+        return current_user
+
+    # Fallback compatible: si el usuario aun no existe en Postgres, leer Firestore.
     try:
         doc = get_firestore_client().collection("users").document(uid).get()
         if not doc.exists:
@@ -266,6 +288,8 @@ async def get_current_firebase_user(
         )
         request.state.current_user = current_user
         return current_user
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

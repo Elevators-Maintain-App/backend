@@ -5,6 +5,11 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 
+class WebSuperAdminCatalogItem(BaseModel):
+    id: str
+    name: str
+
+
 class WebSuperAdminUsersSummary(BaseModel):
     total_users: int = Field(..., ge=0)
 

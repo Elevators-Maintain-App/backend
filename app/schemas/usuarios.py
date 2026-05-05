@@ -35,6 +35,7 @@ class UsuarioUpdate(BaseModel):
     phone_number: Optional[str] = None
     photo_url: Optional[str] = None
     rol: Optional[Rol] = None
+    client_id: Optional[UUID] = None
     is_active: Optional[bool] = None
 
 # Para respuestas generales

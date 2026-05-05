@@ -12,7 +12,7 @@ from app.db.repositories.usuarios import usuario_crud
 from app.services.compania import CompaniaService
 from app.db.repositories.tipos_documento import tipo_documento_crud
 from app.services.usuario.user_cases import FabricaDeUsuarios
-from app.auth.firebase import crear_usuario_firebase
+from app.auth.firebase import actualizar_usuario_firestore, crear_usuario_firebase
 from app.db.models.usuarios import Rol
 from app.schemas.comunes import PaginacionResponse
 from app.services.usuario.usuarios_mapper import usuario_to_usuario_out, usuarios_to_usuarios_out
@@ -25,6 +25,54 @@ from app.services.firebase_storage.firebase_storage import subir_archivo_a_stora
 class UsuarioService:
     def __init__(self, db: AsyncSession):
         self.db = db
+
+    async def _get_cliente_para_usuario_client(
+        self,
+        *,
+        rol: Rol,
+        client_id: Optional[UUID],
+        company_id: UUID,
+    ) -> Cliente | None:
+        if rol != Rol.CLIENT:
+            return None
+        if not client_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="El client_id es requerido para usuarios client",
+            )
+        cliente = await cliente_crud.get_by_field(self.db, "id", client_id)
+        if not cliente:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="El cliente no existe",
+            )
+        if cliente.compania_id != company_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="El cliente no pertenece a la compania del usuario",
+            )
+        return cliente
+
+    async def _sync_usuario_firestore(self, usuario: Usuario) -> None:
+        cliente = usuario.client
+        await actualizar_usuario_firestore(
+            usuario.uid,
+            {
+                "uid": usuario.uid,
+                "company_id": str(usuario.company_id) if usuario.company_id else None,
+                "company_name": usuario.company.nombre if usuario.company else None,
+                "display_name": usuario.display_name,
+                "document_id": str(usuario.document_id) if usuario.document_id else None,
+                "document_type": str(usuario.document_type_id) if usuario.document_type_id else None,
+                "document_type_name": usuario.document_type.nombre if usuario.document_type else None,
+                "email": usuario.email,
+                "photo_url": usuario.photo_url,
+                "rol": usuario.rol.value,
+                "client_id": str(usuario.client_id) if usuario.client_id else None,
+                "client_name": cliente.nombre if cliente else None,
+                "is_active": usuario.is_active,
+            },
+        )
 
     async def get_usuarios_con_paginacion(self, usuario_actual: Usuario, skip: Optional[int], limit: Optional[int] = None, search: Optional[str] = None, company_id: Optional[str] = None, rol: Optional[str] = None) -> PaginacionResponse[UsuarioOut]:
         try:
@@ -121,13 +169,12 @@ class UsuarioService:
         if usuario:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El usuario ya existe")
 
-        cliente: Cliente | None = None        
-        if usuario_in.client_id and usuario_in.rol == Rol.CLIENT:
-            cliente = await cliente_crud.get_by_field(self.db, "id", usuario_in.client_id)
-            if not cliente:
-                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El cliente no existe")
-
         compania = await CompaniaService(self.db).get_compania(usuario_in.company_id, usuario_actual)
+        cliente = await self._get_cliente_para_usuario_client(
+            rol=usuario_in.rol,
+            client_id=usuario_in.client_id,
+            company_id=usuario_in.company_id,
+        )
         tipo_documento = await tipo_documento_crud.get(self.db, usuario_in.document_type_id)
         usuario_firebase = fabrica_de_usuarios.obtener_firebase_usuario(CrearUsuarioFirebaseParams(
             usuario_actual=usuario_actual,
@@ -154,8 +201,24 @@ class UsuarioService:
         
 
     async def update(self, uid: str, usuario_in: UsuarioUpdate) -> UsuarioOut:
-        usuario = await self.get_by_uid(uid)
-        return await usuario_crud.update(self.db, db_obj=usuario, obj_in=usuario_in)
+        usuario = await usuario_crud.get_usuario_con_relaciones(self.db, uid)
+        if not usuario:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado")
+
+        update_data = usuario_in.model_dump(exclude_unset=True)
+        target_rol = update_data.get("rol", usuario.rol)
+        target_company_id = update_data.get("company_id", usuario.company_id)
+        target_client_id = update_data.get("client_id", usuario.client_id)
+        await self._get_cliente_para_usuario_client(
+            rol=target_rol,
+            client_id=target_client_id,
+            company_id=target_company_id,
+        )
+
+        await usuario_crud.update(self.db, db_obj=usuario, obj_in=usuario_in)
+        usuario_actualizado = await usuario_crud.get_usuario_con_relaciones(self.db, uid)
+        await self._sync_usuario_firestore(usuario_actualizado)
+        return usuario_to_usuario_out(usuario_actualizado)
 
     async def delete(self, uid: str) -> None:
         usuario = await self.get_by_uid(uid)

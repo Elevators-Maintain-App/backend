@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, Plus, Search } from "lucide-react";
 import Link from "next/link";
 import { useDeferredValue, useState } from "react";
 import { RoleGuard } from "@/components/auth/role-guard";
@@ -122,12 +122,20 @@ export default function SuperAdminUsersPage() {
             title="Usuarios"
             description="Listado paginado y filtrado de usuarios registrados para VertiOne Web."
             actions={
-              <AppButton asChild variant="outline">
-                <Link href="/dashboard/superadmin">
-                  <ArrowLeft className="h-4 w-4" />
-                  Volver
-                </Link>
-              </AppButton>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <AppButton asChild variant="outline">
+                  <Link href="/dashboard/superadmin">
+                    <ArrowLeft className="h-4 w-4" />
+                    Volver
+                  </Link>
+                </AppButton>
+                <AppButton asChild>
+                  <Link href="/dashboard/superadmin/users/new">
+                    <Plus className="h-4 w-4" />
+                    Crear usuario
+                  </Link>
+                </AppButton>
+              </div>
             }
           />
 

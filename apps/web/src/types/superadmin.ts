@@ -34,3 +34,21 @@ export type SuperAdminUsersPage = {
   page_size: number;
   total_pages: number;
 };
+
+export type SuperAdminCatalogItem = {
+  id: string;
+  name: string;
+};
+
+export type CreateSuperAdminUserInput = {
+  company_id: string;
+  display_name: string;
+  document_id: string;
+  document_type_id: number;
+  email: string;
+  phone_number: string;
+  rol: SuperAdminUserRole;
+  client_id?: string;
+  nivel?: string;
+  is_active?: boolean;
+};

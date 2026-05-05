@@ -9,6 +9,8 @@ from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.testclient import TestClient
 
 from app.auth.firebase import get_current_firebase_user
+from app.auth import firebase as firebase_auth_module
+from app.db.models.usuarios import Rol
 from app.db.session import get_db
 from app.middleware.observability import observability_middleware
 
@@ -214,3 +216,70 @@ def test_web_client_dashboard_does_not_return_other_client_data(monkeypatch):
     order_ids = {order["id"] for order in response.json()["recent_orders"]}
     assert str(VISIBLE_ORDER_ID) in order_ids
     assert str(OTHER_CLIENT_ORDER_ID) not in order_ids
+
+
+def test_web_client_dashboard_uses_postgres_client_id_before_firestore(monkeypatch):
+    FakeWebClientDashboardService.calls = []
+
+    monkeypatch.setattr(
+        web_client,
+        "WebClientDashboardService",
+        FakeWebClientDashboardService,
+    )
+
+    class FakeUsuarioCrud:
+        async def get_usuario_con_relaciones(self, db, uid):
+            return SimpleNamespace(
+                uid=uid,
+                display_name="Cliente PostgreSQL",
+                email="cliente.pg@example.invalid",
+                company_id=COMPANY_ID,
+                company=SimpleNamespace(nombre="Compania PostgreSQL"),
+                client_id=CLIENT_ID,
+                client=SimpleNamespace(nombre="Cliente PostgreSQL"),
+                document_id="DOC-PG",
+                document_type_id=1,
+                document_type=SimpleNamespace(nombre="Cedula"),
+                photo_url=None,
+                rol=Rol.CLIENT,
+                created_at=NOW,
+            )
+
+    def fake_verify_id_token(token):
+        assert token == "firebase-token"
+        return {"uid": "client-from-postgres"}
+
+    def fail_if_firestore_is_used():
+        raise AssertionError("Firestore no debe ser fuente principal si existe PostgreSQL")
+
+    monkeypatch.setattr(firebase_auth_module, "usuario_crud", FakeUsuarioCrud())
+    monkeypatch.setattr(firebase_auth_module.firebase_auth, "verify_id_token", fake_verify_id_token)
+    monkeypatch.setattr(firebase_auth_module, "get_firestore_client", fail_if_firestore_is_used)
+
+    app = FastAPI()
+    app.middleware("http")(observability_middleware)
+    app.include_router(web_client.router, prefix="/api/web/client")
+
+    async def fake_db():
+        return DummyDB()
+
+    app.dependency_overrides[get_db] = fake_db
+    client = TestClient(app)
+
+    response = client.get(
+        "/api/web/client/dashboard",
+        headers={
+            "Authorization": "Bearer firebase-token",
+            "X-Request-ID": "web-client-dashboard-postgres-auth",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers["X-Request-ID"] == "web-client-dashboard-postgres-auth"
+    assert FakeWebClientDashboardService.calls == [
+        {
+            "uid": "client-from-postgres",
+            "client_id": CLIENT_ID,
+            "company_id": COMPANY_ID,
+        }
+    ]
