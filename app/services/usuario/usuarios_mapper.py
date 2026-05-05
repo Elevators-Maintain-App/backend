@@ -14,6 +14,7 @@ def usuario_to_usuario_out(usuario: Usuario) -> UsuarioOut:
         email=usuario.email,
         phone_number=usuario.phone_number,
         rol=usuario.rol,
+        client_id=usuario.client_id,
         nivel=usuario.nivel if usuario.nivel else None,
         zona_geografica_id=usuario.zona_geografica_id if usuario.zona_geografica_id else None,
         photo_url=usuario.photo_url if usuario.photo_url else None,

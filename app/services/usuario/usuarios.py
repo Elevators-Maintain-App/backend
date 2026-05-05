@@ -5,6 +5,7 @@ from uuid import UUID, uuid4
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException, status, UploadFile
 from sqlalchemy import select
+import logging
 
 from app.db.models.usuarios import Usuario
 from app.schemas.usuarios import UsuarioCreate, UsuarioUpdate, UsuarioOut
@@ -12,7 +13,14 @@ from app.db.repositories.usuarios import usuario_crud
 from app.services.compania import CompaniaService
 from app.db.repositories.tipos_documento import tipo_documento_crud
 from app.services.usuario.user_cases import FabricaDeUsuarios
-from app.auth.firebase import actualizar_usuario_firestore, crear_usuario_firebase
+from app.auth.firebase import (
+    FirebaseUser,
+    FirebaseUserCreationError,
+    UsuarioFirebaseCreate,
+    actualizar_usuario_firestore,
+    crear_usuario_firebase,
+    obtener_usuario_firebase_por_email,
+)
 from app.db.models.usuarios import Rol
 from app.schemas.comunes import PaginacionResponse
 from app.services.usuario.usuarios_mapper import usuario_to_usuario_out, usuarios_to_usuarios_out
@@ -20,6 +28,9 @@ from app.db.repositories.clientes import cliente_crud
 from app.db.models.clientes import Cliente
 from app.services.usuario.interfaces.usuario_case import CrearUsuarioParams, CrearUsuarioFirebaseParams
 from app.services.firebase_storage.firebase_storage import subir_archivo_a_storage
+
+
+logger = logging.getLogger(__name__)
 
 
 class UsuarioService:
@@ -74,6 +85,72 @@ class UsuarioService:
             },
         )
 
+    async def _sync_firebase_user_firestore(
+        self,
+        uid: str,
+        usuario_firebase: UsuarioFirebaseCreate,
+    ) -> None:
+        await actualizar_usuario_firestore(
+            uid,
+            {
+                "uid": uid,
+                "company_id": str(usuario_firebase.company_id) if usuario_firebase.company_id else None,
+                "company_name": usuario_firebase.company_name,
+                "display_name": usuario_firebase.display_name,
+                "document_id": str(usuario_firebase.document_id) if usuario_firebase.document_id else None,
+                "document_type": usuario_firebase.document_type,
+                "document_type_name": usuario_firebase.document_type_name,
+                "email": usuario_firebase.email,
+                "photo_url": usuario_firebase.photo_url,
+                "rol": usuario_firebase.rol.value,
+                "client_id": str(usuario_firebase.client_id) if usuario_firebase.client_id else None,
+                "client_name": usuario_firebase.client_name,
+                "is_active": True,
+            },
+        )
+
+    async def _crear_o_recuperar_usuario_firebase(
+        self,
+        usuario_firebase: UsuarioFirebaseCreate,
+        *,
+        request_id: str | None = None,
+    ) -> tuple[FirebaseUser, bool]:
+        try:
+            return await crear_usuario_firebase(usuario_firebase), True
+        except FirebaseUserCreationError as exc:
+            if exc.error_code != "EMAIL_ALREADY_EXISTS":
+                logger.exception(
+                    "user_create_firebase_failed request_id=%s email=%s error_code=%s",
+                    request_id,
+                    usuario_firebase.email,
+                    exc.error_code,
+                )
+                raise HTTPException(
+                    status_code=status.HTTP_502_BAD_GATEWAY,
+                    detail="No fue posible crear el usuario en Firebase Auth",
+                ) from exc
+
+            try:
+                firebase_user = await obtener_usuario_firebase_por_email(usuario_firebase)
+            except FirebaseUserCreationError as lookup_exc:
+                logger.exception(
+                    "user_create_firebase_existing_lookup_failed request_id=%s email=%s error_code=%s",
+                    request_id,
+                    usuario_firebase.email,
+                    lookup_exc.error_code,
+                )
+                raise HTTPException(
+                    status_code=status.HTTP_502_BAD_GATEWAY,
+                    detail="Firebase Auth reporto un email existente, pero no fue posible recuperar el usuario",
+                ) from lookup_exc
+            logger.warning(
+                "user_create_recovering_existing_firebase_auth request_id=%s uid=%s email=%s",
+                request_id,
+                firebase_user.uid,
+                usuario_firebase.email,
+            )
+            return firebase_user, False
+
     async def get_usuarios_con_paginacion(self, usuario_actual: Usuario, skip: Optional[int], limit: Optional[int] = None, search: Optional[str] = None, company_id: Optional[str] = None, rol: Optional[str] = None) -> PaginacionResponse[UsuarioOut]:
         try:
             fabrica_de_usuarios = FabricaDeUsuarios.get_user_case(usuario_actual.rol)
@@ -125,7 +202,13 @@ class UsuarioService:
         usuario_out = usuario_to_usuario_out(usuario)
         return usuario_out
 
-    async def create(self, usuario_actual: Usuario, usuario_data: Dict[str, Any], photo: Optional[UploadFile] = None) -> UsuarioOut:
+    async def create(
+        self,
+        usuario_actual: Usuario,
+        usuario_data: Dict[str, Any],
+        photo: Optional[UploadFile] = None,
+        request_id: str | None = None,
+    ) -> UsuarioOut:
         # Upload photo first if provided, before creating Firebase user
         if photo and photo.filename:
             try:
@@ -161,13 +244,37 @@ class UsuarioService:
             company_id_proporcionado
         )
         usuario_data["company_id"] = company_id_normalizado
+        if usuario_data.get("email"):
+            usuario_data["email"] = str(usuario_data["email"]).strip().lower()
         
         # Convert dict to UsuarioCreate for validation and use in existing logic
         usuario_in = UsuarioCreate(**usuario_data)
         
-        usuario = await usuario_crud.get_by_field(self.db, "email", usuario_in.email)
-        if usuario:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El usuario ya existe")
+        usuario_existente = await usuario_crud.get_by_field(self.db, "email", usuario_in.email)
+        if usuario_existente:
+            usuario_con_relaciones = await usuario_crud.get_usuario_con_relaciones(
+                self.db,
+                usuario_existente.uid,
+            )
+            try:
+                await self._sync_usuario_firestore(usuario_con_relaciones or usuario_existente)
+                logger.warning(
+                    "user_create_duplicate_postgres_synced_firestore request_id=%s uid=%s email=%s",
+                    request_id,
+                    usuario_existente.uid,
+                    usuario_in.email,
+                )
+            except Exception:
+                logger.exception(
+                    "user_create_duplicate_postgres_firestore_sync_failed request_id=%s uid=%s email=%s",
+                    request_id,
+                    usuario_existente.uid,
+                    usuario_in.email,
+                )
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="El usuario ya existe en VertiOne",
+            )
 
         compania = await CompaniaService(self.db).get_compania(usuario_in.company_id, usuario_actual)
         cliente = await self._get_cliente_para_usuario_client(
@@ -184,19 +291,80 @@ class UsuarioService:
             cliente=cliente
         ))
 
-        # crear usuario en firebase
-        usuario_firebase = await crear_usuario_firebase(usuario_firebase)        
+        usuario_firebase, firebase_user_created = await self._crear_o_recuperar_usuario_firebase(
+            usuario_firebase,
+            request_id=request_id,
+        )
+
+        usuario_existente_por_uid = await usuario_crud.get_usuario_con_relaciones(
+            self.db,
+            usuario_firebase.uid,
+        )
+        if usuario_existente_por_uid:
+            try:
+                await self._sync_usuario_firestore(usuario_existente_por_uid)
+            except Exception:
+                logger.exception(
+                    "user_create_existing_uid_firestore_sync_failed request_id=%s uid=%s email=%s",
+                    request_id,
+                    usuario_firebase.uid,
+                    usuario_in.email,
+                )
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="El usuario ya existe en VertiOne",
+            )
+
         usuario_a_guardar: Usuario = None
         usuario_a_guardar = fabrica_de_usuarios.obtener_usuario_a_guardar(CrearUsuarioParams(
             usuario_actual=usuario_actual,
             usuario_nuevo=usuario_in,
             firebase_uid=usuario_firebase.uid
         ))
-        usuario_guardado = await usuario_crud.create(self.db, obj_in=usuario_a_guardar)
+        try:
+            usuario_guardado = await usuario_crud.create(self.db, obj_in=usuario_a_guardar)
+        except Exception as exc:
+            logger.exception(
+                "user_create_postgres_failed request_id=%s uid=%s email=%s",
+                request_id,
+                usuario_firebase.uid,
+                usuario_in.email,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Firebase Auth fue creado o recuperado, pero no fue posible crear el usuario en VertiOne",
+            ) from exc
 
-        await fabrica_de_usuarios.enviar_email_de_bienvenida(usuario_a_guardar.email, usuario_a_guardar.display_name, usuario_firebase.password)
+        usuario_guardado = await usuario_crud.get_usuario_con_relaciones(
+            self.db,
+            usuario_firebase.uid,
+        ) or usuario_guardado
 
-        return usuario_guardado
+        try:
+            await self._sync_usuario_firestore(usuario_guardado)
+        except Exception as exc:
+            logger.exception(
+                "user_create_firestore_sync_failed request_id=%s uid=%s email=%s",
+                request_id,
+                usuario_firebase.uid,
+                usuario_in.email,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="El usuario fue creado en VertiOne, pero no fue posible sincronizar Firestore",
+            ) from exc
+
+        if firebase_user_created and usuario_firebase.password:
+            await fabrica_de_usuarios.enviar_email_de_bienvenida(usuario_a_guardar.email, usuario_a_guardar.display_name, usuario_firebase.password)
+        else:
+            logger.info(
+                "user_create_recovered_partial_user request_id=%s uid=%s email=%s",
+                request_id,
+                usuario_firebase.uid,
+                usuario_in.email,
+            )
+
+        return usuario_to_usuario_out(usuario_guardado)
         
         
 

@@ -1,6 +1,6 @@
 # app/api/routes/usuarios.py
 
-from fastapi import APIRouter, Depends, HTTPException, status, Path, Query, File, UploadFile, Form
+from fastapi import APIRouter, Depends, HTTPException, status, Path, Query, File, UploadFile, Form, Request
 from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
@@ -54,6 +54,7 @@ async def get_usuarios(
 
 @router.post("/", response_model=UsuarioOut, status_code=status.HTTP_201_CREATED)
 async def crear_usuario(
+    request: Request,
     company_id: Optional[UUID] = Form(None),
     display_name: str = Form(...),
     document_id: str = Form(...),
@@ -92,7 +93,12 @@ async def crear_usuario(
     }
     
     service = UsuarioService(db)
-    return await service.create(usuario_actual, usuario_data, photo)
+    return await service.create(
+        usuario_actual,
+        usuario_data,
+        photo,
+        request_id=getattr(request.state, "request_id", None),
+    )
 
 @router.put("/{uid}", response_model=UsuarioOut)
 async def actualizar_usuario(
@@ -522,4 +528,3 @@ async def get_usuario(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error al obtener usuario: {str(e)}"
         )
-

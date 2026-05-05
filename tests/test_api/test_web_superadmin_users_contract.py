@@ -88,12 +88,13 @@ class FakeUsuarioService:
     def __init__(self, db):
         self.db = db
 
-    async def create(self, usuario_actual, usuario_data, photo=None):
+    async def create(self, usuario_actual, usuario_data, photo=None, request_id=None):
         self.calls.append(
             {
                 "usuario_actual": usuario_actual.uid,
                 "usuario_data": usuario_data,
                 "has_photo": photo is not None,
+                "request_id": request_id,
             }
         )
         return {

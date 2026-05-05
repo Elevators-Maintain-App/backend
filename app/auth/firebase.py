@@ -156,6 +156,36 @@ async def crear_usuario_firebase(usuario_dto: UsuarioFirebaseCreate, password: O
             error_code="USER_CREATION_FAILED"
         )
 
+
+async def obtener_usuario_firebase_por_email(usuario_dto: UsuarioFirebaseCreate) -> FirebaseUser:
+    """
+    Recupera un usuario existente en Firebase Auth por email y lo representa con
+    los datos operativos ya validados para poder completar una creación parcial.
+    """
+    try:
+        firebase_user = firebase_auth.get_user_by_email(usuario_dto.email)
+        return FirebaseUser(
+            uid=firebase_user.uid,
+            email=firebase_user.email or usuario_dto.email,
+            display_name=firebase_user.display_name or usuario_dto.display_name,
+            created_time=datetime.now(timezone.utc),
+            company_id=usuario_dto.company_id,
+            company_name=usuario_dto.company_name,
+            document_id=usuario_dto.document_id,
+            document_type=usuario_dto.document_type,
+            document_type_name=usuario_dto.document_type_name,
+            password=None,
+            photo_url=firebase_user.photo_url or usuario_dto.photo_url,
+            rol=usuario_dto.rol,
+            client_id=usuario_dto.client_id,
+            client_name=usuario_dto.client_name,
+        )
+    except Exception as e:
+        raise FirebaseUserCreationError(
+            message=f"Error al recuperar el usuario existente en Firebase Auth: {str(e)}",
+            error_code="USER_LOOKUP_FAILED",
+        )
+
 async def eliminar_usuario_firebase(uid: str) -> bool:
     """
     Deletes a user from both Firebase Auth and Firestore.
@@ -198,7 +228,7 @@ async def actualizar_usuario_firestore(uid: str, data: dict) -> bool:
     """
     try:
         data["updated_at"] = firestore.SERVER_TIMESTAMP
-        get_firestore_client().collection("users").document(uid).update(data)
+        get_firestore_client().collection("users").document(uid).set(data, merge=True)
         return True
         
     except Exception as e:

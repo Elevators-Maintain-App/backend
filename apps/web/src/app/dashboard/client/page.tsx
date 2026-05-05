@@ -1,6 +1,7 @@
 "use client";
 
 import { ClipboardList, FolderKanban, Package, Wrench } from "lucide-react";
+import Link from "next/link";
 import { RoleGuard } from "@/components/auth/role-guard";
 import { EmptyState, ErrorState, StatusBadge } from "@/components/feedback";
 import { AppShell } from "@/components/layout/app-shell";
@@ -30,14 +31,16 @@ function MetricCard({
   title,
   value,
   icon: Icon,
-  tone = "info"
+  tone = "info",
+  href
 }: {
   title: string;
   value: number;
   icon: typeof FolderKanban;
   tone?: "info" | "success" | "warning" | "neutral";
+  href?: string;
 }) {
-  return (
+  const content = (
     <AppCard>
       <AppCardHeader>
         <div className="flex items-center justify-between gap-3">
@@ -54,6 +57,16 @@ function MetricCard({
         </StatusBadge>
       </AppCardContent>
     </AppCard>
+  );
+
+  if (!href) {
+    return content;
+  }
+
+  return (
+    <Link href={href} className="block">
+      {content}
+    </Link>
   );
 }
 
@@ -122,18 +135,21 @@ export default function ClientDashboardPage() {
                   value={dashboard.summary.total_units}
                   icon={Package}
                   tone="neutral"
+                  href="/dashboard/client/units"
                 />
                 <MetricCard
                   title="Ordenes abiertas"
                   value={dashboard.summary.open_orders}
                   icon={Wrench}
                   tone="warning"
+                  href="/dashboard/client/orders"
                 />
                 <MetricCard
                   title="Ordenes cerradas"
                   value={dashboard.summary.closed_orders}
                   icon={ClipboardList}
                   tone="success"
+                  href="/dashboard/client/orders?status=Cerrada"
                 />
               </section>
 

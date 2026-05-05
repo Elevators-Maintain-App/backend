@@ -1,7 +1,7 @@
 from typing import Annotated, Literal
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, Query, Request, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.firebase import FirebaseUser, require_role
@@ -122,6 +122,7 @@ async def get_users(
     status_code=status.HTTP_201_CREATED,
 )
 async def create_user(
+    request: Request,
     company_id: Annotated[UUID, Form()],
     display_name: Annotated[str, Form()],
     document_id: Annotated[str, Form()],
@@ -150,4 +151,9 @@ async def create_user(
         "zona_geografica_id": zona_geografica_id,
         "is_active": is_active,
     }
-    return await UsuarioService(db).create(user, usuario_data, photo)
+    return await UsuarioService(db).create(
+        user,
+        usuario_data,
+        photo,
+        request_id=getattr(request.state, "request_id", None),
+    )
