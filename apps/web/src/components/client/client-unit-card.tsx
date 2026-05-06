@@ -185,7 +185,12 @@ export function ClientUnitCard({ unit }: ClientUnitCardProps) {
             <p className="truncate text-lg font-semibold tracking-tight text-foreground">
               {unit.name}
             </p>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p
+              className={cn(
+                "mt-1 text-sm text-muted-foreground transition-opacity duration-200",
+                isExpanded ? "hidden" : "block"
+              )}
+            >
               Toca para ver informacion de la unidad
             </p>
           </div>
@@ -213,25 +218,25 @@ export function ClientUnitCard({ unit }: ClientUnitCardProps) {
       >
         <div className="min-h-0">
           <div className="space-y-4 border-t border-border/70 px-5 pb-5 pt-4">
-            <div className="grid gap-3 text-sm sm:grid-cols-2">
+            <div className="space-y-4 text-sm">
               <div className="min-w-0 px-1">
                 <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                   Proyecto / cliente
                 </p>
-                <p className="mt-1 flex items-center gap-2 font-medium text-foreground">
-                  <Building2 className="h-4 w-4 text-primary" />
-                  <span className="truncate">{unit.project}</span>
+                <p className="mt-1 flex items-start gap-2 font-medium text-foreground">
+                  <Building2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                  <span className="whitespace-normal break-words">{unit.project}</span>
                 </p>
               </div>
               <div className="min-w-0 px-1">
                 <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                   Marca / modelo
                 </p>
-                <p className="mt-1 truncate font-medium text-foreground">
+                <p className="mt-1 whitespace-normal break-words font-medium text-foreground">
                   {unit.type || "Sin especificar"}
                 </p>
               </div>
-              <div className="min-w-0 px-1 sm:col-span-2">
+              <div className="min-w-0 px-1">
                 <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                   Ultima intervencion
                 </p>
@@ -241,9 +246,9 @@ export function ClientUnitCard({ unit }: ClientUnitCardProps) {
               </div>
             </div>
 
-            <div className="flex flex-col gap-2 sm:flex-row">
+            <div className="flex flex-col gap-2">
               <div onClick={(event) => event.stopPropagation()}>
-                <AppButton asChild size="sm" className="w-full rounded-xl px-3.5 sm:w-auto">
+                <AppButton asChild size="sm" className="w-full rounded-xl px-3.5">
                   <Link href={`/dashboard/client/units/${unit.id}`}>
                     Ver detalle
                     <ArrowUpRight className="h-4 w-4" />
@@ -256,7 +261,7 @@ export function ClientUnitCard({ unit }: ClientUnitCardProps) {
                   asChild
                   variant="outline"
                   size="sm"
-                  className="w-full rounded-xl px-3.5 sm:w-auto"
+                  className="w-full rounded-xl px-3.5"
                 >
                   <Link href="/dashboard/client/orders">
                     <AlertCircle className="h-4 w-4" />
