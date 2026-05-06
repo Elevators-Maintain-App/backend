@@ -1,12 +1,23 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
+import Image from "next/image";
+import { ArrowRight, Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { AppInput } from "@/components/forms/app-input";
+import { LoginHero } from "@/components/auth/login-hero";
+import {
+  AppCard,
+  AppCardContent,
+  AppCardDescription,
+  AppCardHeader,
+  AppCardTitle
+} from "@/components/ui/app-card";
 import { AppButton } from "@/components/ui/app-button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
 import { getDashboardRouteForRole } from "@/lib/roles";
 
@@ -18,6 +29,7 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { signIn } = useAuth();
@@ -58,68 +70,113 @@ export function LoginForm() {
   };
 
   return (
-    <main className="min-h-screen bg-background">
-      <div className="mx-auto grid min-h-screen max-w-6xl grid-cols-1 lg:grid-cols-[1fr_420px]">
-        <section className="hidden flex-col justify-between border-r bg-muted/50 px-10 py-12 lg:flex">
-          <div className="text-sm font-semibold uppercase tracking-wide text-primary">
-            VertiOne Web
-          </div>
-          <div className="max-w-xl">
-            <h1 className="text-4xl font-semibold leading-tight">
-              Operacion, reportes y control de campo en un solo panel.
-            </h1>
-            <p className="mt-4 text-base leading-7 text-muted-foreground">
-              Acceso web protegido para equipos internos de VertiOne.
-            </p>
-          </div>
-          <div className="text-sm text-muted-foreground">
-            API permitida: /api/web/*
-          </div>
+    <main className="min-h-screen overflow-hidden bg-background">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-primary/5 via-info/5 to-transparent" />
+      <div className="mx-auto grid min-h-screen max-w-7xl items-center gap-8 px-6 py-8 lg:grid-cols-[1.15fr_0.85fr] xl:gap-12">
+        <section className="hidden lg:block">
+          <LoginHero />
         </section>
 
-        <section className="flex items-center px-6 py-10 sm:px-10">
-          <div className="w-full">
-            <div className="mb-8 lg:hidden">
-              <p className="text-sm font-semibold uppercase tracking-wide text-primary">
-                VertiOne Web
-              </p>
-              <h1 className="mt-3 text-3xl font-semibold">Iniciar sesion</h1>
-            </div>
-            <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
-              <div className="hidden lg:block">
-                <h2 className="text-2xl font-semibold">Iniciar sesion</h2>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Usa tus credenciales autorizadas para entrar.
-                </p>
-              </div>
-
-              <AppInput
-                label="Correo"
-                type="email"
-                autoComplete="email"
-                placeholder="nombre@empresa.com"
-                error={errors.email?.message}
-                {...register("email")}
-              />
-
-              <AppInput
-                label="Contrasena"
-                type="password"
-                autoComplete="current-password"
-                error={errors.password?.message}
-                {...register("password")}
-              />
-
-              {errors.root ? (
-                <p className="text-sm text-destructive">{errors.root.message}</p>
-              ) : null}
-
-              <AppButton className="w-full" type="submit" disabled={isSubmitting}>
-                {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                Entrar
-              </AppButton>
-            </form>
+        <section className="mx-auto flex w-full max-w-[min(100%,28rem)] flex-col items-center justify-center lg:max-w-md">
+          <div className="flex w-full flex-col items-center gap-6 lg:hidden">
+            <Image
+              src="/logo.png"
+              alt="VertiOne"
+              width={120}
+              height={56}
+              priority
+              className="mb-2 h-auto w-[120px]"
+            />
           </div>
+
+          <AppCard className="w-full max-w-md rounded-[1.75rem] border border-border/80 bg-card p-8 shadow-2xl shadow-emerald-100/50 md:p-10">
+            <AppCardHeader className="space-y-2 p-0 pb-6">
+              <AppCardTitle className="text-2xl sm:text-[1.8rem]">Iniciar sesion</AppCardTitle>
+              <AppCardDescription>
+                Usa tus credenciales autorizadas para acceder a la plataforma.
+              </AppCardDescription>
+            </AppCardHeader>
+
+            <AppCardContent className="p-0">
+              <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Correo</Label>
+                  <div className="relative">
+                    <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="email"
+                      type="email"
+                      autoComplete="email"
+                      placeholder="nombre@empresa.com"
+                      aria-invalid={Boolean(errors.email)}
+                      className="h-12 rounded-xl pl-10 pr-4 focus-visible:ring-primary"
+                      {...register("email")}
+                    />
+                  </div>
+                  {errors.email?.message ? (
+                    <p className="text-sm text-destructive">{errors.email.message}</p>
+                  ) : null}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="password">Contrasena</Label>
+                  <div className="relative">
+                    <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      autoComplete="current-password"
+                      aria-invalid={Boolean(errors.password)}
+                      className="h-12 rounded-xl pl-10 pr-11 focus-visible:ring-primary"
+                      {...register("password")}
+                    />
+                    <button
+                      type="button"
+                      aria-label={showPassword ? "Ocultar contrasena" : "Mostrar contrasena"}
+                      onClick={() => setShowPassword((value) => !value)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  {errors.password?.message ? (
+                    <p className="text-sm text-destructive">{errors.password.message}</p>
+                  ) : null}
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <input type="checkbox" className="h-4 w-4 rounded border-border" />
+                    Mantener sesion iniciada
+                  </label>
+                  <a href="#" className="text-sm font-medium text-primary hover:underline">
+                    Olvidaste tu contrasena?
+                  </a>
+                </div>
+
+                {errors.root ? (
+                  <p className="text-sm text-destructive">{errors.root.message}</p>
+                ) : null}
+
+                <AppButton
+                  className="h-[52px] w-full rounded-xl shadow-sm"
+                  type="submit"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                  Entrar
+                  {!isSubmitting ? <ArrowRight className="h-4 w-4" /> : null}
+                </AppButton>
+
+                <p className="text-center text-sm text-muted-foreground">
+                  Necesitas acceso?{" "}
+                  <a href="#" className="font-medium text-primary hover:underline">
+                    Solicita una demo
+                  </a>
+                </p>
+              </form>
+            </AppCardContent>
+          </AppCard>
         </section>
       </div>
     </main>
