@@ -144,12 +144,13 @@ export function LoginForm() {
                   ) : null}
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <label className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <input type="checkbox" className="h-4 w-4 rounded border-border" />
-                    Mantener sesion iniciada
-                  </label>
-                  <a href="#" className="text-sm font-medium text-primary hover:underline">
+                <div className="flex justify-end">
+                  <a
+                    href="https://verti-one.com/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm font-medium text-primary hover:underline"
+                  >
                     Olvidaste tu contrasena?
                   </a>
                 </div>
@@ -170,7 +171,12 @@ export function LoginForm() {
 
                 <p className="text-center text-sm text-muted-foreground">
                   Necesitas acceso?{" "}
-                  <a href="#" className="font-medium text-primary hover:underline">
+                  <a
+                    href="https://verti-one.com/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-primary hover:underline"
+                  >
                     Solicita una demo
                   </a>
                 </p>
