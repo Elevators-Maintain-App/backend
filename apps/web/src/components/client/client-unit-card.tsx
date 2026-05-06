@@ -172,14 +172,6 @@ export function ClientUnitCard({ unit }: ClientUnitCardProps) {
               <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-sm">
                 <Settings2 className="h-5 w-5" />
               </div>
-              <div>
-                <p className="text-xs uppercase tracking-[0.18em] text-white/70">
-                  Transporte vertical
-                </p>
-                <h3 className="max-w-[14rem] text-lg font-semibold tracking-tight">
-                  {unit.name}
-                </h3>
-              </div>
             </div>
 
             <div className="hidden rounded-2xl border border-white/10 bg-white/10 p-2 backdrop-blur-sm sm:block">
@@ -188,7 +180,7 @@ export function ClientUnitCard({ unit }: ClientUnitCardProps) {
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-4 p-5">
+        <div className="flex items-center justify-between gap-3 p-5">
           <div className="min-w-0 flex-1">
             <p className="truncate text-lg font-semibold tracking-tight text-foreground">
               {unit.name}
@@ -198,7 +190,7 @@ export function ClientUnitCard({ unit }: ClientUnitCardProps) {
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-3">
             <KpiRing value={kpiValue} trackClassName={status.track} />
             <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-muted/45 text-muted-foreground transition-colors group-hover:bg-primary/10 group-hover:text-primary">
               <ChevronDown
@@ -222,7 +214,7 @@ export function ClientUnitCard({ unit }: ClientUnitCardProps) {
         <div className="min-h-0">
           <div className="space-y-4 border-t border-border/70 px-5 pb-5 pt-4">
             <div className="grid gap-3 text-sm sm:grid-cols-2">
-              <div className="px-1">
+              <div className="min-w-0 px-1">
                 <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                   Proyecto / cliente
                 </p>
@@ -231,15 +223,15 @@ export function ClientUnitCard({ unit }: ClientUnitCardProps) {
                   <span className="truncate">{unit.project}</span>
                 </p>
               </div>
-              <div className="px-1">
+              <div className="min-w-0 px-1">
                 <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                   Marca / modelo
                 </p>
-                <p className="mt-1 font-medium text-foreground">
+                <p className="mt-1 truncate font-medium text-foreground">
                   {unit.type || "Sin especificar"}
                 </p>
               </div>
-              <div className="px-1 sm:col-span-2">
+              <div className="min-w-0 px-1 sm:col-span-2">
                 <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                   Ultima intervencion
                 </p>

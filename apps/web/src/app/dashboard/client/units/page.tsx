@@ -92,7 +92,7 @@ export default function ClientUnitsPage() {
 
           {unitsPage?.data.length ? (
             <>
-              <section className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+              <section className="grid items-start grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
                 {unitsPage.data.map((unit) => (
                   <ClientUnitCard key={unit.id} unit={unit} />
                 ))}
