@@ -56,7 +56,7 @@ export function ProfileDropdown({
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="flex items-center gap-3 rounded-xl border border-border/70 bg-card px-3 py-2 text-left transition-colors hover:bg-muted/50"
+        className="flex items-center gap-2 rounded-xl px-2 py-2 text-left transition-colors hover:bg-muted/40"
         aria-expanded={open}
         aria-haspopup="menu"
       >
