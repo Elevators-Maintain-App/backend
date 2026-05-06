@@ -1,11 +1,11 @@
 "use client";
 
-import { ArrowLeft, ChevronLeft, ChevronRight, Eye, Package } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, Package } from "lucide-react";
 import Link from "next/link";
 import { useDeferredValue, useState } from "react";
 import { RoleGuard } from "@/components/auth/role-guard";
-import { DataTable } from "@/components/data-display";
-import { EmptyState, ErrorState, StatusBadge } from "@/components/feedback";
+import { ClientUnitCard } from "@/components/client/client-unit-card";
+import { EmptyState, ErrorState } from "@/components/feedback";
 import { AppInput } from "@/components/forms";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/layout/page-header";
@@ -17,7 +17,6 @@ import {
   AppCardTitle
 } from "@/components/ui/app-card";
 import { useClientUnits } from "@/hooks/use-client-units";
-import type { ClientUnit } from "@/types/client-portal";
 
 const pageSize = 10;
 
@@ -32,43 +31,6 @@ export default function ClientUnitsPage() {
     search: deferredSearch || undefined
   });
   const unitsPage = unitsQuery.data;
-
-  const columns = [
-    {
-      key: "unit",
-      header: "Unidad",
-      cell: (unit: ClientUnit) => (
-        <div className="min-w-0">
-          <p className="truncate font-medium">{unit.name}</p>
-          <p className="truncate text-xs text-muted-foreground">{unit.project}</p>
-        </div>
-      )
-    },
-    {
-      key: "type",
-      header: "Tipo",
-      cell: (unit: ClientUnit) => (
-        <StatusBadge tone="neutral">{unit.type || "Sin tipo"}</StatusBadge>
-      )
-    },
-    {
-      key: "kpi",
-      header: "KPI",
-      cell: (unit: ClientUnit) => unit.kpi_functioning || "Sin KPI"
-    },
-    {
-      key: "actions",
-      header: "Acciones",
-      cell: (unit: ClientUnit) => (
-        <AppButton asChild variant="outline" size="sm">
-          <Link href={`/dashboard/client/units/${unit.id}`}>
-            <Eye className="h-4 w-4" />
-            Ver
-          </Link>
-        </AppButton>
-      )
-    }
-  ];
 
   return (
     <RoleGuard allowedRoles={["client"]}>
@@ -130,7 +92,11 @@ export default function ClientUnitsPage() {
 
           {unitsPage?.data.length ? (
             <>
-              <DataTable columns={columns} data={unitsPage.data} getRowKey={(unit) => unit.id} />
+              <section className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                {unitsPage.data.map((unit) => (
+                  <ClientUnitCard key={unit.id} unit={unit} />
+                ))}
+              </section>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-sm text-muted-foreground">
                   Pagina {unitsPage.page} de {unitsPage.total_pages || 1} ({unitsPage.total} unidades)
