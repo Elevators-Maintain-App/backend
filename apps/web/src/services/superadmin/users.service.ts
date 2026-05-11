@@ -1,4 +1,5 @@
 import { apiClient } from "@/lib/api-client";
+import { listSuperadminUsers } from "@/services/superadmin-users-service";
 import type {
   CreateSuperAdminUserInput,
   SuperAdminCatalogItem,
@@ -19,23 +20,7 @@ export async function getSuperAdminUsersSummary() {
 }
 
 export async function getSuperAdminUsers(params: SuperAdminUsersParams) {
-  const searchParams = new URLSearchParams({
-    page: String(params.page),
-    page_size: String(params.page_size)
-  });
-
-  if (params.search) {
-    searchParams.set("search", params.search);
-  }
-
-  if (params.role) {
-    searchParams.set("role", params.role);
-  }
-
-  const response = await apiClient.get<SuperAdminUsersPage>(
-    `${superAdminUsersBasePath}?${searchParams.toString()}`
-  );
-  return response.data;
+  return listSuperadminUsers(params) as Promise<SuperAdminUsersPage>;
 }
 
 export async function getSuperAdminCompanies() {
