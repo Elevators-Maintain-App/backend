@@ -1,7 +1,6 @@
 "use client";
 
 import { ChevronDown, LogOut, UserRound } from "lucide-react";
-import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { AppButton } from "@/components/ui/app-button";
 import { cn } from "@/lib/utils";
@@ -32,13 +31,22 @@ export function UserAvatar({
   userProfile: UserProfile | null;
   className?: string;
 }) {
-  if (userProfile?.photoUrl) {
+  const [imageError, setImageError] = useState(false);
+  const initials = getInitials(userProfile);
+
+  useEffect(() => {
+    setImageError(false);
+  }, [userProfile?.photoUrl]);
+
+  if (userProfile?.photoUrl && !imageError) {
     return (
-      <Image
+      // Remote avatar URLs are user-provided, so avoid next/image host allowlists here.
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
         src={userProfile.photoUrl}
         alt={userProfile.displayName || "Usuario"}
-        width={36}
-        height={36}
+        referrerPolicy="no-referrer"
+        onError={() => setImageError(true)}
         className={cn("h-9 w-9 shrink-0 rounded-full object-cover", className)}
       />
     );
@@ -51,7 +59,7 @@ export function UserAvatar({
         className
       )}
     >
-      {getInitials(userProfile)}
+      {initials}
     </div>
   );
 }

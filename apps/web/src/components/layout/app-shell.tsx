@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
+import { superAdminNavItems } from "@/components/layout/superadmin-navbar";
 import { useAuth } from "@/hooks/use-auth";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -17,6 +18,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     userProfile?.role === "client" ? (
       <DashboardShell>{children}</DashboardShell>
+    ) : userProfile?.role === "superadmin" ? (
+      <DashboardShell
+        navItems={superAdminNavItems}
+        homeHref="/dashboard/superadmin"
+        sidebarStateKey="vertione:web:superadmin-sidebar-collapsed"
+      >
+        {children}
+      </DashboardShell>
     ) : (
       <div className="min-h-screen bg-background">
         <header className="border-b bg-card">

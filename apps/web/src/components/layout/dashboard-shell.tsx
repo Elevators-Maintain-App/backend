@@ -16,11 +16,15 @@ const sidebarStorageKey = "vertione:web:client-sidebar-collapsed";
 type DashboardShellProps = {
   children: React.ReactNode;
   navItems?: DashboardNavItem[];
+  homeHref?: string;
+  sidebarStateKey?: string;
 };
 
 export function DashboardShell({
   children,
   navItems = clientNavItems,
+  homeHref = "/dashboard/client",
+  sidebarStateKey = sidebarStorageKey,
 }: DashboardShellProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -31,18 +35,18 @@ export function DashboardShell({
   const [hasLoadedSidebarState, setHasLoadedSidebarState] = useState(false);
 
   useEffect(() => {
-    const storedValue = window.localStorage.getItem(sidebarStorageKey);
+    const storedValue = window.localStorage.getItem(sidebarStateKey);
     setIsCollapsed(storedValue === "true");
     setHasLoadedSidebarState(true);
-  }, []);
+  }, [sidebarStateKey]);
 
   useEffect(() => {
     if (!hasLoadedSidebarState) {
       return;
     }
 
-    window.localStorage.setItem(sidebarStorageKey, String(isCollapsed));
-  }, [hasLoadedSidebarState, isCollapsed]);
+    window.localStorage.setItem(sidebarStateKey, String(isCollapsed));
+  }, [hasLoadedSidebarState, isCollapsed, sidebarStateKey]);
 
   useEffect(() => {
     setIsMobileMenuOpen(false);
@@ -58,6 +62,7 @@ export function DashboardShell({
       <div className="lg:flex">
         <DashboardSidebar
           navItems={navItems}
+          homeHref={homeHref}
           pathname={pathname}
           searchParams={searchParams}
           isCollapsed={isCollapsed}
@@ -80,9 +85,9 @@ export function DashboardShell({
               </button>
 
               <Link
-                href="/dashboard/client"
+                href={homeHref}
                 className="absolute left-1/2 -translate-x-1/2"
-                aria-label="Ir al dashboard de cliente"
+                aria-label="Ir al dashboard"
               >
                 <Image
                   src="/logo.png"
@@ -100,6 +105,7 @@ export function DashboardShell({
 
           <MobileDashboardMenu
             navItems={navItems}
+            homeHref={homeHref}
             pathname={pathname}
             searchParams={searchParams}
             isOpen={isMobileMenuOpen}

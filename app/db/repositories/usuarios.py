@@ -7,6 +7,7 @@ from app.db.repositories.base import CRUDBaseRepository
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 from sqlalchemy import func, or_, select
+from uuid import UUID
 from typing import List
 
 class CRUDUsuarios(CRUDBaseRepository[Usuario, UsuarioCreate, UsuarioUpdate]):
@@ -36,10 +37,22 @@ class CRUDUsuarios(CRUDBaseRepository[Usuario, UsuarioCreate, UsuarioUpdate]):
         result = await db.execute(query)        
         return result.scalars().all()
 
-    def _web_superadmin_filters(self, search: str | None = None, rol=None) -> list:
+    def _web_superadmin_filters(
+        self,
+        search: str | None = None,
+        rol=None,
+        company_id: UUID | None = None,
+        status: str | None = None,
+    ) -> list:
         filters = []
         if rol is not None:
             filters.append(Usuario.rol == rol)
+        if company_id is not None:
+            filters.append(Usuario.company_id == company_id)
+        if status == "active":
+            filters.append(Usuario.is_active.is_(True))
+        elif status == "inactive":
+            filters.append(Usuario.is_active.is_(False))
         if search:
             search_pattern = f"%{search.strip()}%"
             filters.append(
@@ -56,8 +69,15 @@ class CRUDUsuarios(CRUDBaseRepository[Usuario, UsuarioCreate, UsuarioUpdate]):
         db: AsyncSession,
         search: str | None = None,
         rol=None,
+        company_id: UUID | None = None,
+        status: str | None = None,
     ) -> int:
-        filters = self._web_superadmin_filters(search=search, rol=rol)
+        filters = self._web_superadmin_filters(
+            search=search,
+            rol=rol,
+            company_id=company_id,
+            status=status,
+        )
         query = select(func.count()).select_from(Usuario).where(*filters)
         result = await db.execute(query)
         return result.scalar() or 0
@@ -69,8 +89,15 @@ class CRUDUsuarios(CRUDBaseRepository[Usuario, UsuarioCreate, UsuarioUpdate]):
         limit: int,
         search: str | None = None,
         rol=None,
+        company_id: UUID | None = None,
+        status: str | None = None,
     ) -> list[tuple[Usuario, str | None]]:
-        filters = self._web_superadmin_filters(search=search, rol=rol)
+        filters = self._web_superadmin_filters(
+            search=search,
+            rol=rol,
+            company_id=company_id,
+            status=status,
+        )
         query = (
             select(Usuario, Compania.nombre.label("company_name"))
             .outerjoin(Compania, Usuario.company_id == Compania.id)

@@ -26,6 +26,7 @@ function getInitials(userProfile: UserProfile | null) {
 
 type MobileDashboardMenuProps = {
   navItems: DashboardNavItem[];
+  homeHref: string;
   pathname: string;
   searchParams: ReadonlyURLSearchParams;
   isOpen: boolean;
@@ -36,6 +37,7 @@ type MobileDashboardMenuProps = {
 
 export function MobileDashboardMenu({
   navItems,
+  homeHref,
   pathname,
   searchParams,
   isOpen,
@@ -73,7 +75,7 @@ export function MobileDashboardMenu({
     <div className="fixed inset-0 z-[100] bg-background lg:hidden">
       <div className="flex h-full flex-col">
         <div className="flex items-center justify-between border-b border-border/70 px-4 py-4 sm:px-6">
-          <Link href="/dashboard/client" onClick={onClose} className="flex items-center">
+          <Link href={homeHref} onClick={onClose} className="flex items-center">
             <Image
               src="/logo.png"
               alt="VertiOne"

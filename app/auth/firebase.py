@@ -333,7 +333,12 @@ def require_role(*allowed_roles: str):
     async def role_dependency(
         current_user: FirebaseUser = Depends(get_current_firebase_user)
     ) -> FirebaseUser:
-        if current_user.rol.value not in allowed_roles:
+        current_role = (
+            current_user.rol.value
+            if hasattr(current_user.rol, "value")
+            else str(current_user.rol)
+        )
+        if current_role not in allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"Permisos insuficientes. Requiere rol: {allowed_roles}"

@@ -15,6 +15,7 @@ import type { UserProfile } from "@/types/auth";
 
 type DashboardSidebarProps = {
   navItems: DashboardNavItem[];
+  homeHref: string;
   pathname: string;
   searchParams: ReadonlyURLSearchParams;
   isCollapsed: boolean;
@@ -25,6 +26,7 @@ type DashboardSidebarProps = {
 
 export function DashboardSidebar({
   navItems,
+  homeHref,
   pathname,
   searchParams,
   isCollapsed,
@@ -61,9 +63,9 @@ export function DashboardSidebar({
         )}
       >
         <Link
-          href="/dashboard/client"
+          href={homeHref}
           className="flex items-center justify-center"
-          aria-label="Ir al dashboard de cliente"
+          aria-label="Ir al dashboard"
         >
           <Image
             src="/logo.png"
