@@ -6,6 +6,7 @@ from datetime import datetime, date
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_, extract
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload
 
 from app.db.models.ordenes_de_trabajo import OrdenDeTrabajo
@@ -40,9 +41,62 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
+
 class OrdenDeTrabajoService:
+    MAX_REFERENCE_RETRIES = 3
+
     def __init__(self, db: AsyncSession):
         self.db = db
+
+    def _reference_prefix_for_today(self) -> str:
+        return f"OTC{datetime.now().strftime('%y%m%d')}"
+
+    async def _generate_next_reference(self, company_id: UUID) -> str:
+        prefix = self._reference_prefix_for_today()
+        stmt = (
+            select(OrdenDeTrabajo.referencia)
+            .where(
+                OrdenDeTrabajo.company_id == company_id,
+                OrdenDeTrabajo.referencia.like(f"{prefix}%")
+            )
+            .order_by(OrdenDeTrabajo.referencia.desc())
+            .limit(1)
+        )
+        last_ref = (await self.db.execute(stmt)).scalar_one_or_none()
+
+        last_seq = 0
+        if last_ref:
+            try:
+                last_seq = int(last_ref.removeprefix(prefix))
+            except ValueError:
+                logger.warning("No se pudo parsear la referencia previa %s; reiniciando secuencia diaria", last_ref)
+
+        return f"{prefix}{last_seq + 1:04d}"
+
+    def _build_orden_entity(
+        self,
+        orden_data: dict,
+        company_id: UUID,
+        cliente_id: UUID,
+        referencia: str,
+    ) -> OrdenDeTrabajo:
+        return OrdenDeTrabajo(
+            **orden_data,
+            id=uuid4(),
+            referencia=referencia,
+            company_id=company_id,
+            cliente_id=cliente_id,
+        )
+
+    def _is_reference_unique_violation(self, error: IntegrityError) -> bool:
+        constraint_names = {
+            getattr(error.orig, "constraint_name", None),
+            getattr(getattr(error.orig, "diag", None), "constraint_name", None),
+        }
+        if "ordenes_de_trabajo_referencia_key" in constraint_names:
+            return True
+        return "ordenes_de_trabajo_referencia_key" in str(error)
 
     # — Admin —
     async def count_by_company(self, company_id: UUID) -> int:
@@ -384,29 +438,45 @@ class OrdenDeTrabajoService:
                 raise HTTPException(status_code=400, detail=f"{name} invalido")
 
         # 4) preparar datos, excluyendo supervisor_id del dict
-        orden_data = orden_in.dict(exclude_unset=True)
+        orden_data = orden_in.model_dump(exclude_unset=True)
 
-        # 5) crear instancia
-        nueva = OrdenDeTrabajo(
-            **orden_data,
-            id=uuid4(),
-            company_id=company_id,
-            cliente_id=cliente_id
+        # 5) generar referencia y persistir con reintentos acotados
+        for attempt in range(self.MAX_REFERENCE_RETRIES):
+            nueva = self._build_orden_entity(
+                orden_data=orden_data,
+                company_id=company_id,
+                cliente_id=cliente_id,
+                referencia=await self._generate_next_reference(company_id),
+            )
+            self.db.add(nueva)
+
+            try:
+                await self.db.commit()
+                await self.db.refresh(nueva)
+                return nueva.id
+            except IntegrityError as exc:
+                await self.db.rollback()
+
+                if self._is_reference_unique_violation(exc):
+                    if attempt < self.MAX_REFERENCE_RETRIES - 1:
+                        logger.warning(
+                            "Colision de referencia al crear orden para company_id=%s. Reintentando (%s/%s)",
+                            company_id,
+                            attempt + 1,
+                            self.MAX_REFERENCE_RETRIES,
+                        )
+                        continue
+                    raise HTTPException(
+                        status_code=status.HTTP_409_CONFLICT,
+                        detail="No fue posible generar una referencia única para la orden de trabajo. Intente nuevamente.",
+                    ) from exc
+
+                raise
+
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="No fue posible generar una referencia única para la orden de trabajo. Intente nuevamente.",
         )
-
-        # 6) generar referencia
-        fecha = datetime.now().strftime("%y%m%d")
-        seq = (await self.db.execute(
-            select(func.count()).select_from(OrdenDeTrabajo)
-            .where(OrdenDeTrabajo.company_id == company_id)
-        )).scalar_one() + 1
-        nueva.referencia = f"OTC{fecha}{seq:04d}"
-
-        # 7) persistir 
-        self.db.add(nueva)
-        await self.db.commit()
-        await self.db.refresh(nueva)
-        return nueva.id
     
     async def get_total_ordenes_trabajo_por_compania(self, company_id: UUID) -> int:
         return await orden_de_trabajo_crud.get_total_by_field(
