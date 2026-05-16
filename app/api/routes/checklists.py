@@ -4,8 +4,10 @@ from fastapi import APIRouter, Depends, HTTPException, status, Path, Body
 from typing import List
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 from app.db.session import get_db
+from app.db.models.ordenes_de_trabajo import OrdenDeTrabajo
 from app.schemas.checklists import (
     ChecklistTemplateOut, ChecklistOut,
     ChecklistItemUpdate, ChecklistTemplateCreate,
@@ -13,6 +15,7 @@ from app.schemas.checklists import (
 )
 from app.services.checklists import ChecklistService
 from app.auth.firebase import require_role, get_current_firebase_user
+from app.services.plans import PlanEnforcementService
 
 
 from fastapi.responses import StreamingResponse
@@ -116,6 +119,13 @@ async def generar_reporte_pdf(
     if not checklist:
         raise HTTPException(status_code=404, detail="Checklist no encontrado")
 
+    orden = await db.scalar(select(OrdenDeTrabajo).where(OrdenDeTrabajo.id == orden_id))
+    if not orden:
+        raise HTTPException(status_code=404, detail="Orden no encontrada")
+
+    plan_enforcement = PlanEnforcementService(db)
+    await plan_enforcement.assert_can_generate_pdf_report(orden.company_id)
+
     # Renderizar HTML
     env = Environment(loader=FileSystemLoader("app/templates"))
     template = env.get_template("reporte_checklist.html")
@@ -125,6 +135,14 @@ async def generar_reporte_pdf(
     pdf_buffer = io.BytesIO()
     HTML(string=html_content, base_url=".").write_pdf(pdf_buffer)
     pdf_buffer.seek(0)
+
+    await plan_enforcement.record_successful_pdf_generation(
+        company_id=orden.company_id,
+        orden_id=orden.id,
+        checklist_id=checklist.id,
+        report_type="inline",
+        storage_url=None,
+    )
 
     return StreamingResponse(
         pdf_buffer,

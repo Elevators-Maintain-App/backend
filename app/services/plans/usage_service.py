@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy import func, select
@@ -6,6 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.clientes import Cliente
 from app.db.models.company_usage import CompanyUsage
+from app.db.models.ordenes_de_trabajo import OrdenDeTrabajo
+from app.db.models.pdf_report_generation_events import PdfReportGenerationEvent
 from app.db.models.proyectos import Proyecto
 from app.db.models.unidades import Unidad
 from app.db.models.usuarios import Rol, Usuario
@@ -63,6 +66,8 @@ class CompanyUsageService:
         usage.projects_count = await self._count(Proyecto, Proyecto.company_id == company_id)
         usage.clients_count = await self._count(Cliente, Cliente.compania_id == company_id)
         usage.units_count = await self._count(Unidad, Unidad.company_id == company_id)
+        usage.work_orders_created = await self._count_work_orders(company_id, year, month)
+        usage.pdf_reports_generated = await self._count_pdf_reports(company_id, year, month)
 
         self.db.add(usage)
         await self.db.commit()
@@ -82,3 +87,30 @@ class CompanyUsageService:
     async def _count(self, model, *filters) -> int:
         result = await self.db.execute(select(func.count()).select_from(model).where(*filters))
         return result.scalar_one() or 0
+
+    async def _count_work_orders(self, company_id: UUID, year: int, month: int) -> int:
+        start, end = self._month_bounds(year, month)
+        return await self._count(
+            OrdenDeTrabajo,
+            OrdenDeTrabajo.company_id == company_id,
+            OrdenDeTrabajo.created_at >= start,
+            OrdenDeTrabajo.created_at < end,
+        )
+
+    async def _count_pdf_reports(self, company_id: UUID, year: int, month: int) -> int:
+        start, end = self._month_bounds(year, month)
+        return await self._count(
+            PdfReportGenerationEvent,
+            PdfReportGenerationEvent.company_id == company_id,
+            PdfReportGenerationEvent.status == "success",
+            PdfReportGenerationEvent.created_at >= start,
+            PdfReportGenerationEvent.created_at < end,
+        )
+
+    def _month_bounds(self, year: int, month: int):
+        start = datetime(year, month, 1)
+        if month == 12:
+            end = datetime(year + 1, 1, 1)
+        else:
+            end = datetime(year, month + 1, 1)
+        return start, end

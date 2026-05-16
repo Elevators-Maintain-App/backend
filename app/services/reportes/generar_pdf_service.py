@@ -17,6 +17,7 @@ from app.db.models.seguimiento import EventoOrden, OrdenTrabajoSeguimiento
 from app.db.models.unidades import Unidad
 from app.db.models.usuarios import Usuario
 from app.db.session import AsyncSessionLocal
+from app.services.plans import PlanEnforcementService
 
 LOCAL_TZ = ZoneInfo("America/Panama")
 
@@ -170,6 +171,11 @@ async def generar_y_subir_pdf(orden_id, tipo: str = "prereporte") -> str:
             raise ValueError("Checklist no encontrado")
 
         odt = getattr(checklist, "orden_de_trabajo", None)
+        if odt is None:
+            raise ValueError("Orden de trabajo no encontrada")
+
+        plan_enforcement = PlanEnforcementService(db)
+        await plan_enforcement.assert_can_generate_pdf_report(odt.company_id)
 
         supervisor_nombre = None
         if odt and getattr(odt, "supervisor_id", None):
@@ -303,4 +309,11 @@ async def generar_y_subir_pdf(orden_id, tipo: str = "prereporte") -> str:
             checklist.reporte_final_url = url
 
         await db.commit()
+        await plan_enforcement.record_successful_pdf_generation(
+            company_id=odt.company_id,
+            orden_id=odt.id,
+            checklist_id=checklist.id,
+            report_type=tipo,
+            storage_url=url,
+        )
         return url

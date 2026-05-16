@@ -72,10 +72,21 @@ def service_dependencies(monkeypatch):
     async def fake_enum_get(db, value):
         return SimpleNamespace(id=value)
 
+    class FakePlanEnforcementService:
+        def __init__(self, db):
+            self.db = db
+
+        async def assert_can_create_work_order(self, company_id):
+            return None
+
+        async def refresh_current_usage_snapshot(self, company_id):
+            return None
+
     monkeypatch.setattr(service_module.unidad_crud, "get", fake_unidad_get)
     monkeypatch.setattr(service_module.tipo_orden_crud, "get", fake_enum_get)
     monkeypatch.setattr(service_module.estado_orden_crud, "get", fake_enum_get)
     monkeypatch.setattr(service_module.prioridad_crud, "get", fake_enum_get)
+    monkeypatch.setattr(service_module, "PlanEnforcementService", FakePlanEnforcementService)
 
     return service_module
 

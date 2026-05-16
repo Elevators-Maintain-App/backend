@@ -12,6 +12,7 @@ from .compania import Compania
 from .plans import Plan
 from .company_subscriptions import CompanySubscription
 from .company_usage import CompanyUsage
+from .pdf_report_generation_events import PdfReportGenerationEvent
 from .seguimiento import OrdenTrabajoSeguimiento, EventoOrden
 
 from .enums import (
@@ -45,6 +46,7 @@ __all__ = [
     "Plan",
     "CompanySubscription",
     "CompanyUsage",
+    "PdfReportGenerationEvent",
     "Pais",
     "EventoOrden",
     "OrdenTrabajoSeguimiento"

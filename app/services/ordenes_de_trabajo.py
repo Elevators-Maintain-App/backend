@@ -35,6 +35,7 @@ from app.schemas.ordenes_de_trabajo import (
     OrdenDeTrabajoWeeklyComplianceOut,
     OrdenDeTrabajoListOut
 )
+from app.services.plans import PlanEnforcementService
 
 logging.basicConfig(
     level=logging.DEBUG,  # O usa logging.INFO si no necesitas tanto detalle
@@ -437,6 +438,9 @@ class OrdenDeTrabajoService:
             if not await repo.get(self.db, val):
                 raise HTTPException(status_code=400, detail=f"{name} invalido")
 
+        plan_enforcement = PlanEnforcementService(self.db)
+        await plan_enforcement.assert_can_create_work_order(company_id)
+
         # 4) preparar datos, excluyendo supervisor_id del dict
         orden_data = orden_in.model_dump(exclude_unset=True)
 
@@ -453,6 +457,7 @@ class OrdenDeTrabajoService:
             try:
                 await self.db.commit()
                 await self.db.refresh(nueva)
+                await plan_enforcement.refresh_current_usage_snapshot(company_id)
                 return nueva.id
             except IntegrityError as exc:
                 await self.db.rollback()
