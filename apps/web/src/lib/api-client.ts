@@ -1,7 +1,7 @@
 import axios from "axios";
 import { firebaseAuth } from "@/lib/firebase";
 
-const allowedApiPrefixes = ["/api/web/"];
+const allowedApiPrefixes = ["/api/web/", "/api/admin/", "/api/subscription/"];
 
 function assertAllowedApiPath(path: string) {
   const isAbsolute = /^https?:\/\//i.test(path);
