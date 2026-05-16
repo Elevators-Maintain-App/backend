@@ -28,6 +28,7 @@ from app.db.repositories.clientes import cliente_crud
 from app.db.models.clientes import Cliente
 from app.services.usuario.interfaces.usuario_case import CrearUsuarioParams, CrearUsuarioFirebaseParams
 from app.services.firebase_storage.firebase_storage import subir_archivo_a_storage
+from app.services.plans import PlanEnforcementService
 
 
 logger = logging.getLogger(__name__)
@@ -209,33 +210,6 @@ class UsuarioService:
         photo: Optional[UploadFile] = None,
         request_id: str | None = None,
     ) -> UsuarioOut:
-        # Upload photo first if provided, before creating Firebase user
-        if photo and photo.filename:
-            try:
-                contenido_foto = await photo.read()
-                content_type = photo.content_type or "image/jpeg"
-                
-                # Generate a UUID for the photo path (user_id doesn't exist yet)
-                photo_user_id = uuid4()
-                company_id = usuario_data.get("company_id")
-                
-                photo_url = subir_archivo_a_storage(
-                    archivo_bytes=contenido_foto,
-                    compania_id=company_id,
-                    entidad="users",
-                    entidad_id=photo_user_id,
-                    nombre_archivo="photo",
-                    tipo_archivo="photo",
-                    content_type=content_type
-                )
-                
-                usuario_data["photo_url"] = photo_url
-            except Exception as e:
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail=f"Error al subir la foto: {str(e)}"
-                )
-        
         # Validar y normalizar company_id según las reglas del rol del usuario actual
         fabrica_de_usuarios = FabricaDeUsuarios.get_user_case(usuario_actual.rol)
         company_id_proporcionado = usuario_data.get("company_id")
@@ -283,6 +257,33 @@ class UsuarioService:
             company_id=usuario_in.company_id,
         )
         tipo_documento = await tipo_documento_crud.get(self.db, usuario_in.document_type_id)
+
+        plan_enforcement = PlanEnforcementService(self.db)
+        await plan_enforcement.assert_can_create_user(usuario_in.company_id, usuario_in.rol)
+
+        if photo and photo.filename:
+            try:
+                contenido_foto = await photo.read()
+                content_type = photo.content_type or "image/jpeg"
+
+                photo_url = subir_archivo_a_storage(
+                    archivo_bytes=contenido_foto,
+                    compania_id=usuario_in.company_id,
+                    entidad="users",
+                    entidad_id=uuid4(),
+                    nombre_archivo="photo",
+                    tipo_archivo="photo",
+                    content_type=content_type
+                )
+
+                usuario_data["photo_url"] = photo_url
+                usuario_in = UsuarioCreate(**usuario_data)
+            except Exception as e:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Error al subir la foto: {str(e)}"
+                )
+
         usuario_firebase = fabrica_de_usuarios.obtener_firebase_usuario(CrearUsuarioFirebaseParams(
             usuario_actual=usuario_actual,
             usuario_nuevo=usuario_in,
@@ -335,6 +336,16 @@ class UsuarioService:
                 detail="Firebase Auth fue creado o recuperado, pero no fue posible crear el usuario en VertiOne",
             ) from exc
 
+        try:
+            await plan_enforcement.refresh_current_usage_snapshot(usuario_guardado.company_id)
+        except Exception:
+            logger.exception(
+                "user_create_usage_snapshot_refresh_failed request_id=%s uid=%s email=%s",
+                request_id,
+                usuario_firebase.uid,
+                usuario_in.email,
+            )
+
         usuario_guardado = await usuario_crud.get_usuario_con_relaciones(
             self.db,
             usuario_firebase.uid,
@@ -342,23 +353,31 @@ class UsuarioService:
 
         try:
             await self._sync_usuario_firestore(usuario_guardado)
-        except Exception as exc:
+        except Exception:
             logger.exception(
-                "user_create_firestore_sync_failed request_id=%s uid=%s email=%s",
+                "user_create_firestore_sync_failed_non_blocking request_id=%s uid=%s email=%s",
                 request_id,
                 usuario_firebase.uid,
                 usuario_in.email,
             )
-            raise HTTPException(
-                status_code=status.HTTP_502_BAD_GATEWAY,
-                detail="El usuario fue creado en VertiOne, pero no fue posible sincronizar Firestore",
-            ) from exc
 
-        if firebase_user_created and usuario_firebase.password:
-            await fabrica_de_usuarios.enviar_email_de_bienvenida(usuario_a_guardar.email, usuario_a_guardar.display_name, usuario_firebase.password)
-        else:
-            logger.info(
-                "user_create_recovered_partial_user request_id=%s uid=%s email=%s",
+        try:
+            if firebase_user_created and usuario_firebase.password:
+                await fabrica_de_usuarios.enviar_email_de_bienvenida(
+                    usuario_a_guardar.email,
+                    usuario_a_guardar.display_name,
+                    usuario_firebase.password,
+                )
+            else:
+                logger.info(
+                    "user_create_recovered_partial_user request_id=%s uid=%s email=%s",
+                    request_id,
+                    usuario_firebase.uid,
+                    usuario_in.email,
+                )
+        except Exception:
+            logger.exception(
+                "user_create_welcome_email_failed_non_blocking request_id=%s uid=%s email=%s",
                 request_id,
                 usuario_firebase.uid,
                 usuario_in.email,

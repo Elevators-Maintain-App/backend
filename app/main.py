@@ -30,10 +30,13 @@ from app.api.routes import (
     usuarios_router,
     web_client_router,
     web_superadmin_router,
+    plans_router,
+    subscriptions_router,
     zonas_geograficas
 )
 from app.core.config import settings
 from app.db.session import engine, Base
+import app.db.models  # noqa: F401
 from app.core.openapi_config import OpenAPIConfig
 from app.middleware.observability import observability_middleware
 
@@ -103,6 +106,8 @@ app.include_router(unidades_router, prefix="/api/unidades", tags=["Unidades"])
 app.include_router(usuarios_router, prefix="/api/usuarios", tags=["Usuarios"])
 app.include_router(web_client_router, prefix="/api/web/client", tags=["Web Client"])
 app.include_router(web_superadmin_router, prefix="/api/web/superadmin", tags=["Web SuperAdmin"])
+app.include_router(plans_router, prefix="/api", tags=["Plans"])
+app.include_router(subscriptions_router, prefix="/api", tags=["Subscriptions"])
 app.include_router(zonas_geograficas, prefix="/api/zonas-geograficas", tags=["Zonas Geograficas"])
 
 # add openapi config

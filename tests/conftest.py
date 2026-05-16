@@ -11,6 +11,8 @@ from app.db.models.usuarios import Usuario, Rol
 from app.db.models.compania import Compania
 from app.db.models import TipoDocumento
 
+from uuid import uuid4
+
 
 @pytest.fixture(scope="session")
 def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
@@ -21,7 +23,7 @@ def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
 
 
 @pytest.fixture
-async def mock_db_session() -> AsyncMock:
+def mock_db_session() -> AsyncMock:
     """Create a mock database session."""
     session = AsyncMock(spec=AsyncSession)
     session.execute = AsyncMock()
@@ -36,12 +38,12 @@ async def mock_db_session() -> AsyncMock:
 def mock_usuario_actual() -> Usuario:
     """Create a mock current user."""
     usuario = Usuario(
-        id="test-user-id",
+        id=uuid4(),
         uid="test-firebase-uid",
         email="test@example.com",
         display_name="Test User",
         rol=Rol.SUPER_ADMIN,
-        company_id="test-company-id"
+        company_id=uuid4(),
     )
     return usuario
 
@@ -50,9 +52,9 @@ def mock_usuario_actual() -> Usuario:
 def mock_compania() -> Compania:
     """Create a mock company."""
     compania = Compania(
-        id="test-company-id",
-        name="Test Company",
-        email="company@test.com"
+        id=uuid4(),
+        nombre="Test Company",
+        email="company@test.com",
     )
     return compania
 
@@ -61,7 +63,7 @@ def mock_compania() -> Compania:
 def mock_tipo_documento() -> TipoDocumento:
     """Create a mock document type."""
     tipo_documento = TipoDocumento(
-        id="test-doc-type-id",
+        id=1,
         nombre="Cédula"
     )
     return tipo_documento

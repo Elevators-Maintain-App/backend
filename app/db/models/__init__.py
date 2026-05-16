@@ -7,7 +7,11 @@ from .proyectos import Proyecto
 from .unidades import Unidad
 from .zonas_geograficas import ZonaGeografica
 from .usuarios import Usuario
+from .nivel_tecnico import NivelTecnico
 from .compania import Compania
+from .plans import Plan
+from .company_subscriptions import CompanySubscription
+from .company_usage import CompanyUsage
 from .seguimiento import OrdenTrabajoSeguimiento, EventoOrden
 
 from .enums import (
@@ -36,7 +40,11 @@ __all__ = [
     "TipoEvidencia",
     "TipoDocumento",
     "Usuario",
+    "NivelTecnico",
     "Compania",
+    "Plan",
+    "CompanySubscription",
+    "CompanyUsage",
     "Pais",
     "EventoOrden",
     "OrdenTrabajoSeguimiento"

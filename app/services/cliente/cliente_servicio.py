@@ -22,6 +22,7 @@ from app.services.cliente.user_cases import FabricaDeClientes
 from app.core.exceptions import ForbiddenException
 from app.schemas.comunes import PaginacionResponse
 from app.services.firebase_storage.firebase_storage import subir_archivo_a_storage
+from app.services.plans import PlanEnforcementService
 
 class ClienteService:
     def __init__(self, db: AsyncSession):
@@ -132,9 +133,13 @@ class ClienteService:
         if not fabrica_de_clientes.puede_crear_clientes(usuario_actual=usuario_actual, compania_id=compania_id):
             raise ForbiddenException("No tienes permisos para crear clientes")
         
+        plan_enforcement = PlanEnforcementService(self.db)
+        await plan_enforcement.assert_can_create_client(compania_id)
+
         cliente_create = ClienteCreate(**cliente_data)
         
         cliente_creado = await cliente_crud.create(self.db, obj_in=cliente_create)
+        await plan_enforcement.refresh_current_usage_snapshot(compania_id)
         
         if logo and logo.filename:
             try:

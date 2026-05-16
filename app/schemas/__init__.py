@@ -18,6 +18,24 @@ from app.schemas.tipos_orden import TipoOrdenBase, TipoOrdenCreate, TipoOrdenUpd
 from app.schemas.tipos_unidad import TipoUnidadBase, TipoUnidadCreate, TipoUnidadUpdate, TipoUnidadInDBBase
 from app.schemas.comunes import LovElemento
 from app.schemas.nivel_tecnico import NivelTecnicoCreate, NivelTecnicoUpdate
+from app.schemas.plans import PlanBase, PlanCreate, PlanUpdate, PlanRead
+from app.schemas.company_subscriptions import (
+    CompanySubscriptionBase,
+    CompanySubscriptionCreate,
+    CompanySubscriptionUpdate,
+    CompanySubscriptionRead,
+)
+from app.schemas.company_usage import CompanyUsageRead
+from app.schemas.subscriptions import (
+    AdminPlanRead,
+    CompanySubscriptionStatusResponse,
+    CompanyUsageSummary,
+    PlanFeaturesSummary,
+    PlanLimitsSummary,
+    SubscriptionAssignRequest,
+    SubscriptionPlanSummary,
+    SubscriptionSummary,
+)
 
 __all__ = [
     "ClienteBase", "ClienteCreate", "ClienteUpdate", "ClienteOut",
@@ -35,5 +53,11 @@ __all__ = [
     "TipoOrdenBase", "TipoOrdenCreate", "TipoOrdenUpdate", "TipoOrdenInDBBase",
     "TipoUnidadBase", "TipoUnidadCreate", "TipoUnidadUpdate", "TipoUnidadInDBBase",
     "UsuarioBase", "UsuarioCreate", "UsuarioUpdate", "UsuarioInDBBase",
-    "LovElemento", "NivelTecnicoCreate", "NivelTecnicoUpdate"
+    "LovElemento", "NivelTecnicoCreate", "NivelTecnicoUpdate",
+    "PlanBase", "PlanCreate", "PlanUpdate", "PlanRead",
+    "CompanySubscriptionBase", "CompanySubscriptionCreate", "CompanySubscriptionUpdate", "CompanySubscriptionRead",
+    "CompanyUsageRead",
+    "AdminPlanRead", "CompanySubscriptionStatusResponse", "CompanyUsageSummary",
+    "PlanFeaturesSummary", "PlanLimitsSummary", "SubscriptionAssignRequest",
+    "SubscriptionPlanSummary", "SubscriptionSummary",
 ]

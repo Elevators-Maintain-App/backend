@@ -18,6 +18,7 @@ from app.schemas.comunes import PaginacionResponse
 from app.schemas.unidades import (
     UnidadCreate, UnidadUpdate, UnidadInDBBase, UnidadCreateInDB, UnidadListOut
 )
+from app.services.plans import PlanEnforcementService
 
 class UnidadService:
     def __init__(self, db: AsyncSession):
@@ -120,6 +121,9 @@ class UnidadService:
         if not tipo:
             raise HTTPException(status_code=400, detail="Tipo de unidad no existe")
 
+        plan_enforcement = PlanEnforcementService(self.db)
+        await plan_enforcement.assert_can_create_unit(company_id)
+
         # Reconstruir payload como schema
         payload = UnidadCreateInDB(
             **unidad_in.dict(exclude_unset=True),
@@ -127,6 +131,7 @@ class UnidadService:
             cliente_id=str(cliente_id)
         )
         created = await unidad_crud.create(self.db, obj_in=payload)
+        await plan_enforcement.refresh_current_usage_snapshot(company_id)
         return created
 
     async def update(self, unidad_id: UUID, unidad_in: UnidadUpdate, company_id: UUID) -> UnidadInDBBase:

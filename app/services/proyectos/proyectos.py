@@ -15,6 +15,7 @@ from app.schemas.comunes import PaginacionResponse
 from app.schemas.proyectos import ProyectoOut
 from app.services.proyectos.proyectos_mappers import map_proyecto_to_proyecto_out
 from app.auth.firebase import FirebaseUser
+from app.services.plans import PlanEnforcementService
 
 class ProyectoService:
     def __init__(self, db: AsyncSession):
@@ -95,7 +96,12 @@ class ProyectoService:
         fabrica_de_proyectos = FabricaDeProyectos.get_proyecto_case(user.rol)
         proyecto_payload = fabrica_de_proyectos.obtener_payload_para_crear_proyecto(proyecto_in, user)
 
-        return await proyecto_crud.create(self.db, obj_in=proyecto_payload)
+        plan_enforcement = PlanEnforcementService(self.db)
+        await plan_enforcement.assert_can_create_project(proyecto_payload.company_id)
+
+        created = await proyecto_crud.create(self.db, obj_in=proyecto_payload)
+        await plan_enforcement.refresh_current_usage_snapshot(created.company_id)
+        return created
 
     async def update(
         self,

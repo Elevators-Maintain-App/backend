@@ -55,6 +55,18 @@ class Compania(Base):
 
     usuarios = relationship("Usuario", back_populates="company", cascade="all, delete-orphan")
 
+    subscriptions = relationship(
+        "CompanySubscription",
+        back_populates="company",
+        cascade="all, delete-orphan",
+    )
+
+    usage_periods = relationship(
+        "CompanyUsage",
+        back_populates="company",
+        cascade="all, delete-orphan",
+    )
+
     document_type = relationship("TipoDocumento", back_populates="companias", foreign_keys=[tipo_documento_id])
     
     def __str__(self):
