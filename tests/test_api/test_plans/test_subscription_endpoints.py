@@ -64,6 +64,7 @@ async def cleanup_test_data():
         await session.execute(delete(CompanySubscription).where(CompanySubscription.company_id.in_(company_ids)))
         await session.execute(delete(CompanyUsage).where(CompanyUsage.company_id.in_(company_ids)))
         await session.execute(delete(Plan).where(Plan.code.like("test-api-slice3-%")))
+        await session.execute(delete(Plan).where(Plan.code.like("test-api-slice6-%")))
         await session.execute(delete(Compania).where(Compania.id.in_(company_ids)))
         await session.execute(delete(TipoDocumento).where(TipoDocumento.id == TEST_DOCUMENT_TYPE_ID))
         await session.commit()
@@ -313,3 +314,225 @@ async def test_assign_subscription_rejects_inactive_plan():
 
     assert response.status_code == 400
     assert response.json()["detail"]["code"] == "PLAN_INACTIVE"
+
+
+@pytest.mark.asyncio
+async def test_superadmin_can_create_plan():
+    async with AsyncClient(app=create_app(role="superAdmin"), base_url="http://test") as client:
+        response = await client.post(
+            "/api/admin/plans",
+            json={
+                "code": "test-api-slice6-create",
+                "name": "Test API Slice 6 Create",
+                "description": "Plan creado desde API",
+                "is_public": True,
+                "is_active": True,
+                "limits": {
+                    "admins": 1,
+                    "supervisors": 2,
+                    "technicians": 5,
+                    "projects": 10,
+                    "clients": 25,
+                    "units": 100,
+                    "work_orders_per_month": 300,
+                    "pdf_reports_per_month": 300,
+                    "storage_mb": 1024,
+                },
+                "features": {
+                    "offline_mode": True,
+                    "custom_checklists": False,
+                    "advanced_dashboard": False,
+                    "evidence_editing": True,
+                },
+            },
+        )
+
+    assert response.status_code == 201
+    payload = response.json()
+    assert payload["code"] == "test-api-slice6-create"
+    assert payload["limits"]["storage_mb"] == 1024
+    assert payload["features"]["offline_mode"] is True
+
+
+@pytest.mark.asyncio
+async def test_non_superadmin_cannot_create_plan():
+    async with AsyncClient(app=create_app(role="admin"), base_url="http://test") as client:
+        response = await client.post(
+            "/api/admin/plans",
+            json={"code": "test-api-slice6-forbidden", "name": "Forbidden"},
+        )
+
+    assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_superadmin_can_get_plan_detail():
+    async with AsyncSessionLocal() as session:
+        plan = Plan(
+            code="test-api-slice6-detail",
+            name="Test API Slice 6 Detail",
+            max_technicians=7,
+            allow_offline_mode=True,
+            is_active=True,
+            is_public=True,
+        )
+        session.add(plan)
+        await session.commit()
+        await session.refresh(plan)
+        plan_id = plan.id
+
+    async with AsyncClient(app=create_app(role="superAdmin"), base_url="http://test") as client:
+        response = await client.get(f"/api/admin/plans/{plan_id}")
+
+    assert response.status_code == 200
+    assert response.json()["limits"]["technicians"] == 7
+
+
+@pytest.mark.asyncio
+async def test_superadmin_can_update_plan_partially():
+    async with AsyncSessionLocal() as session:
+        plan = Plan(
+            code="test-api-slice6-update",
+            name="Test API Slice 6 Update",
+            max_technicians=5,
+            max_units=100,
+            allow_advanced_dashboard=False,
+            is_active=True,
+            is_public=True,
+        )
+        session.add(plan)
+        await session.commit()
+        await session.refresh(plan)
+        plan_id = plan.id
+
+    async with AsyncClient(app=create_app(role="superAdmin"), base_url="http://test") as client:
+        response = await client.patch(
+            f"/api/admin/plans/{plan_id}",
+            json={
+                "name": "Test API Slice 6 Updated",
+                "limits": {"technicians": 10},
+                "features": {"advanced_dashboard": True},
+            },
+        )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["name"] == "Test API Slice 6 Updated"
+    assert payload["limits"]["technicians"] == 10
+    assert payload["limits"]["units"] == 100
+    assert payload["features"]["advanced_dashboard"] is True
+
+
+@pytest.mark.asyncio
+async def test_superadmin_can_deactivate_plan_without_active_subscriptions():
+    async with AsyncSessionLocal() as session:
+        plan = Plan(
+            code="test-api-slice6-deactivate",
+            name="Test API Slice 6 Deactivate",
+            is_active=True,
+            is_public=True,
+        )
+        session.add(plan)
+        await session.commit()
+        await session.refresh(plan)
+        plan_id = plan.id
+
+    async with AsyncClient(app=create_app(role="superAdmin"), base_url="http://test") as client:
+        response = await client.patch(f"/api/admin/plans/{plan_id}/deactivate")
+
+    assert response.status_code == 200
+    assert response.json()["is_active"] is False
+
+
+@pytest.mark.asyncio
+async def test_create_duplicate_plan_returns_controlled_error():
+    async with AsyncClient(app=create_app(role="superAdmin"), base_url="http://test") as client:
+        first = await client.post(
+            "/api/admin/plans",
+            json={"code": "test-api-slice6-duplicate", "name": "Test API Slice 6 Duplicate"},
+        )
+        second = await client.post(
+            "/api/admin/plans",
+            json={"code": "test-api-slice6-duplicate", "name": "Test API Slice 6 Duplicate 2"},
+        )
+
+    assert first.status_code == 201
+    assert second.status_code == 409
+    assert second.json()["detail"]["code"] == "PLAN_CODE_ALREADY_EXISTS"
+
+
+@pytest.mark.asyncio
+async def test_create_plan_with_negative_limit_returns_controlled_error():
+    async with AsyncClient(app=create_app(role="superAdmin"), base_url="http://test") as client:
+        response = await client.post(
+            "/api/admin/plans",
+            json={
+                "code": "test-api-slice6-negative-limit",
+                "name": "Test API Slice 6 Negative Limit",
+                "limits": {"technicians": -1},
+            },
+        )
+
+    assert response.status_code == 400
+    assert response.json()["detail"]["code"] == "INVALID_PLAN_PAYLOAD"
+
+
+@pytest.mark.asyncio
+async def test_admin_plan_listing_still_filters_inactive_by_default():
+    async with AsyncSessionLocal() as session:
+        active = Plan(
+            code="test-api-slice6-list-active",
+            name="Test API Slice 6 List Active",
+            is_active=True,
+            is_public=True,
+        )
+        inactive = Plan(
+            code="test-api-slice6-list-inactive",
+            name="Test API Slice 6 List Inactive",
+            is_active=False,
+            is_public=False,
+        )
+        session.add_all([active, inactive])
+        await session.commit()
+        await session.refresh(active)
+        await session.refresh(inactive)
+
+    async with AsyncClient(app=create_app(role="superAdmin"), base_url="http://test") as client:
+        active_response = await client.get("/api/admin/plans")
+        all_response = await client.get("/api/admin/plans", params={"include_inactive": "true"})
+
+    assert active_response.status_code == 200
+    assert str(active.id) in {item["id"] for item in active_response.json()}
+    assert str(inactive.id) not in {item["id"] for item in active_response.json()}
+    assert all_response.status_code == 200
+    assert str(inactive.id) in {item["id"] for item in all_response.json()}
+
+
+@pytest.mark.asyncio
+async def test_company_subscription_assignment_still_works_after_plan_crud():
+    await seed_company_and_plan(with_subscription=False)
+
+    async with AsyncClient(app=create_app(role="superAdmin"), base_url="http://test") as client:
+        created = await client.post(
+            "/api/admin/plans",
+            json={
+                "code": "test-api-slice6-assignable",
+                "name": "Test API Slice 6 Assignable",
+                "limits": {"technicians": 20},
+                "features": {"offline_mode": True},
+            },
+        )
+        response = await client.post(
+            f"/api/admin/companies/{COMPANY_ID}/subscription",
+            json={
+                "plan_id": created.json()["id"],
+                "status": "active",
+                "billing_period": "monthly",
+                "start_date": "2026-05-15",
+                "end_date": "2026-06-15",
+            },
+        )
+
+    assert created.status_code == 201
+    assert response.status_code == 201
+    assert response.json()["plan"]["id"] == created.json()["id"]

@@ -1,6 +1,6 @@
 "use client";
 
-import { Edit3, ExternalLink, Plus, Power, RefreshCw, Trash2 } from "lucide-react";
+import { Edit3, Eye, ExternalLink, Plus, Power, RefreshCw, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { RoleGuard } from "@/components/auth/role-guard";
@@ -20,12 +20,12 @@ import {
 import { getApiErrorMessage } from "@/lib/api-errors";
 import {
   useAdminPlans,
+  useAdminPlanDetail,
   useCreateAdminPlan,
   useDeactivateAdminPlan,
-  useDeleteAdminPlan,
   useUpdateAdminPlan,
 } from "@/hooks/use-plans";
-import type { Plan, PlanFormValues } from "@/types/plans";
+import type { Plan, PlanFeatures, PlanFormValues, PlanLimits } from "@/types/plans";
 
 function planTone(plan: Plan) {
   return plan.is_active ? "success" : "danger";
@@ -36,10 +36,12 @@ function publicTone(plan: Plan) {
 }
 
 function featuresSummary(plan: Plan) {
-  const features = plan.features;
-  if (!features) {
-    return "Sin features";
-  }
+  const features = plan.features || {
+    offline_mode: false,
+    custom_checklists: false,
+    advanced_dashboard: false,
+    evidence_editing: false,
+  };
 
   return [
     features.offline_mode ? "Offline" : null,
@@ -49,8 +51,32 @@ function featuresSummary(plan: Plan) {
   ].filter(Boolean).join(", ") || "Sin features";
 }
 
+function formatStorage(value: number | null | undefined) {
+  return value === null || value === undefined ? "Sin límite" : `${value} MB`;
+}
+
+const detailLimitLabels: Array<{ key: keyof PlanLimits; label: string }> = [
+  { key: "admins", label: "Admins" },
+  { key: "supervisors", label: "Supervisores" },
+  { key: "technicians", label: "Técnicos" },
+  { key: "projects", label: "Proyectos" },
+  { key: "clients", label: "Clientes" },
+  { key: "units", label: "Unidades" },
+  { key: "work_orders_per_month", label: "Órdenes/mes" },
+  { key: "pdf_reports_per_month", label: "PDFs/mes" },
+  { key: "storage_mb", label: "Storage MB" },
+];
+
+const detailFeatureLabels: Array<{ key: keyof PlanFeatures; label: string }> = [
+  { key: "offline_mode", label: "Modo offline" },
+  { key: "custom_checklists", label: "Checklists personalizados" },
+  { key: "advanced_dashboard", label: "Dashboard avanzado" },
+  { key: "evidence_editing", label: "Edición de evidencias" },
+];
+
 export default function SuperAdminPlansPage() {
   const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
+  const [detailPlanId, setDetailPlanId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -59,9 +85,10 @@ export default function SuperAdminPlansPage() {
   const createPlan = useCreateAdminPlan();
   const updatePlan = useUpdateAdminPlan();
   const deactivatePlan = useDeactivateAdminPlan();
-  const deletePlan = useDeleteAdminPlan();
+  const detailPlanQuery = useAdminPlanDetail(detailPlanId || undefined);
 
   const plans = plansQuery.data || [];
+  const detailPlan = detailPlanQuery.data || null;
   const showForm = isCreating || Boolean(editingPlan);
 
   const handleSubmit = async (values: PlanFormValues) => {
@@ -78,6 +105,7 @@ export default function SuperAdminPlansPage() {
       }
       setEditingPlan(null);
       setIsCreating(false);
+      setDetailPlanId(null);
     } catch (error) {
       setActionError(getApiErrorMessage(error));
     }
@@ -94,24 +122,6 @@ export default function SuperAdminPlansPage() {
     try {
       await deactivatePlan.mutateAsync(plan.id);
       setSuccessMessage("Plan desactivado correctamente.");
-    } catch (error) {
-      setActionError(getApiErrorMessage(error));
-    }
-  };
-
-  const handleDelete = async (plan: Plan) => {
-    const confirmed = window.confirm(
-      `¿Eliminar el plan "${plan.name}"? Esta acción depende de soporte backend.`
-    );
-    if (!confirmed) {
-      return;
-    }
-
-    setActionError(null);
-    setSuccessMessage(null);
-    try {
-      await deletePlan.mutateAsync(plan.id);
-      setSuccessMessage("Plan eliminado correctamente.");
     } catch (error) {
       setActionError(getApiErrorMessage(error));
     }
@@ -152,6 +162,7 @@ export default function SuperAdminPlansPage() {
           <p>Unidades: {formatLimit(plan.limits?.units)}</p>
           <p>Órdenes/mes: {formatLimit(plan.limits?.work_orders_per_month)}</p>
           <p>PDFs/mes: {formatLimit(plan.limits?.pdf_reports_per_month)}</p>
+          <p>Storage: {formatStorage(plan.limits?.storage_mb)}</p>
         </div>
       ),
     },
@@ -171,6 +182,19 @@ export default function SuperAdminPlansPage() {
             size="sm"
             variant="outline"
             onClick={() => {
+              setDetailPlanId(plan.id);
+              setEditingPlan(null);
+              setIsCreating(false);
+              setActionError(null);
+            }}
+          >
+            <Eye className="h-4 w-4" />
+            Detalle
+          </AppButton>
+          <AppButton
+            size="sm"
+            variant="outline"
+            onClick={() => {
               setEditingPlan(plan);
               setIsCreating(false);
               setActionError(null);
@@ -179,13 +203,15 @@ export default function SuperAdminPlansPage() {
             <Edit3 className="h-4 w-4" />
             Editar
           </AppButton>
-          <AppButton size="sm" variant="outline" onClick={() => void handleDeactivate(plan)}>
+          <AppButton
+            size="sm"
+            variant="outline"
+            disabled={!plan.is_active || plan.code === "free"}
+            title={plan.code === "free" ? "El plan free no se puede desactivar" : undefined}
+            onClick={() => void handleDeactivate(plan)}
+          >
             <Power className="h-4 w-4" />
             Desactivar
-          </AppButton>
-          <AppButton size="sm" variant="outline" onClick={() => void handleDelete(plan)}>
-            <Trash2 className="h-4 w-4" />
-            Eliminar
           </AppButton>
         </div>
       ),
@@ -212,6 +238,7 @@ export default function SuperAdminPlansPage() {
                   onClick={() => {
                     setIsCreating(true);
                     setEditingPlan(null);
+                    setDetailPlanId(null);
                     setActionError(null);
                   }}
                 >
@@ -224,11 +251,11 @@ export default function SuperAdminPlansPage() {
 
           <AppCard>
             <AppCardHeader>
-              <AppCardTitle>Soporte backend</AppCardTitle>
+              <AppCardTitle>CRUD conectado</AppCardTitle>
               <AppCardDescription>
-                El listado y asignación de planes usan endpoints reales. Crear, editar,
-                desactivar o eliminar quedan conectados a endpoints admin esperados y
-                mostrarán el error del backend si todavía no existen.
+                El listado, detalle, creación, edición, desactivación y asignación
+                usan endpoints admin reales. Los límites vacíos se envían como
+                ilimitados.
               </AppCardDescription>
             </AppCardHeader>
           </AppCard>
@@ -258,6 +285,105 @@ export default function SuperAdminPlansPage() {
               }}
               onSubmit={handleSubmit}
             />
+          ) : null}
+
+          {detailPlanId && !showForm ? (
+            <AppCard>
+              <AppCardHeader>
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <AppCardTitle>Detalle de plan</AppCardTitle>
+                    <AppCardDescription>
+                      Datos normalizados desde `/api/admin/plans/{detailPlanId}`.
+                    </AppCardDescription>
+                  </div>
+                  <AppButton variant="ghost" size="sm" onClick={() => setDetailPlanId(null)}>
+                    <X className="h-4 w-4" />
+                    Cerrar
+                  </AppButton>
+                </div>
+              </AppCardHeader>
+              <AppCardContent>
+                {detailPlanQuery.isLoading ? (
+                  <div className="flex items-center gap-3 py-4 text-sm text-muted-foreground">
+                    <RefreshCw className="h-5 w-5 animate-spin text-primary" />
+                    Cargando detalle...
+                  </div>
+                ) : null}
+
+                {detailPlanQuery.isError ? (
+                  <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
+                    <p className="font-medium text-destructive">No pudimos cargar el detalle</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {getApiErrorMessage(detailPlanQuery.error)}
+                    </p>
+                    <AppButton
+                      className="mt-3"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => void detailPlanQuery.refetch()}
+                    >
+                      Reintentar
+                    </AppButton>
+                  </div>
+                ) : null}
+
+                {detailPlan ? (
+                  <div className="grid gap-5 lg:grid-cols-[1fr_1.4fr]">
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Nombre</p>
+                        <p className="font-medium text-foreground">{detailPlan.name}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Código</p>
+                        <p className="font-mono text-sm text-foreground">{detailPlan.code}</p>
+                      </div>
+                      <p className="text-sm leading-6 text-muted-foreground">
+                        {detailPlan.description || "Sin descripción."}
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        <StatusBadge tone={planTone(detailPlan)}>
+                          {detailPlan.is_active ? "Activo" : "Inactivo"}
+                        </StatusBadge>
+                        <StatusBadge tone={publicTone(detailPlan)}>
+                          {detailPlan.is_public ? "Público" : "Privado"}
+                        </StatusBadge>
+                      </div>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="rounded-lg border bg-background p-4">
+                        <h3 className="text-sm font-semibold text-foreground">Límites</h3>
+                        <dl className="mt-3 space-y-2 text-sm">
+                          {detailLimitLabels.map((item) => (
+                            <div key={item.key} className="flex justify-between gap-3">
+                              <dt className="text-muted-foreground">{item.label}</dt>
+                              <dd className="font-medium text-foreground">
+                                {formatLimit(detailPlan.limits?.[item.key])}
+                              </dd>
+                            </div>
+                          ))}
+                        </dl>
+                      </div>
+                      <div className="rounded-lg border bg-background p-4">
+                        <h3 className="text-sm font-semibold text-foreground">Features</h3>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {detailFeatureLabels.map((item) => (
+                            <StatusBadge
+                              key={item.key}
+                              tone={detailPlan.features?.[item.key] ? "success" : "neutral"}
+                            >
+                              {item.label}
+                            </StatusBadge>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+              </AppCardContent>
+            </AppCard>
           ) : null}
 
           {plansQuery.isLoading ? (

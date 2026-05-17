@@ -49,6 +49,10 @@ export function AssignPlanDialog({
       setValidationError("La fecha de inicio es obligatoria.");
       return;
     }
+    if (endDate && endDate < startDate) {
+      setValidationError("La fecha de fin no puede ser anterior a la fecha de inicio.");
+      return;
+    }
 
     setValidationError(null);
     await onSubmit({
@@ -62,7 +66,7 @@ export function AssignPlanDialog({
 
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center bg-background/80 px-4 backdrop-blur-sm">
-      <div className="w-full max-w-lg rounded-2xl border bg-card p-5 shadow-xl">
+      <div className="w-full max-w-lg rounded-lg border bg-card p-5 shadow-xl">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-sm font-medium text-primary">Cambiar plan</p>
@@ -103,11 +107,12 @@ export function AssignPlanDialog({
               value={status}
               onChange={(event) => setStatus(event.target.value)}
               options={[
-                { value: "active", label: "Active" },
+                { value: "active", label: "Activa" },
+                { value: "trial", label: "Trial" },
                 { value: "trialing", label: "Trialing" },
-                { value: "past_due", label: "Past due" },
-                { value: "suspended", label: "Suspended" },
-                { value: "cancelled", label: "Cancelled" },
+                { value: "past_due", label: "Pago pendiente" },
+                { value: "suspended", label: "Suspendida" },
+                { value: "cancelled", label: "Cancelada" },
               ]}
             />
             <AppSelect
@@ -115,10 +120,10 @@ export function AssignPlanDialog({
               value={billingPeriod}
               onChange={(event) => setBillingPeriod(event.target.value)}
               options={[
-                { value: "monthly", label: "Monthly" },
-                { value: "annual", label: "Annual" },
-                { value: "pilot", label: "Pilot" },
-                { value: "none", label: "None" },
+                { value: "monthly", label: "Mensual" },
+                { value: "yearly", label: "Anual" },
+                { value: "pilot", label: "Piloto" },
+                { value: "custom", label: "Personalizado" },
               ]}
             />
             <AppInput

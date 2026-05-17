@@ -3,67 +3,98 @@ import type {
   AssignPlanPayload,
   CompanySubscriptionStatus,
   Plan,
+  PlanCreateRequest,
+  PlanFeatures,
   PlanFormValues,
-  PlanUpsertPayload,
+  PlanLimits,
+  PlanUpdateRequest,
   SuperAdminCompany,
 } from "@/types/plans";
 import type { SuperAdminCatalogItem } from "@/types/superadmin";
 
-function toPlanPayload(values: PlanFormValues): PlanUpsertPayload {
+const emptyLimits: PlanLimits = {
+  admins: null,
+  supervisors: null,
+  technicians: null,
+  projects: null,
+  clients: null,
+  units: null,
+  work_orders_per_month: null,
+  pdf_reports_per_month: null,
+  storage_mb: null,
+};
+
+const emptyFeatures: PlanFeatures = {
+  offline_mode: false,
+  custom_checklists: false,
+  advanced_dashboard: false,
+  evidence_editing: false,
+};
+
+function normalizePlan(plan: Plan): Plan {
   return {
-    code: values.code.trim(),
+    ...plan,
+    limits: {
+      ...emptyLimits,
+      ...(plan.limits || {}),
+    },
+    features: {
+      ...emptyFeatures,
+      ...(plan.features || {}),
+    },
+  };
+}
+
+function normalizeCode(code: string) {
+  return code.trim().toLowerCase().replace(/\s+/g, "_");
+}
+
+function toPlanCreatePayload(values: PlanFormValues): PlanCreateRequest {
+  return {
+    code: normalizeCode(values.code),
     name: values.name.trim(),
     description: values.description.trim() || null,
-    max_admins: values.limits.admins,
-    max_supervisors: values.limits.supervisors,
-    max_technicians: values.limits.technicians,
-    max_projects: values.limits.projects,
-    max_clients: values.limits.clients,
-    max_units: values.limits.units,
-    max_work_orders_per_month: values.limits.work_orders_per_month,
-    max_pdf_reports_per_month: values.limits.pdf_reports_per_month,
-    storage_limit_mb: values.limits.storage_mb,
-    allow_offline_mode: values.features.offline_mode,
-    allow_custom_checklists: values.features.custom_checklists,
-    allow_advanced_dashboard: values.features.advanced_dashboard,
-    allow_evidence_editing: values.features.evidence_editing,
     is_public: values.is_public,
     is_active: values.is_active,
+    limits: values.limits,
+    features: values.features,
   };
+}
+
+function toPlanUpdatePayload(values: PlanFormValues): PlanUpdateRequest {
+  return toPlanCreatePayload(values);
 }
 
 export async function listAdminPlans(includeInactive = true) {
   const response = await apiClient.get<Plan[]>(
     `/api/admin/plans?include_inactive=${String(includeInactive)}`
   );
-  return response.data;
+  return response.data.map(normalizePlan);
+}
+
+export async function getAdminPlan(planId: string) {
+  const response = await apiClient.get<Plan>(`/api/admin/plans/${planId}`);
+  return normalizePlan(response.data);
 }
 
 export async function createAdminPlan(values: PlanFormValues) {
-  const response = await apiClient.post<Plan>("/api/admin/plans", toPlanPayload(values));
-  return response.data;
+  const response = await apiClient.post<Plan>("/api/admin/plans", toPlanCreatePayload(values));
+  return normalizePlan(response.data);
 }
 
 export async function updateAdminPlan(planId: string, values: PlanFormValues) {
   const response = await apiClient.patch<Plan>(
     `/api/admin/plans/${planId}`,
-    toPlanPayload(values)
+    toPlanUpdatePayload(values)
   );
-  return response.data;
+  return normalizePlan(response.data);
 }
 
 export async function deactivateAdminPlan(planId: string) {
-  const response = await apiClient.patch<Plan>(`/api/admin/plans/${planId}`, {
-    is_active: false,
-  });
-  return response.data;
-}
-
-export async function deleteAdminPlan(planId: string) {
-  const response = await apiClient.delete<{ deleted: boolean } | Plan>(
-    `/api/admin/plans/${planId}`
+  const response = await apiClient.patch<Plan>(
+    `/api/admin/plans/${planId}/deactivate`
   );
-  return response.data;
+  return normalizePlan(response.data);
 }
 
 export async function listSuperAdminCompaniesForPlans(): Promise<SuperAdminCompany[]> {

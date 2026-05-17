@@ -41,7 +41,7 @@ class PlanNotFoundError(PlanServiceError):
     code = "PLAN_NOT_FOUND"
 
     def __init__(self):
-        super().__init__("No se encontro el plan asociado a la suscripcion.")
+        super().__init__("Plan no encontrado.")
 
 
 class PlanInactiveError(PlanServiceError):
@@ -49,3 +49,31 @@ class PlanInactiveError(PlanServiceError):
 
     def __init__(self):
         super().__init__("El plan asociado a la suscripcion no esta activo.")
+
+
+class PlanCodeAlreadyExistsError(PlanServiceError):
+    code = "PLAN_CODE_ALREADY_EXISTS"
+
+    def __init__(self):
+        super().__init__("Ya existe un plan con este codigo.")
+
+
+class InvalidPlanPayloadError(PlanServiceError):
+    code = "INVALID_PLAN_PAYLOAD"
+
+    def __init__(self, message: str):
+        super().__init__(message)
+
+
+class FreePlanCannotBeDeactivatedError(PlanServiceError):
+    code = "FREE_PLAN_CANNOT_BE_DEACTIVATED"
+
+    def __init__(self):
+        super().__init__("No se puede desactivar el plan free.")
+
+
+class PlanHasActiveSubscriptionsError(PlanServiceError):
+    code = "PLAN_HAS_ACTIVE_SUBSCRIPTIONS"
+
+    def __init__(self):
+        super().__init__("No se puede desactivar un plan con suscripciones activas.")

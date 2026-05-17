@@ -19,5 +19,14 @@ class PlanRepository(CRUDBaseRepository):
         result = await db.execute(query)
         return list(result.scalars().all())
 
+    async def get_by_code_excluding_id(self, db: AsyncSession, code: str, excluded_id) -> Plan | None:
+        result = await db.execute(
+            select(Plan).where(
+                Plan.code == code,
+                Plan.id != excluded_id,
+            )
+        )
+        return result.scalars().first()
+
 
 plan_repository = PlanRepository()

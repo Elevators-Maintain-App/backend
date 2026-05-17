@@ -28,6 +28,26 @@ export type Plan = {
   features?: PlanFeatures | null;
 };
 
+export type PlanCreateRequest = {
+  code: string;
+  name: string;
+  description?: string | null;
+  is_public: boolean;
+  is_active: boolean;
+  limits: PlanLimits;
+  features: PlanFeatures;
+};
+
+export type PlanUpdateRequest = {
+  code?: string;
+  name?: string;
+  description?: string | null;
+  is_public?: boolean;
+  is_active?: boolean;
+  limits?: Partial<PlanLimits>;
+  features?: Partial<PlanFeatures>;
+};
+
 export type CompanySubscription = {
   id: string;
   status: string;
@@ -70,27 +90,6 @@ export type PlanFormValues = {
   is_active: boolean;
   limits: PlanLimits;
   features: PlanFeatures;
-};
-
-export type PlanUpsertPayload = {
-  code: string;
-  name: string;
-  description?: string | null;
-  max_admins?: number | null;
-  max_supervisors?: number | null;
-  max_technicians?: number | null;
-  max_projects?: number | null;
-  max_clients?: number | null;
-  max_units?: number | null;
-  max_work_orders_per_month?: number | null;
-  max_pdf_reports_per_month?: number | null;
-  storage_limit_mb?: number | null;
-  allow_offline_mode: boolean;
-  allow_custom_checklists: boolean;
-  allow_advanced_dashboard: boolean;
-  allow_evidence_editing: boolean;
-  is_public: boolean;
-  is_active: boolean;
 };
 
 export type AssignPlanPayload = {

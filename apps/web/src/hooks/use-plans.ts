@@ -3,7 +3,7 @@ import {
   assignCompanyPlan,
   createAdminPlan,
   deactivateAdminPlan,
-  deleteAdminPlan,
+  getAdminPlan,
   getCompanySubscription,
   listAdminPlans,
   listSuperAdminCompaniesForPlans,
@@ -15,6 +15,14 @@ export function useAdminPlans(includeInactive = true) {
   return useQuery({
     queryKey: ["admin", "plans", { includeInactive }],
     queryFn: () => listAdminPlans(includeInactive),
+  });
+}
+
+export function useAdminPlanDetail(planId?: string) {
+  return useQuery({
+    queryKey: ["admin", "plans", planId],
+    queryFn: () => getAdminPlan(planId || ""),
+    enabled: Boolean(planId),
   });
 }
 
@@ -50,17 +58,6 @@ export function useDeactivateAdminPlan() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["admin", "plans"] });
       await queryClient.invalidateQueries({ queryKey: ["admin", "company-subscription"] });
-    },
-  });
-}
-
-export function useDeleteAdminPlan() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (planId: string) => deleteAdminPlan(planId),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["admin", "plans"] });
     },
   });
 }

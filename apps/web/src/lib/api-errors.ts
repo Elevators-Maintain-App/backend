@@ -6,9 +6,21 @@ type ApiErrorDetail = {
   code?: string;
 };
 
+function formatMessage(message: string, code?: string) {
+  return code ? `${message} (${code})` : message;
+}
+
 export function getApiErrorMessage(error: unknown): string {
   if (axios.isAxiosError(error)) {
-    const data = error.response?.data as { detail?: string | ApiErrorDetail } | undefined;
+    const data = error.response?.data as
+      | { detail?: string | ApiErrorDetail; message?: string; code?: string }
+      | string
+      | undefined;
+
+    if (typeof data === "string") {
+      return data;
+    }
+
     const detail = data?.detail;
 
     if (typeof detail === "string") {
@@ -16,11 +28,15 @@ export function getApiErrorMessage(error: unknown): string {
     }
 
     if (detail?.message) {
-      return detail.code ? `${detail.message} (${detail.code})` : detail.message;
+      return formatMessage(detail.message, detail.code);
     }
 
     if (detail?.detail) {
-      return detail.code ? `${detail.detail} (${detail.code})` : detail.detail;
+      return formatMessage(detail.detail, detail.code);
+    }
+
+    if (data?.message) {
+      return formatMessage(data.message, data.code);
     }
 
     if (error.response?.status === 404) {
@@ -38,6 +54,16 @@ export function getApiErrorMessage(error: unknown): string {
 
   if (error instanceof Error) {
     return error.message;
+  }
+
+  if (typeof error === "object" && error !== null) {
+    const candidate = error as { message?: unknown; detail?: unknown };
+    if (typeof candidate.message === "string") {
+      return candidate.message;
+    }
+    if (typeof candidate.detail === "string") {
+      return candidate.detail;
+    }
   }
 
   return "Ocurrio un error inesperado.";

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { AlertTriangle } from "lucide-react";
 import { AppInput } from "@/components/forms";
@@ -34,6 +34,8 @@ const featureFields: Array<{ key: FeatureKey; label: string }> = [
   { key: "advanced_dashboard", label: "Dashboard avanzado" },
   { key: "evidence_editing", label: "Edición de evidencias" },
 ];
+
+const planCodePattern = /^[a-z0-9_-]+$/;
 
 const emptyLimits: PlanLimits = {
   admins: null,
@@ -95,6 +97,10 @@ function parseLimit(value: string) {
   return Number.isFinite(parsed) ? parsed : Number.NaN;
 }
 
+function normalizeCode(value: string) {
+  return value.trim().toLowerCase().replace(/\s+/g, "_");
+}
+
 export function formatLimit(value: number | null | undefined) {
   return value === null || value === undefined ? "Sin límite" : String(value);
 }
@@ -111,11 +117,23 @@ export function PlanForm({
   const [limitInputs, setLimitInputs] = useState(() => toLimitInputs(initialValues.limits));
   const [validationError, setValidationError] = useState<string | null>(null);
 
+  useEffect(() => {
+    setValues(initialValues);
+    setLimitInputs(toLimitInputs(initialValues.limits));
+    setValidationError(null);
+  }, [initialValues]);
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const normalizedCode = normalizeCode(values.code);
 
-    if (!values.code.trim() || !values.name.trim()) {
+    if (!normalizedCode || !values.name.trim()) {
       setValidationError("Código y nombre son obligatorios.");
+      return;
+    }
+
+    if (!planCodePattern.test(normalizedCode)) {
+      setValidationError("El código solo puede contener letras minúsculas, números, guiones y guiones bajos.");
       return;
     }
 
@@ -135,7 +153,7 @@ export function PlanForm({
     setValidationError(null);
     await onSubmit({
       ...values,
-      code: values.code.trim(),
+      code: normalizedCode,
       name: values.name.trim(),
       description: values.description.trim(),
       limits: parsedLimits,
@@ -161,6 +179,8 @@ export function PlanForm({
               label="Código"
               value={values.code}
               onChange={(event) => setValues((current) => ({ ...current, code: event.target.value }))}
+              onBlur={() => setValues((current) => ({ ...current, code: normalizeCode(current.code) }))}
+              hint="Se normaliza a minúsculas. Espacios = guion bajo."
               placeholder="professional"
             />
             <AppInput
@@ -211,6 +231,7 @@ export function PlanForm({
                   label={field.label}
                   type="number"
                   min={0}
+                  step={1}
                   value={limitInputs[field.key]}
                   onChange={(event) =>
                     setLimitInputs((current) => ({
