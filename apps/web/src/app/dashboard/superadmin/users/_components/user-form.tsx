@@ -1,8 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AxiosError } from "axios";
-import { Loader2, Save } from "lucide-react";
+import { AlertTriangle, Loader2, Save } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
@@ -17,6 +16,7 @@ import {
   AppCardTitle
 } from "@/components/ui/app-card";
 import { useSuperAdminCompanies } from "@/hooks/use-superadmin-users";
+import { getApiErrorMessage, isPlanLimitReachedError } from "@/lib/api-errors";
 import type {
   SuperadminUserDetail,
   SuperadminUserRole
@@ -69,17 +69,6 @@ type UserFormProps = {
   onSubmit: (values: SuperadminUserFormValues) => void | Promise<void>;
 };
 
-function getApiErrorMessage(error: unknown) {
-  if (error instanceof AxiosError) {
-    const detail = error.response?.data?.detail;
-    if (typeof detail === "string") {
-      return detail;
-    }
-  }
-
-  return "No fue posible guardar el usuario. Revisa los datos e intenta nuevamente.";
-}
-
 function getDefaultValues(
   mode: UserFormProps["mode"],
   user?: SuperadminUserDetail
@@ -124,6 +113,7 @@ export function UserForm({
   );
 
   const apiErrorMessage = error ? getApiErrorMessage(error) : "";
+  const isPlanLimitError = error ? isPlanLimitReachedError(error) : false;
   const isEmailLocked = mode === "edit";
 
   return (
@@ -147,8 +137,16 @@ export function UserForm({
           ) : null}
 
           {apiErrorMessage ? (
-            <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-              {apiErrorMessage}
+            <div className="flex items-start gap-3 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-3 text-sm text-destructive">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              <div className="space-y-1">
+                {isPlanLimitError ? (
+                  <p className="font-medium">Límite del plan alcanzado</p>
+                ) : null}
+                {apiErrorMessage.split("\n").map((line) => (
+                  <p key={line}>{line}</p>
+                ))}
+              </div>
             </div>
           ) : null}
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { Edit3, Eye, ExternalLink, Plus, Power, RefreshCw, X } from "lucide-react";
+import { Edit3, Eye, ExternalLink, Plus, Power, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { RoleGuard } from "@/components/auth/role-guard";
@@ -9,6 +9,7 @@ import { EmptyState, ErrorState, StatusBadge } from "@/components/feedback";
 import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/layout/page-header";
 import { PlanForm, formatLimit } from "@/components/plans/plan-form";
+import { PlanModal } from "@/components/plans/plan-modal";
 import { AppButton } from "@/components/ui/app-button";
 import {
   AppCard,
@@ -89,7 +90,7 @@ export default function SuperAdminPlansPage() {
 
   const plans = plansQuery.data || [];
   const detailPlan = detailPlanQuery.data || null;
-  const showForm = isCreating || Boolean(editingPlan);
+  const isPlanFormOpen = isCreating || Boolean(editingPlan);
 
   const handleSubmit = async (values: PlanFormValues) => {
     setActionError(null);
@@ -266,124 +267,11 @@ export default function SuperAdminPlansPage() {
             </div>
           ) : null}
 
-          {actionError && !showForm ? (
+          {actionError && !isPlanFormOpen ? (
             <ErrorState
               title="No se pudo completar la acción"
               description={actionError}
             />
-          ) : null}
-
-          {showForm ? (
-            <PlanForm
-              plan={editingPlan}
-              isSubmitting={createPlan.isPending || updatePlan.isPending}
-              errorMessage={actionError}
-              onCancel={() => {
-                setIsCreating(false);
-                setEditingPlan(null);
-                setActionError(null);
-              }}
-              onSubmit={handleSubmit}
-            />
-          ) : null}
-
-          {detailPlanId && !showForm ? (
-            <AppCard>
-              <AppCardHeader>
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <AppCardTitle>Detalle de plan</AppCardTitle>
-                    <AppCardDescription>
-                      Datos normalizados desde `/api/admin/plans/{detailPlanId}`.
-                    </AppCardDescription>
-                  </div>
-                  <AppButton variant="ghost" size="sm" onClick={() => setDetailPlanId(null)}>
-                    <X className="h-4 w-4" />
-                    Cerrar
-                  </AppButton>
-                </div>
-              </AppCardHeader>
-              <AppCardContent>
-                {detailPlanQuery.isLoading ? (
-                  <div className="flex items-center gap-3 py-4 text-sm text-muted-foreground">
-                    <RefreshCw className="h-5 w-5 animate-spin text-primary" />
-                    Cargando detalle...
-                  </div>
-                ) : null}
-
-                {detailPlanQuery.isError ? (
-                  <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
-                    <p className="font-medium text-destructive">No pudimos cargar el detalle</p>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {getApiErrorMessage(detailPlanQuery.error)}
-                    </p>
-                    <AppButton
-                      className="mt-3"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => void detailPlanQuery.refetch()}
-                    >
-                      Reintentar
-                    </AppButton>
-                  </div>
-                ) : null}
-
-                {detailPlan ? (
-                  <div className="grid gap-5 lg:grid-cols-[1fr_1.4fr]">
-                    <div className="space-y-3">
-                      <div>
-                        <p className="text-sm text-muted-foreground">Nombre</p>
-                        <p className="font-medium text-foreground">{detailPlan.name}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Código</p>
-                        <p className="font-mono text-sm text-foreground">{detailPlan.code}</p>
-                      </div>
-                      <p className="text-sm leading-6 text-muted-foreground">
-                        {detailPlan.description || "Sin descripción."}
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        <StatusBadge tone={planTone(detailPlan)}>
-                          {detailPlan.is_active ? "Activo" : "Inactivo"}
-                        </StatusBadge>
-                        <StatusBadge tone={publicTone(detailPlan)}>
-                          {detailPlan.is_public ? "Público" : "Privado"}
-                        </StatusBadge>
-                      </div>
-                    </div>
-
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <div className="rounded-lg border bg-background p-4">
-                        <h3 className="text-sm font-semibold text-foreground">Límites</h3>
-                        <dl className="mt-3 space-y-2 text-sm">
-                          {detailLimitLabels.map((item) => (
-                            <div key={item.key} className="flex justify-between gap-3">
-                              <dt className="text-muted-foreground">{item.label}</dt>
-                              <dd className="font-medium text-foreground">
-                                {formatLimit(detailPlan.limits?.[item.key])}
-                              </dd>
-                            </div>
-                          ))}
-                        </dl>
-                      </div>
-                      <div className="rounded-lg border bg-background p-4">
-                        <h3 className="text-sm font-semibold text-foreground">Features</h3>
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {detailFeatureLabels.map((item) => (
-                            <StatusBadge
-                              key={item.key}
-                              tone={detailPlan.features?.[item.key] ? "success" : "neutral"}
-                            >
-                              {item.label}
-                            </StatusBadge>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ) : null}
-              </AppCardContent>
-            </AppCard>
           ) : null}
 
           {plansQuery.isLoading ? (
@@ -411,6 +299,121 @@ export default function SuperAdminPlansPage() {
 
           {!plansQuery.isLoading && !plansQuery.isError && plans.length ? (
             <DataTable columns={columns} data={plans} getRowKey={(plan) => plan.id} />
+          ) : null}
+
+          {isPlanFormOpen ? (
+            <PlanModal
+              title={editingPlan ? "Editar plan" : "Crear plan"}
+              description={
+                editingPlan
+                  ? "Actualiza límites, features y datos comerciales del plan."
+                  : "Define un nuevo plan comercial con límites y features."
+              }
+              onClose={() => {
+                setIsCreating(false);
+                setEditingPlan(null);
+                setActionError(null);
+              }}
+            >
+              <PlanForm
+                plan={editingPlan}
+                isSubmitting={createPlan.isPending || updatePlan.isPending}
+                errorMessage={actionError}
+                onCancel={() => {
+                  setIsCreating(false);
+                  setEditingPlan(null);
+                  setActionError(null);
+                }}
+                onSubmit={handleSubmit}
+              />
+            </PlanModal>
+          ) : null}
+
+          {detailPlanId && !isPlanFormOpen ? (
+            <PlanModal
+              title="Detalle de plan"
+              description="Consulta datos generales, límites y features configuradas."
+              onClose={() => setDetailPlanId(null)}
+            >
+              {detailPlanQuery.isLoading ? (
+                <div className="flex items-center gap-3 py-4 text-sm text-muted-foreground">
+                  <RefreshCw className="h-5 w-5 animate-spin text-primary" />
+                  Cargando detalle...
+                </div>
+              ) : null}
+
+              {detailPlanQuery.isError ? (
+                <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
+                  <p className="font-medium text-destructive">No pudimos cargar el detalle</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {getApiErrorMessage(detailPlanQuery.error)}
+                  </p>
+                  <AppButton
+                    className="mt-3"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => void detailPlanQuery.refetch()}
+                  >
+                    Reintentar
+                  </AppButton>
+                </div>
+              ) : null}
+
+              {detailPlan ? (
+                <div className="grid gap-5 lg:grid-cols-[1fr_1.4fr]">
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Nombre</p>
+                      <p className="font-medium text-foreground">{detailPlan.name}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Código</p>
+                      <p className="font-mono text-sm text-foreground">{detailPlan.code}</p>
+                    </div>
+                    <p className="text-sm leading-6 text-muted-foreground">
+                      {detailPlan.description || "Sin descripción."}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <StatusBadge tone={planTone(detailPlan)}>
+                        {detailPlan.is_active ? "Activo" : "Inactivo"}
+                      </StatusBadge>
+                      <StatusBadge tone={publicTone(detailPlan)}>
+                        {detailPlan.is_public ? "Público" : "Privado"}
+                      </StatusBadge>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="rounded-lg border bg-background p-4">
+                      <h3 className="text-sm font-semibold text-foreground">Límites</h3>
+                      <dl className="mt-3 space-y-2 text-sm">
+                        {detailLimitLabels.map((item) => (
+                          <div key={item.key} className="flex justify-between gap-3">
+                            <dt className="text-muted-foreground">{item.label}</dt>
+                            <dd className="font-medium text-foreground">
+                              {formatLimit(detailPlan.limits?.[item.key])}
+                            </dd>
+                          </div>
+                        ))}
+                      </dl>
+                    </div>
+                    <div className="rounded-lg border bg-background p-4">
+                      <h3 className="text-sm font-semibold text-foreground">Features</h3>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {detailFeatureLabels.map((item) => (
+                          <StatusBadge
+                            key={item.key}
+                            tone={detailPlan.features?.[item.key] ? "success" : "neutral"}
+                          >
+                            {item.label}
+                          </StatusBadge>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+            </PlanModal>
           ) : null}
         </div>
       </AppShell>
