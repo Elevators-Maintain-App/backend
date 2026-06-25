@@ -20,6 +20,7 @@ from app.services.plans.subscription_service import SubscriptionService
 from app.services.plans.subscription_status_service import (
     CompanyNotFoundError,
     InvalidSubscriptionPeriodError,
+    InvalidSubscriptionStatusError,
     SubscriptionStatusService,
 )
 from app.services.plans.usage_service import CompanyUsageService
@@ -31,6 +32,7 @@ __all__ = [
     "InvalidPlanPayloadError",
     "InvalidPlanResourceError",
     "InvalidSubscriptionPeriodError",
+    "InvalidSubscriptionStatusError",
     "FreePlanCannotBeDeactivatedError",
     "LimitCheckResult",
     "PlanAdminService",

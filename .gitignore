@@ -178,3 +178,5 @@ pyrightconfig.json
 .cursor/*
 
 firebase-service-account.json
+
+*.sql

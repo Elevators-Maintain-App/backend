@@ -9,6 +9,7 @@ from app.schemas.subscriptions import CompanySubscriptionStatusResponse, Subscri
 from app.services.plans import (
     CompanyNotFoundError,
     InvalidSubscriptionPeriodError,
+    InvalidSubscriptionStatusError,
     PlanInactiveError,
     PlanNotFoundError,
     SubscriptionNotFoundError,
@@ -44,6 +45,11 @@ def _plan_http_error(exc: Exception) -> HTTPException:
             detail={"message": exc.message, "code": exc.code},
         )
     if isinstance(exc, InvalidSubscriptionPeriodError):
+        return HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"message": exc.message, "code": exc.code},
+        )
+    if isinstance(exc, InvalidSubscriptionStatusError):
         return HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={"message": exc.message, "code": exc.code},

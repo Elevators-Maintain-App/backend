@@ -17,6 +17,7 @@ from app.schemas.subscriptions import (
     SubscriptionPlanSummary,
     SubscriptionSummary,
 )
+from app.services.plans.constants import ACTIVE_SUBSCRIPTION_STATUSES, VALID_SUBSCRIPTION_STATUSES
 from app.services.plans.exceptions import PlanInactiveError, PlanNotFoundError, SubscriptionNotFoundError
 from app.services.plans.subscription_service import SubscriptionService
 from app.services.plans.usage_service import CompanyUsageService
@@ -35,6 +36,14 @@ class InvalidSubscriptionPeriodError(Exception):
 
     def __init__(self):
         self.message = "El periodo de suscripcion no es valido."
+        super().__init__(self.message)
+
+
+class InvalidSubscriptionStatusError(Exception):
+    code = "INVALID_SUBSCRIPTION_STATUS"
+
+    def __init__(self):
+        self.message = "El estado de suscripcion no es valido."
         super().__init__(self.message)
 
 
@@ -82,23 +91,26 @@ class SubscriptionStatusService:
         if not plan.is_active:
             raise PlanInactiveError()
 
+        status = self._normalize_status(payload.status)
+        start_date = payload.start_date or date.today()
+
         if payload.start_date and payload.end_date and payload.end_date < payload.start_date:
             raise InvalidSubscriptionPeriodError()
 
         active_subscription = await self.subscription_service.get_active_subscription(company_id)
         now = datetime.now(timezone.utc)
-        if active_subscription is not None:
+        if active_subscription is not None and self._subscription_starts_active_today(status, start_date):
             active_subscription.status = "cancelled"
-            active_subscription.end_date = payload.start_date or date.today()
+            active_subscription.end_date = start_date
             active_subscription.cancelled_at = now
             self.db.add(active_subscription)
 
         subscription = CompanySubscription(
             company_id=company_id,
             plan_id=payload.plan_id,
-            status=payload.status,
+            status=status,
             billing_period=payload.billing_period,
-            start_date=payload.start_date or date.today(),
+            start_date=start_date,
             end_date=payload.end_date,
             current_period_start=payload.current_period_start,
             current_period_end=payload.current_period_end,
@@ -112,6 +124,15 @@ class SubscriptionStatusService:
         subscription.plan = plan
 
         return await self.get_company_status(company_id)
+
+    def _normalize_status(self, status: str | None) -> str:
+        normalized = (status or "active").strip().lower()
+        if normalized not in VALID_SUBSCRIPTION_STATUSES:
+            raise InvalidSubscriptionStatusError()
+        return normalized
+
+    def _subscription_starts_active_today(self, status: str, start_date: date) -> bool:
+        return status in ACTIVE_SUBSCRIPTION_STATUSES and start_date <= date.today()
 
     def _build_status_response(self, company_id: UUID, subscription, plan: Plan, usage) -> CompanySubscriptionStatusResponse:
         limits = self._build_limits(plan)

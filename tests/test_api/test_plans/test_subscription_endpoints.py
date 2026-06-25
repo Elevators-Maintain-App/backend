@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from importlib import import_module
 from types import SimpleNamespace
 from uuid import UUID
@@ -137,7 +137,7 @@ async def seed_company_and_plan(*, with_subscription: bool = True, active_plan: 
                 status="active",
                 billing_period="monthly",
                 start_date=date(2026, 5, 1),
-                end_date=date(2026, 6, 1),
+                end_date=None,
             )
             session.add(subscription)
 
@@ -295,6 +295,74 @@ async def test_superadmin_can_change_company_subscription_without_duplicate_acti
     count, original_status = await active_subscription_count()
     assert count == 1
     assert original_status == "cancelled"
+
+
+@pytest.mark.asyncio
+async def test_superadmin_can_schedule_future_subscription_without_cancelling_current():
+    seeded = await seed_company_and_plan()
+
+    async def add_future_plan():
+        async with AsyncSessionLocal() as session:
+            plan = Plan(
+                code=f"test-api-slice3-future-{uuid.uuid4()}",
+                name=f"Test API Slice 3 Future {uuid.uuid4()}",
+                max_technicians=25,
+                allow_offline_mode=True,
+                is_active=True,
+                is_public=False,
+            )
+            session.add(plan)
+            await session.commit()
+            await session.refresh(plan)
+            return plan
+
+    future_plan = await add_future_plan()
+    future_start = date.today() + timedelta(days=30)
+
+    async with AsyncClient(app=create_app(role="superAdmin"), base_url="http://test") as client:
+        response = await client.post(
+            f"/api/admin/companies/{COMPANY_ID}/subscription",
+            json={
+                "plan_id": str(future_plan.id),
+                "status": "active",
+                "billing_period": "monthly",
+                "start_date": future_start.isoformat(),
+            },
+        )
+
+    assert response.status_code == 201
+    assert response.json()["plan"]["id"] == str(seeded["plan"].id)
+
+    async with AsyncSessionLocal() as session:
+        original = await session.get(CompanySubscription, seeded["subscription"].id)
+        rows = (
+            await session.execute(
+                select(CompanySubscription).where(CompanySubscription.company_id == COMPANY_ID)
+            )
+        ).scalars().all()
+
+    assert original.status == "active"
+    assert original.cancelled_at is None
+    assert any(row.plan_id == future_plan.id and row.start_date == future_start for row in rows)
+
+
+@pytest.mark.asyncio
+async def test_assign_subscription_rejects_invalid_status():
+    seeded = await seed_company_and_plan()
+
+    async with AsyncClient(app=create_app(role="superAdmin"), base_url="http://test") as client:
+        response = await client.post(
+            f"/api/admin/companies/{COMPANY_ID}/subscription",
+            json={
+                "plan_id": str(seeded["plan"].id),
+                "status": "not-a-real-status",
+                "billing_period": "monthly",
+                "start_date": date.today().isoformat(),
+            },
+        )
+
+    assert response.status_code == 400
+    assert response.json()["detail"]["code"] == "INVALID_SUBSCRIPTION_STATUS"
 
 
 @pytest.mark.asyncio
