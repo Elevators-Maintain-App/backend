@@ -17,6 +17,7 @@ from app.db.models.compania import Compania
 from app.db.models.plans import Plan
 from app.db.models.company_subscriptions import CompanySubscription
 from app.db.models.company_usage import CompanyUsage
+from app.db.models.overtime_requests import OvertimeRequest, OvertimeRequestEvent
 from app.db.models.clientes import Cliente
 from app.db.models.enums.tipos_documento import TipoDocumento
 from app.db.models.enums.tipos_unidad import TipoUnidad
