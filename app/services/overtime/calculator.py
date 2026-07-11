@@ -59,10 +59,12 @@ def calculate_overtime(
     now: date | datetime,
     break_start_time: time | None = None,
     break_end_time: time | None = None,
+    validate_week: bool = True,
 ) -> OvertimeCalculation:
     """Validate and calculate a same-day work period using integer minutes."""
     _validate_minute_precision(entry_time, exit_time, break_start_time, break_end_time)
-    validate_current_calendar_week(work_date, now=now)
+    if validate_week:
+        validate_current_calendar_week(work_date, now=now)
 
     entry_minutes = _minutes(entry_time)
     exit_minutes = _minutes(exit_time)

@@ -111,6 +111,20 @@ def test_panama_week_changes_at_0500_utc():
         validate_current_calendar_week(date(2026, 7, 12), now=utc_panama_monday)
 
 
+def test_calculation_can_skip_week_validation_for_supervisor_review():
+    utc_panama_monday = datetime(2026, 7, 13, 5, 0, tzinfo=timezone.utc)
+    result = calculate_overtime(
+        work_date=date(2026, 7, 12),
+        entry_time=time(7),
+        break_start_time=time(12),
+        break_end_time=time(12, 30),
+        exit_time=time(18, 30),
+        now=utc_panama_monday,
+        validate_week=False,
+    )
+    assert (result.worked_minutes, result.regular_minutes, result.overtime_minutes) == (660, 480, 180)
+
+
 def test_regular_minutes_are_capped_and_overtime_is_never_negative():
     short_day = calculate(time(7), time(8))
     long_day = calculate(time(6), time(20))

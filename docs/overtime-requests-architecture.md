@@ -2,9 +2,9 @@
 
 ## Objetivo y alcance
 
-Esta fase establece la base documental, de persistencia y de lógica pura para que un técnico registre una jornada real con horas extra. Incluye los modelos `overtime_requests` y `overtime_request_events`, una migración Alembic, cálculo/validación sin infraestructura y pruebas unitarias.
+El dominio permite que un técnico registre una jornada real con horas extra y que el supervisor seleccionado la resuelva. Incluye persistencia, cálculo/validación pura, API protegida, servicio de dominio y auditoría transaccional.
 
-No existen endpoints, schemas HTTP, repositorios, integración móvil ni cambios de contratos API en esta fase. Tampoco se implementan revisión, notificaciones, control de asistencia, entrada/salida diaria, GPS, geocercas, marcaciones, fichaje ni cálculo legal de jornada.
+No se implementan integración móvil, notificaciones, control de asistencia, entrada/salida diaria, GPS, geocercas, marcaciones, fichaje ni cálculo legal de jornada.
 
 ## Separación del dominio
 
@@ -61,7 +61,11 @@ La tabla refuerza que el trabajo sea positivo, los regulares estén entre 0 y 48
 
 ## Semana y zona horaria
 
-Solo se acepta una fecha entre lunes y domingo de la semana calendario actual en `America/Panama`. El domingo aún acepta cualquier fecha desde el lunes anterior; a las 00:00 del lunes de Panamá empieza una semana nueva. La función recibe `now` explícitamente. Los `datetime` conscientes se convierten a Panamá; uno naive se interpreta como hora de Panamá. Un `date` se usa como fecha de Panamá.
+La ventana lunes-domingo de la semana calendario actual en `America/Panama` limita solamente el envío inicial del técnico. El domingo aún se acepta cualquier fecha desde el lunes anterior; a las 00:00 del lunes de Panamá empieza una semana nueva y el técnico ya no puede crear solicitudes de la semana anterior.
+
+La revisión del supervisor puede realizarse en semanas posteriores. Al corregir y aprobar se revalidan los intervalos horarios, el receso y la precisión de minutos, y se recalculan `worked_minutes`, `regular_minutes` y `overtime_minutes`; no se vuelve a validar que `work_date` pertenezca a la semana actual.
+
+La función recibe `now` explícitamente. Los `datetime` conscientes se convierten a Panamá; uno naive se interpreta como hora de Panamá. Un `date` se usa como fecha de Panamá.
 
 ## Índices y restricciones
 
@@ -78,4 +82,44 @@ Hay índices simples para compañía, técnico, supervisor autorizante, fecha, e
 - Evaluar políticas de retención, privacidad y reporting.
 - Integrar más adelante con mobile offline sin mezclar este dominio con asistencia/GPS.
 
-Confirmación: esta fase no registra routers ni crea endpoints.
+## Contrato API
+
+Todos los endpoints usan Bearer token Firebase y el prefijo `/api/overtime`. El servicio resuelve el usuario PostgreSQL por el `uid` autenticado y usa su UUID y `company_id`; no confía en identidad o compañía enviadas por el cliente.
+
+| Método | Endpoint | Rol | Descripción |
+| --- | --- | --- | --- |
+| GET | `/catalogs/projects` | `technician` | Proyectos activos de su compañía; devuelve solo `id`, `name`. |
+| GET | `/catalogs/supervisors` | `technician` | Supervisores activos de su compañía; devuelve solo `id`, `name`. |
+| POST | `/requests` | `technician` | Crea para sí mismo y genera `submitted`. |
+| GET | `/requests/me` | `technician` | Lista propia con filtros `status`, `date_from`, `date_to`, `skip`, `limit`. |
+| GET | `/requests/me/{request_id}` | `technician` | Detalle propio e historial ascendente. |
+| GET | `/supervisor/requests` | `supervisor` | Lista solo asignadas; acepta además `technician_id`. |
+| GET | `/supervisor/requests/{request_id}` | `supervisor` | Detalle solo si fue el supervisor elegido. |
+| POST | `/supervisor/requests/{request_id}/approve` | `supervisor` | Aprueba; `note` opcional. |
+| POST | `/supervisor/requests/{request_id}/adjust-and-approve` | `supervisor` | Corrige todos los valores finales y aprueba. |
+| POST | `/supervisor/requests/{request_id}/reject` | `supervisor` | Rechaza con `note` obligatoria. |
+
+La creación acepta `work_date`, los cuatro horarios (receso nullable como par), `activity`, `project_id` y `authorizing_supervisor_id`. Prohíbe campos de identidad, compañía, estado, revisión y minutos calculados. Devuelve `201` con el detalle. El ajuste exige el conjunto completo de valores finales (`entry_time`, ambos campos de receso, `exit_time`, `activity`, `project_id`, `note`); no permite cambiar fecha, técnico, compañía ni supervisor autorizante, y puede ejecutarse en una semana posterior a la fecha trabajada.
+
+Las respuestas resumidas incluyen jornada, proyecto, técnico, supervisor, minutos, estado y fechas principales. El detalle agrega horarios, nota, timestamps e historial. Horas se serializan como `HH:MM`, UUID como string, enums por valor y fechas ISO.
+
+## Errores y visibilidad
+
+- `400`: jornada, rango o selección de proyecto/supervisor inválidos.
+- `401`: token ausente o inválido.
+- `403`: rol o usuario PostgreSQL activo no permitido.
+- `404`: solicitud no visible; no revela existencia fuera de técnico, compañía o supervisor asignado.
+- `409`: solicitud ya resuelta.
+- `422`: forma/tipo del payload, campos extra, nota vacía o precisión horaria inválida detectada por Pydantic.
+
+Los listados usan `skip` desde 0 y `limit` entre 1 y 100 (default 20). Técnico: `work_date DESC, submitted_at DESC`. Supervisor: pendientes primero y luego el mismo orden descendente.
+
+## Transacciones, bloqueo y snapshots
+
+Repositorio y servicio solo hacen `flush`; no hacen commit. `get_db` realiza un único commit al final o rollback ante cualquier excepción. Así, la solicitud/transición y su evento se confirman juntas. Las revisiones recuperan la fila visible con `SELECT ... FOR UPDATE`; tras adquirir el bloqueo verifican `pending`, evitando doble resolución concurrente.
+
+Una única función serializa snapshots JSONB con UUID string, fecha/datetime ISO, hora `HH:MM` y enum por valor. `submitted` guarda solo snapshot posterior; las resoluciones guardan antes y después. Los eventos no tienen endpoints de modificación ni eliminación.
+
+## Fuera de alcance actual
+
+React Native, edición o eliminación del técnico, reapertura, delegación, notificaciones, exportaciones, asistencia/GPS y jornadas nocturnas siguen fuera de alcance.
