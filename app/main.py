@@ -32,6 +32,7 @@ from app.api.routes import (
     web_superadmin_router,
     plans_router,
     subscriptions_router,
+    overtime_requests_router,
     zonas_geograficas
 )
 from app.core.config import settings
@@ -108,6 +109,7 @@ app.include_router(web_client_router, prefix="/api/web/client", tags=["Web Clien
 app.include_router(web_superadmin_router, prefix="/api/web/superadmin", tags=["Web SuperAdmin"])
 app.include_router(plans_router, prefix="/api", tags=["Plans"])
 app.include_router(subscriptions_router, prefix="/api", tags=["Subscriptions"])
+app.include_router(overtime_requests_router, prefix="/api/overtime", tags=["Overtime Requests"])
 app.include_router(zonas_geograficas, prefix="/api/zonas-geograficas", tags=["Zonas Geograficas"])
 
 # add openapi config

@@ -22,6 +22,7 @@ from app.api.routes.web_client import router as web_client_router
 from app.api.routes.web_superadmin import router as web_superadmin_router
 from app.api.routes.plans import router as plans_router
 from app.api.routes.subscriptions import router as subscriptions_router
+from app.api.routes.overtime_requests import router as overtime_requests_router
 
 __all__ = ["usuarios_router", "clientes_router", 
            "tipos_documento_router", "estados_orden_router", "prioridades_router", 
@@ -30,5 +31,6 @@ __all__ = ["usuarios_router", "clientes_router",
            "checklists_router", "unidades_router", "admin_dashboard", "dashboard",
            "hojas_de_vida", "zonas_geograficas", "compania_router", "lov_router",
            "nivel_tecnico_router", "ordenes_seguimiento", "web_client_router",
-           "web_superadmin_router", "plans_router", "subscriptions_router"
+           "web_superadmin_router", "plans_router", "subscriptions_router",
+           "overtime_requests_router"
            ] 

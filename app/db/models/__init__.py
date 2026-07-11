@@ -13,6 +13,12 @@ from .plans import Plan
 from .company_subscriptions import CompanySubscription
 from .company_usage import CompanyUsage
 from .pdf_report_generation_events import PdfReportGenerationEvent
+from .overtime_requests import (
+    OvertimeRequest,
+    OvertimeRequestEvent,
+    OvertimeRequestEventType,
+    OvertimeRequestStatus,
+)
 from .seguimiento import OrdenTrabajoSeguimiento, EventoOrden
 
 from .enums import (
@@ -47,6 +53,10 @@ __all__ = [
     "CompanySubscription",
     "CompanyUsage",
     "PdfReportGenerationEvent",
+    "OvertimeRequest",
+    "OvertimeRequestEvent",
+    "OvertimeRequestEventType",
+    "OvertimeRequestStatus",
     "Pais",
     "EventoOrden",
     "OrdenTrabajoSeguimiento"
