@@ -19,6 +19,14 @@ from app.schemas.overtime_requests import OvertimeApproveRequest, OvertimeReques
 from app.services.overtime.request_service import OvertimeRequestService
 
 
+class _BinaryRenderer:
+    def __init__(self, content):
+        self.content = content
+
+    def render(self, context):
+        return self.content
+
+
 def _request(*, company_id, technician_id, project_id, supervisor_id, entry, exit):
     now = datetime.now(timezone.utc)
     worked_minutes = int(
@@ -306,3 +314,75 @@ async def test_paginated_repository_count_order_and_tenant_identity_isolation():
         assert await repository.count_for_supervisor_export(**export_filters) == 2
         exported = await repository.list_for_supervisor_export(**export_filters)
         assert {row.id for row in exported} == {first_id, second_id}
+
+
+@pytest.mark.asyncio
+async def test_supervisor_catalog_ids_filter_page_and_both_exports_without_tenant_leaks():
+    request_id, technician_uid, supervisor_uid = await _seed_request()
+    other_request_id, other_technician_uid, _ = await _seed_request()
+    async with AsyncSessionLocal() as setup:
+        request = await setup.get(OvertimeRequest, request_id)
+        technician = (
+            await setup.execute(select(Usuario).where(Usuario.uid == technician_uid))
+        ).scalar_one()
+        supervisor = (
+            await setup.execute(select(Usuario).where(Usuario.uid == supervisor_uid))
+        ).scalar_one()
+        other_technician = (
+            await setup.execute(select(Usuario).where(Usuario.uid == other_technician_uid))
+        ).scalar_one()
+        no_request = Usuario(
+            uid=f"no-request-{uuid4().hex}", display_name="Técnico sin solicitudes",
+            company_id=supervisor.company_id, document_id=f"doc-{uuid4().hex}",
+            document_type_id=supervisor.document_type_id,
+            email=f"no-request-{uuid4().hex}@example.com", rol=Rol.TECHNICIAN, is_active=True,
+        )
+        inactive = Usuario(
+            uid=f"inactive-{uuid4().hex}", display_name="Técnico inactivo",
+            company_id=supervisor.company_id, document_id=f"doc-{uuid4().hex}",
+            document_type_id=supervisor.document_type_id,
+            email=f"inactive-{uuid4().hex}@example.com", rol=Rol.TECHNICIAN, is_active=False,
+        )
+        setup.add_all([no_request, inactive])
+        await setup.commit()
+        ids = technician.id, no_request.id, inactive.id, other_technician.id
+        work_date = request.work_date
+
+    async with AsyncSessionLocal() as querying:
+        service = OvertimeRequestService(
+            querying,
+            clock=lambda: datetime(2026, 7, 12, tzinfo=timezone.utc),
+            pdf_renderer=_BinaryRenderer(b"%PDF-catalog"),
+            xlsx_renderer=_BinaryRenderer(b"PK-catalog"),
+        )
+        auth = SimpleNamespace(uid=supervisor_uid)
+        catalog = await service.list_technician_catalog_for_supervisor(auth)
+        catalog_ids = {item.id for item in catalog}
+        assert ids[0] in catalog_ids and ids[1] in catalog_ids
+        assert ids[2] not in catalog_ids and ids[3] not in catalog_ids
+        assert all(item.model_dump().keys() == {"id", "name"} for item in catalog)
+
+        page = await service.page_assigned_requests(
+            auth, status=None, technician_id=ids[0], date_from=work_date,
+            date_to=work_date, page=1, page_size=20,
+        )
+        assert page.total == 1 and [item.id for item in page.items] == [request_id]
+
+        empty_same_company = await service.page_assigned_requests(
+            auth, status=None, technician_id=ids[1], date_from=work_date,
+            date_to=work_date, page=1, page_size=20,
+        )
+        empty_other_company = await service.page_assigned_requests(
+            auth, status=None, technician_id=ids[3], date_from=work_date,
+            date_to=work_date, page=1, page_size=20,
+        )
+        assert empty_same_company.total == empty_other_company.total == 0
+
+        for export_format, prefix in (("pdf", b"%PDF"), ("xlsx", b"PK")):
+            content, _, _ = await service.export_assigned_requests(
+                auth, export_format=export_format, status=None, technician_id=ids[0],
+                date_from=work_date, date_to=work_date,
+            )
+            assert content.startswith(prefix)
+
+        assert other_request_id != request_id

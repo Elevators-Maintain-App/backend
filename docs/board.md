@@ -75,6 +75,17 @@ Estado:
 
 ## Validation
 
+### `OT-COMPAT-001` — Catálogo compatible de técnicos para filtros overtime
+
+Implementado en rama `fix/overtime-supervisor-technician-catalog`:
+
+* endpoint protegido `GET /api/overtime/supervisor/catalogs/technicians`;
+* UUID PostgreSQL compatible con listado y exportaciones;
+* aislamiento por compañía, rol técnico y estado activo;
+* focalizadas `95 passed`, módulo `125 passed`, integración PostgreSQL `7 passed`;
+* suite completa `367 passed`, `36 warnings`, `0 failed`;
+* pendiente validación posterior a un despliegue autorizado desde React Native.
+
 ### `PLAN-001` — Validar estado final de planes y suscripciones
 
 Implementación confirmada:

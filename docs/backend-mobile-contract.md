@@ -141,6 +141,13 @@ El contrato incorpora el estado `cancelled` y los eventos `edited` y `cancelled`
 
 Se agregan de forma aditiva `GET /api/overtime/requests/me/page` y `GET /api/overtime/supervisor/requests/page`. Devuelven `items`, `page`, `page_size`, `total`, `total_pages`, `date_from` y `date_to`; admiten un estado y rango de fechas, y supervisor puede filtrar por técnico sin ampliar visibilidad. Los endpoints array con `skip`/`limit` permanecen intactos y no están deprecados. Mobile actual puede seguir usándolos hasta migrar coordinadamente a `/page`.
 
+`GET /api/overtime/supervisor/catalogs/technicians` requiere supervisor activo y devuelve un array
+de elementos con exactamente `{ "id": UUID, "name": string }`. Lista únicamente técnicos activos
+de su compañía, ordenados por nombre y UUID. El `id` es `usuarios.id` de PostgreSQL y es la fuente
+exclusiva para `technician_id` en `/supervisor/requests/page` y `/supervisor/requests/export`.
+`/api/lov/tecnicos` conserva su Firebase UID y su contrato legacy para otros dominios; no debe usarse
+para filtros overtime.
+
 `GET /api/overtime/supervisor/requests/export` permite la descarga autenticada con Bearer y `format` obligatorio, exactamente `pdf` o `xlsx`. Acepta `date_from`, `date_to`, `status` y `technician_id`, y devuelve directamente una respuesta binaria, no JSON ni URL. PDF usa `application/pdf`, nombre `horas-extra_{date_from}_{date_to}.pdf` y máximo 2000 solicitudes. XLSX usa `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`, nombre `horas-extra_{date_from}_{date_to}.xlsx` y máximo 10000; contiene las hojas `Solicitudes`, `Resumen por técnico` y `Resumen general`. Ambos usan `Content-Disposition: attachment` y todo el resultado filtrado, no solo una página. Puede devolver `400` por rango, `403` por autorización, `413` por el límite propio del formato y `422` por formato/parámetros. La descarga y compartición desde React Native se implementa y valida en el repositorio mobile.
 
 ### Clientes, proyectos y unidades

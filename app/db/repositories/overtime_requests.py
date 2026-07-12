@@ -51,6 +51,18 @@ class OvertimeRequestRepository:
         )
         return list(result.scalars().all())
 
+    async def list_active_technicians(self, company_id: UUID) -> list[Usuario]:
+        result = await self.db.execute(
+            select(Usuario)
+            .where(
+                Usuario.company_id == company_id,
+                Usuario.rol == Rol.TECHNICIAN,
+                Usuario.is_active.is_(True),
+            )
+            .order_by(Usuario.display_name.asc(), Usuario.id.asc())
+        )
+        return list(result.scalars().all())
+
     async def get_active_supervisor(self, company_id: UUID, user_id: UUID) -> Usuario | None:
         result = await self.db.execute(
             select(Usuario).where(

@@ -26,6 +26,7 @@ Prefijo común: `/api/overtime`.
 | --- | --- | --- | --- | --- | --- | --- |
 | GET | `/catalogs/projects` | `technician` | Sin parámetros | `OvertimeCatalogItem[]` | 401, 403 | Fuente del selector de proyecto. |
 | GET | `/catalogs/supervisors` | `technician` | Sin parámetros | `OvertimeCatalogItem[]` | 401, 403 | Fuente del supervisor autorizante. |
+| GET | `/supervisor/catalogs/technicians` | `supervisor` | Sin parámetros | `OvertimeCatalogItem[]` | 401, 403 | Fuente exclusiva del selector `technician_id` para listado y exportaciones. |
 | POST | `/requests` | `technician` | `OvertimeRequestCreate` | `201 OvertimeRequestDetail` | 400, 401, 403, 409, 422 | Crear y refrescar listas propias. |
 | GET | `/requests/me` | `technician` | `status?`, `date_from?`, `date_to?`, `skip=0`, `limit=20` | `OvertimeRequestSummary[]` | 400, 401, 403, 422 | Contrato array legacy preservado. |
 | GET | `/requests/me/page` | `technician` | `status?`, `date_from?`, `date_to?`, `page=1`, `page_size=20` | `OvertimeRequestPage` | 400, 401, 403, 422 | Destino recomendado para la iteración 2. |
@@ -41,6 +42,12 @@ Prefijo común: `/api/overtime`.
 | POST | `/supervisor/requests/{request_id}/reject` | `supervisor` | `{ "note": string }` | `OvertimeRequestDetail` | 401, 403, 404, 409, 422 | Nota obligatoria; invalidar listas/detalle. |
 
 `OvertimeCatalogItem` contiene exactamente `id` UUID y `name` string.
+
+En el catálogo de técnicos del supervisor, `id` es el UUID interno `usuarios.id` de PostgreSQL. El
+resultado incluye solo técnicos activos de la misma compañía, ordenados por nombre y UUID. Mobile
+debe enviar ese valor directamente como `technician_id` a `/supervisor/requests/page` y
+`/supervisor/requests/export` para PDF o XLSX. No usar `/api/lov/tecnicos` en este flujo: ese LOV
+legacy devuelve Firebase UID y permanece disponible para sus demás consumidores.
 
 ## 3. Payloads y respuestas exactas
 
