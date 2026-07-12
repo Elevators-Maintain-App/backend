@@ -3,7 +3,11 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
+from app.core.database_safety import validate_safe_test_database
 from app.core.config import settings
+
+if settings.environment == "test":
+    validate_safe_test_database(settings.environment, str(settings.database_url))
 
 # Create async engine
 engine = create_async_engine(
@@ -40,4 +44,4 @@ async def get_db():
             await session.rollback()
             raise
         finally:
-            await session.close() 
+            await session.close()

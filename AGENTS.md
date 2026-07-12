@@ -20,6 +20,7 @@ Dar contexto operativo a agentes de código para corregir bugs y agregar funcion
 - Levantar local con Docker: `docker-compose up -d`
 - Ejecutar API manualmente: `uvicorn app.main:app --reload`
 - Docs Swagger: `http://localhost:8000/docs`
+- Pruebas: no uses `docker-compose exec api pytest`. Usa `docker compose -f docker-compose.test.yml ...`, inicializa con `python scripts/bootstrap_test_database.py` + `alembic stamp 7b8d4f2c1a90`, y consulta `docs/testing-database-isolation.md`.
 
 ## Skills disponibles
 - `.agent-skills/fastapi-domain-changes/SKILL.md`: cambios de dominio completos en FastAPI por capas.

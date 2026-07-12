@@ -53,8 +53,8 @@ class OrdenDeTrabajo(Base):
     )
 
     cliente = relationship(
-        "Usuario",
-        primaryjoin="OrdenDeTrabajo.cliente_id == foreign(Usuario.uid)",
+        "Cliente",
+        primaryjoin="foreign(OrdenDeTrabajo.cliente_id) == Cliente.id",
         lazy="joined",
         uselist=False,
         viewonly=True,

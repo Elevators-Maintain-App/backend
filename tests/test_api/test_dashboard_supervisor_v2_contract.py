@@ -107,7 +107,7 @@ def fake_order(
     estado_id: int,
     fecha: date,
     descripcion: str,
-    cliente=SimpleNamespace(display_name="Cliente contrato"),
+    cliente=SimpleNamespace(nombre="Cliente contrato"),
     tecnico=SimpleNamespace(display_name="Tecnico contrato"),
     unidad=SimpleNamespace(
         nombre="Unidad contrato",

@@ -1,17 +1,22 @@
 import pytest
 import asyncio
-from typing import AsyncGenerator, Generator
+from typing import Generator
 from unittest.mock import AsyncMock, MagicMock
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.session import Base
+from app.core.database_safety import validate_safe_test_database_from_env
+
+validate_safe_test_database_from_env()
+
 from app.db.models.usuarios import Usuario, Rol
 from app.db.models.compania import Compania
 from app.db.models import TipoDocumento
 
 from uuid import uuid4
+
+
+def pytest_sessionstart(session):
+    validate_safe_test_database_from_env()
 
 
 @pytest.fixture(scope="session")
@@ -97,4 +102,4 @@ def sample_usuarios_list() -> list[Usuario]:
             rol=Rol.TECHNICIAN,
             company_id="company2"
         )
-    ] 
+    ]

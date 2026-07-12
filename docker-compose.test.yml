@@ -1,0 +1,41 @@
+services:
+  db-test:
+    image: postgres:14-alpine
+    container_name: vertione_postgres_test
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: vertione_test_user
+      POSTGRES_PASSWORD: vertione_test_password
+      POSTGRES_DB: vertione_test
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vertione_test_user -d vertione_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - test-network
+
+  api-test:
+    build: .
+    container_name: vertione_api_test
+    restart: unless-stopped
+    depends_on:
+      db-test:
+        condition: service_healthy
+    environment:
+      ENVIRONMENT: test
+      DATABASE_URL: postgresql+asyncpg://vertione_test_user:vertione_test_password@db-test:5432/vertione_test
+      NOTIFICATION_EMAIL: test@example.local
+      EMAIL_PWD: test-password
+      SMTP_SERVER: localhost
+    volumes:
+      - ./:/app
+    command: tail -f /dev/null
+    networks:
+      - test-network
+
+networks:
+  test-network:
+    driver: bridge

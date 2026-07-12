@@ -53,7 +53,10 @@ class Settings(BaseSettings):
         if database_url_from_env:
             if database_url_from_env.startswith("postgresql://"):
                 database_url_from_env = database_url_from_env.replace("postgresql://", "postgresql+asyncpg://", 1)
-            print(f"☁️ Production DB")
+            if environment == "test":
+                print(f"🧪 Test DB")
+            else:
+                print(f"☁️ Production DB")
             return database_url_from_env
             
         fallback_url = f"postgresql+asyncpg://{data.get('db_user')}:{data.get('db_password')}@{data.get('db_host')}:{data.get('db_port')}/{data.get('db_name')}"
@@ -75,4 +78,3 @@ class Settings(BaseSettings):
 
 # Create settings instance
 settings = Settings()
-

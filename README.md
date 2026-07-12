@@ -19,6 +19,23 @@ A FastAPI application skeleton with a layered architecture, PostgreSQL database 
 docker-compose up -d
 ```
 
+### Running tests safely
+
+Do not run pytest inside the normal `api` service. It loads `.env`, which may contain a production `DATABASE_URL`.
+
+Use the isolated test compose instead:
+
+```bash
+docker compose -f docker-compose.test.yml up -d --build
+docker compose -f docker-compose.test.yml exec -T api-test python scripts/bootstrap_test_database.py
+docker compose -f docker-compose.test.yml exec -T api-test alembic stamp 7b8d4f2c1a90
+docker compose -f docker-compose.test.yml exec -T api-test alembic current
+docker compose -f docker-compose.test.yml exec -T api-test python -m pytest tests/test_database_safety.py -v --no-cov
+docker compose -f docker-compose.test.yml down
+```
+
+See `docs/testing-database-isolation.md` for the full policy and commands. The historical Alembic chain is not yet bootstrappeable from an empty database, so tests temporarily use `create_all + stamp` only in `db-test`.
+
 ### Manual Setup
 
 1. Create a virtual environment:

@@ -250,7 +250,7 @@ class OrdenTrabajoService:
                 estado_prioridad.get(o.estado.nombre, 99),  # valor por defecto alto si no está en el dict
                 OrdenEnCursoOut(
                     id=o.id,
-                    cliente=o.cliente.display_name if o.cliente else None,
+                    cliente=o.cliente.nombre if o.cliente else None,
                     proyecto=o.unidad.proyecto.nombre,
                     unidad=o.unidad.nombre,
                     descripcion=o.descripcion,
@@ -343,7 +343,7 @@ class OrdenTrabajoService:
                 estado_prioridad.get(estado, 99),
                 OrdenResumenSupervisor(
                     id=o.id,
-                    cliente=o.cliente.display_name if o.cliente else "—",
+                    cliente=o.cliente.nombre if o.cliente else "—",
                     tecnico=o.tecnico.display_name if o.tecnico else "—",
                     proyecto=o.unidad.proyecto.nombre if o.unidad and o.unidad.proyecto else "—",
                     unidad=o.unidad.nombre if o.unidad else "—",
