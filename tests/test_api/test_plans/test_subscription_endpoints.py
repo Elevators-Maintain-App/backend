@@ -25,7 +25,7 @@ subscriptions = import_module("app.api.routes.subscriptions")
 TEST_DOCUMENT_TYPE_ID = 993
 COMPANY_ID = UUID("99999999-9999-9999-9999-999999999993")
 OTHER_COMPANY_ID = UUID("99999999-9999-9999-9999-999999999994")
-NOW = datetime(2026, 5, 15, 12, 0, tzinfo=timezone.utc)
+NOW = datetime.now(timezone.utc)
 
 
 def auth_user(role: str, company_id: UUID = COMPANY_ID):
@@ -136,7 +136,7 @@ async def seed_company_and_plan(*, with_subscription: bool = True, active_plan: 
                 plan_id=plan.id,
                 status="active",
                 billing_period="monthly",
-                start_date=date(2026, 5, 1),
+                start_date=date.today() - timedelta(days=30),
                 end_date=None,
             )
             session.add(subscription)
@@ -263,6 +263,8 @@ async def test_superadmin_can_change_company_subscription_without_duplicate_acti
             return plan
 
     replacement_plan = await add_replacement_plan()
+    active_start = date.today()
+    active_end = date.today() + timedelta(days=30)
     async with AsyncClient(app=create_app(role="superAdmin"), base_url="http://test") as client:
         response = await client.post(
             f"/api/admin/companies/{COMPANY_ID}/subscription",
@@ -270,8 +272,8 @@ async def test_superadmin_can_change_company_subscription_without_duplicate_acti
                 "plan_id": str(replacement_plan.id),
                 "status": "active",
                 "billing_period": "monthly",
-                "start_date": "2026-05-15",
-                "end_date": "2026-06-15",
+                "start_date": active_start.isoformat(),
+                "end_date": active_end.isoformat(),
             },
         )
 
@@ -368,6 +370,8 @@ async def test_assign_subscription_rejects_invalid_status():
 @pytest.mark.asyncio
 async def test_assign_subscription_rejects_inactive_plan():
     seeded = await seed_company_and_plan(active_plan=False)
+    active_start = date.today()
+    active_end = date.today() + timedelta(days=30)
     async with AsyncClient(app=create_app(role="superAdmin"), base_url="http://test") as client:
         response = await client.post(
             f"/api/admin/companies/{COMPANY_ID}/subscription",
@@ -375,8 +379,8 @@ async def test_assign_subscription_rejects_inactive_plan():
                 "plan_id": str(seeded["plan"].id),
                 "status": "active",
                 "billing_period": "monthly",
-                "start_date": "2026-05-15",
-                "end_date": "2026-06-15",
+                "start_date": active_start.isoformat(),
+                "end_date": active_end.isoformat(),
             },
         )
 
@@ -579,6 +583,8 @@ async def test_admin_plan_listing_still_filters_inactive_by_default():
 @pytest.mark.asyncio
 async def test_company_subscription_assignment_still_works_after_plan_crud():
     await seed_company_and_plan(with_subscription=False)
+    active_start = date.today()
+    active_end = date.today() + timedelta(days=30)
 
     async with AsyncClient(app=create_app(role="superAdmin"), base_url="http://test") as client:
         created = await client.post(
@@ -596,8 +602,8 @@ async def test_company_subscription_assignment_still_works_after_plan_crud():
                 "plan_id": created.json()["id"],
                 "status": "active",
                 "billing_period": "monthly",
-                "start_date": "2026-05-15",
-                "end_date": "2026-06-15",
+                "start_date": active_start.isoformat(),
+                "end_date": active_end.isoformat(),
             },
         )
 
