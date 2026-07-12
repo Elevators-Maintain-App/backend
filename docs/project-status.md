@@ -17,10 +17,11 @@ El backend se despliega en Google Cloud Run. El frontend web se configura y desp
 ## Estado Git validado
 
 * Rama base: `main`.
-* Commit actual: `a8ed5b5`.
+* Commit base actual: `1c16546`; los Slices 1–6 todavía no tienen commit propio.
 * `main` local sincronizada con `origin/main`.
 * No se identificaron commits remotos pendientes al momento de la revisión.
-* Los únicos cambios locales observados corresponden a la actualización de instrucciones y documentación de trabajo asistido por IA.
+* Rama de trabajo actual: `feature/overtime-iteration-2-backend`.
+* Los cambios locales acumulados corresponden a la segunda iteración backend de horas extra, pruebas y documentación relacionada.
 
 ## Estado del backend
 
@@ -95,10 +96,61 @@ Componentes observados:
 Estado actual:
 
 * backend integrado en `main`;
-* pruebas específicas presentes;
-* suite completa posterior al merge pendiente de confirmar;
-* despliegue en producción pendiente de confirmar;
+* primera iteración desplegada y validada históricamente con `300 passed`, `36 warnings`, `0 failed`;
 * frontend mobile desarrollado en su repositorio independiente y pendiente de reconciliar con el contrato backend actual.
+
+Segunda iteración backend, Slices 1–6, en rama `feature/overtime-iteration-2-backend`:
+
+* validación previa de jornadas activas solapadas con `409` estable;
+* garantía PostgreSQL mediante restricción GiST parcial por compañía, técnico y rango semiabierto;
+* migración nueva que falla explícitamente ante datos preexistentes incompatibles;
+* pruebas unitarias, API e integración/concurrencia añadidas;
+* Alembic confirmado en `c4f8a1d2e6b9 (head)` y ciclo downgrade/upgrade validado en `db-test`;
+* pruebas focalizadas: `40 passed`, `34 warnings`;
+* módulo de horas extra: `72 passed`, `34 warnings`;
+* suite backend completa: `307 passed`, `36 warnings`, `0 failed`;
+* validación manual del flujo HTTP permanece pendiente.
+* edición parcial propia de solicitudes `pending`, con combinación omitido/`null`, revalidación y recálculo;
+* cancelación lógica `pending → cancelled`, eventos `edited`/`cancelled` y locks contra revisiones concurrentes;
+* migración `e7a3c9d4f2b1` sobre `c4f8a1d2e6b9`, con downgrade seguro y cabeza confirmada;
+* focalizadas acumuladas: `62 passed`, `34 warnings`;
+* módulo acumulado: `94 passed`, `34 warnings`;
+* suite backend acumulada: `329 passed`, `36 warnings`, `0 failed`;
+* cinco pruebas PostgreSQL de solapamiento, liberación de franja y carreras: OK;
+* validación manual integrada diferida hasta completar mobile y despliegue coordinado.
+* listados `/page` para técnico y supervisor con conteo SQL, rango efectivo y orden determinista;
+* endpoints array legacy preservados sin cambios de parámetros ni respuesta;
+* rango default de 31 fechas en Panamá y máximo inclusivo de 366 días;
+* Slice 3 sin migración; cabeza Alembic preservada en `e7a3c9d4f2b1`;
+* focalizadas Slice 3: `70 passed`, `34 warnings`;
+* módulo acumulado: `108 passed`, `34 warnings`;
+* integración PostgreSQL acumulada: `6 passed`, `30 warnings`;
+* suite backend acumulada: `343 passed`, `36 warnings`, `0 failed`.
+* exportación PDF binaria para supervisor con filtros compartidos y límite de 2000;
+* renderer local Jinja2/WeasyPrint, autoescape, totales por técnico y total general;
+* resultado vacío y duraciones mayores de 24 horas soportados;
+* Slice 4 sin migración ni dependencia nueva; Alembic permanece en `e7a3c9d4f2b1`;
+* renderer PDF: `2 passed`, `30 warnings`;
+* focalizadas acumuladas: `78 passed`, `34 warnings`;
+* módulo acumulado: `116 passed`, `34 warnings`;
+* integración PostgreSQL acumulada: `6 passed`, `30 warnings`;
+* suite backend acumulada: `351 passed`, `36 warnings`, `0 failed`.
+* exportación XLSX binaria con detalle, resumen por técnico y resumen general;
+* fechas/horarios nativos, duraciones `[h]:mm`, textos protegidos contra fórmulas y totales sin fórmulas;
+* límite XLSX de 10000 antes de cargar filas; PDF conserva límite y contrato de Slice 4;
+* dependencia directa `openpyxl>=3.1.2`; Slice 5 sin migración y Alembic en `e7a3c9d4f2b1`;
+* renderer XLSX: `3 passed`, `30 warnings`;
+* focalizadas acumuladas: `83 passed`, `34 warnings`;
+* módulo acumulado: `123 passed`, `34 warnings`;
+* integración PostgreSQL acumulada: `6 passed`, `30 warnings`.
+* suite backend acumulada: `358 passed`, `36 warnings`, `0 failed`.
+* Slice 6 completó auditoría integral, contrato OpenAPI binario y optimización de `/page` sin eventos;
+* migraciones acumuladas verificadas con ciclo limpio y constraint/enums inspeccionados en `db-test`;
+* focalizadas finales por capa: `113 passed`, `34 warnings`;
+* módulo overtime final: `124 passed`, `34 warnings`;
+* suite backend final: `359 passed`, `36 warnings`, `0 failed`;
+* handoff mobile autocontenido: `docs/overtime-mobile-handoff-iteration-2.md`;
+* implementación, despliegue y validación manual React Native permanecen pendientes.
 
 ### Planes y suscripciones
 
@@ -140,9 +192,10 @@ Existen pruebas para:
 Estado de validación:
 
 * inspección estática del repositorio: realizada;
-* pruebas focalizadas recientes: presentes en el historial, pero no ejecutadas durante esta revisión;
-* suite backend completa posterior al último merge: pendiente;
-* validación de migraciones en `db-test`: pendiente;
+* pruebas focalizadas finales de horas extra: `113 passed`, `34 warnings`;
+* módulo final de horas extra: `124 passed`, `34 warnings`;
+* suite backend completa de la rama: `359 passed`, `36 warnings`, `0 failed`;
+* validación de migración en `db-test`: downgrade protegido y ciclo limpio OK, cabeza `e7a3c9d4f2b1`;
 * typecheck web: pendiente;
 * lint web: pendiente;
 * build web: pendiente;
@@ -203,54 +256,13 @@ El workflow backend no valida ni despliega automáticamente los cambios de `apps
 
 ## Próximo punto de inicio
 
-### Validación técnica inmediata
+### Handoff e implementación React Native
 
-1. Ejecutar infraestructura aislada:
-
-```bash
-docker compose -f docker-compose.test.yml up -d --build
-```
-
-2. Inicializar la base de pruebas:
-
-```bash
-docker compose -f docker-compose.test.yml exec -T api-test \
-  python run_tests.py bootstrap-db
-```
-
-3. Confirmar el estado de Alembic:
-
-```bash
-docker compose -f docker-compose.test.yml exec -T api-test \
-  alembic heads
-
-docker compose -f docker-compose.test.yml exec -T api-test \
-  alembic current
-```
-
-4. Ejecutar la suite backend completa:
-
-```bash
-docker compose -f docker-compose.test.yml exec -T api-test \
-  python run_tests.py all
-```
-
-5. Detener la infraestructura iniciada:
-
-```bash
-docker compose -f docker-compose.test.yml down
-```
-
-6. Validar el frontend web:
-
-```bash
-cd apps/web
-npm run typecheck
-npm run lint
-npm run build
-```
-
-7. Registrar los resultados reales en este documento y actualizar `docs/board.md`.
+1. Usar `docs/overtime-mobile-handoff-iteration-2.md` como fuente contractual principal.
+2. Implementar primero tipos, servicio HTTP, query keys y compatibilidad de enums.
+3. Continuar con edición/cancelación, paginación/filtros y exportaciones en los slices propuestos.
+4. Validar con este backend en un entorno local o controlado.
+5. Mantener migraciones, deploy y distribución mobile sujetos a autorización y secuencia coordinada.
 
 ### Prioridad posterior
 
@@ -259,7 +271,7 @@ Después de confirmar una línea base verde:
 1. incorporar pruebas backend obligatorias antes del despliegue;
 2. actualizar el README;
 3. reconciliar la documentación histórica de planes;
-4. continuar la siguiente iteración de horas extra entre backend y mobile;
+4. implementar React Native desde el handoff y validar manualmente los Slices 1–6 en conjunto;
 5. diseñar por separado la baseline de Alembic.
 
 ## Validaciones de esta revisión
@@ -269,8 +281,8 @@ Después de confirmar una línea base verde:
 * Rama y sincronización con `origin/main`: validadas.
 * Integración backend de horas extra: confirmada mediante historial Git.
 * Integración de planes y suscripciones: confirmada mediante historial Git y código.
-* Suite backend completa actual: no ejecutada.
-* Estado real de Alembic en `db-test`: no ejecutado.
+* Suite backend completa actual: `359 passed`, `36 warnings`, `0 failed`.
+* Estado real de Alembic en `db-test`: `e7a3c9d4f2b1 (head)`, downgrade protegido y ciclo limpio OK.
 * Typecheck, lint y build web: no ejecutados.
 * Despliegue actual en producción: no confirmado.
 * Validación manual: no ejecutada.

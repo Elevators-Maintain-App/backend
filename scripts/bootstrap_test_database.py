@@ -3,6 +3,8 @@ import asyncio
 import sys
 from collections.abc import Callable
 
+from sqlalchemy import text
+
 from app.core.config import settings
 from app.core.database_safety import validate_safe_test_database
 from app.db.session import Base, engine
@@ -19,6 +21,7 @@ def import_models() -> None:
 
 async def create_schema() -> None:
     async with engine.begin() as connection:
+        await connection.execute(text("CREATE EXTENSION IF NOT EXISTS btree_gist"))
         await connection.run_sync(Base.metadata.create_all)
 
 

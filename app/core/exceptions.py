@@ -74,4 +74,17 @@ class ConflictException(AppException):
             status_code=status.HTTP_409_CONFLICT,
             detail=detail,
             headers=headers,
-        ) 
+        )
+
+class PayloadTooLargeException(AppException):
+    """Exception raised when a requested synchronous payload exceeds its safe limit."""
+    def __init__(
+        self,
+        detail: Any = "Payload too large",
+        headers: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        super().__init__(
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+            detail=detail,
+            headers=headers,
+        )

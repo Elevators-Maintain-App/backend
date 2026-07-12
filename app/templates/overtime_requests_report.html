@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <style>
+    @page { size: A4 landscape; margin: 12mm; @bottom-right { content: "Página " counter(page) " de " counter(pages); font-size: 8px; } }
+    body { font-family: "DejaVu Sans", sans-serif; font-size: 9px; color: #172033; }
+    h1 { margin: 0 0 6px; font-size: 20px; }
+    h2 { margin: 14px 0 5px; font-size: 13px; }
+    .meta { margin-bottom: 10px; line-height: 1.5; }
+    table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    thead { display: table-header-group; }
+    th, td { border: 1px solid #cbd5e1; padding: 4px; vertical-align: top; overflow-wrap: anywhere; }
+    th { background: #e2e8f0; text-align: left; }
+    tr { break-inside: avoid; }
+    .num { text-align: right; white-space: nowrap; }
+    .activity { width: 21%; }
+    .empty { padding: 18px; text-align: center; }
+    .totals { width: 70%; margin-left: auto; }
+    .grand { font-weight: bold; background: #f1f5f9; }
+  </style>
+</head>
+<body>
+  <h1>Reporte de horas extra</h1>
+  <div class="meta">
+    <div><strong>Período:</strong> {{ date_from }} – {{ date_to }}</div>
+    <div><strong>Generado:</strong> {{ generated_at }}</div>
+    <div><strong>Compañía:</strong> {{ company_name }}</div>
+    <div><strong>Estado:</strong> {{ status_filter }} · <strong>Técnico:</strong> {{ technician_filter }}</div>
+  </div>
+
+  {% if rows %}
+  <table>
+    <thead><tr>
+      <th>Técnico</th><th>Proyecto</th><th>Fecha</th><th>Horario</th><th>Receso</th>
+      <th class="activity">Actividad</th><th>Trabajado</th><th>Regular</th><th>Extra</th><th>Estado</th>
+    </tr></thead>
+    <tbody>
+    {% for row in rows %}
+      <tr>
+        <td>{{ row.technician }}</td><td>{{ row.project }}</td><td>{{ row.work_date }}</td>
+        <td>{{ row.schedule }}</td><td>{{ row.break_time }}</td><td class="activity">{{ row.activity }}</td>
+        <td class="num">{{ row.worked }}</td><td class="num">{{ row.regular }}</td>
+        <td class="num">{{ row.overtime }}</td><td>{{ row.status }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <div class="empty">No se encontraron solicitudes para los filtros seleccionados</div>
+  {% endif %}
+
+  <h2>Totales por técnico</h2>
+  <table class="totals">
+    <thead><tr><th>Técnico</th><th>Solicitudes</th><th>Trabajado</th><th>Regular</th><th>Extra</th></tr></thead>
+    <tbody>
+    {% for total in technician_totals %}
+      <tr><td>{{ total.technician }}</td><td class="num">{{ total.count }}</td><td class="num">{{ total.worked }}</td><td class="num">{{ total.regular }}</td><td class="num">{{ total.overtime }}</td></tr>
+    {% endfor %}
+      <tr class="grand"><td>Total general</td><td class="num">{{ grand_total.count }}</td><td class="num">{{ grand_total.worked }}</td><td class="num">{{ grand_total.regular }}</td><td class="num">{{ grand_total.overtime }}</td></tr>
+    </tbody>
+  </table>
+</body>
+</html>

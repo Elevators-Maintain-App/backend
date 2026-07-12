@@ -57,6 +57,39 @@ class OvertimeRequestCreate(OvertimeScheduleBase):
     authorizing_supervisor_id: UUID
 
 
+class OvertimeRequestUpdate(BaseModel):
+    work_date: date | None = None
+    entry_time: time | None = None
+    break_start_time: time | None = None
+    break_end_time: time | None = None
+    exit_time: time | None = None
+    activity: str | None = Field(default=None, min_length=3, max_length=2000)
+    project_id: UUID | None = None
+    authorizing_supervisor_id: UUID | None = None
+
+    model_config = ConfigDict(extra="forbid")
+
+    @field_validator("entry_time", "break_start_time", "break_end_time", "exit_time")
+    @classmethod
+    def validate_minute_precision(cls, value: time | None) -> time | None:
+        return _validate_minute_time(value)
+
+    @field_validator("activity")
+    @classmethod
+    def validate_activity(cls, value: str | None) -> str | None:
+        return _non_blank(value) if value is not None else None
+
+    @model_validator(mode="after")
+    def validate_patch(self):
+        if not self.model_fields_set:
+            raise ValueError("Debe enviar al menos un campo modificable")
+        nullable_fields = {"break_start_time", "break_end_time"}
+        for field_name in self.model_fields_set - nullable_fields:
+            if getattr(self, field_name) is None:
+                raise ValueError(f"{field_name} no puede ser null")
+        return self
+
+
 class OvertimeApproveRequest(BaseModel):
     note: str | None = Field(default=None, max_length=2000)
 
@@ -126,3 +159,13 @@ class OvertimeRequestDetail(OvertimeRequestSummary):
     created_at: datetime
     updated_at: datetime
     events: list[OvertimeRequestEventOut]
+
+
+class OvertimeRequestPage(BaseModel):
+    items: list[OvertimeRequestSummary]
+    page: int
+    page_size: int
+    total: int
+    total_pages: int
+    date_from: date
+    date_to: date

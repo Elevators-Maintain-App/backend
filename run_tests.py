@@ -45,7 +45,7 @@ def main():
     if command == "bootstrap-db":
         for cmd, description in (
             (["python", "scripts/bootstrap_test_database.py"], "Creating isolated test schema"),
-            (["alembic", "stamp", "7b8d4f2c1a90"], "Stamping Alembic at current test baseline"),
+            (["alembic", "stamp", "e7a3c9d4f2b1"], "Stamping Alembic at current test baseline"),
             (["alembic", "current"], "Showing Alembic current revision"),
         ):
             exit_code = run_command(cmd, description)

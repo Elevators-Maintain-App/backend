@@ -14,8 +14,9 @@ from sqlalchemy import (
     TIMESTAMP,
     func,
 )
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID, ExcludeConstraint
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql import text
 
 from app.db.session import Base
 
@@ -25,6 +26,7 @@ class OvertimeRequestStatus(str, enum.Enum):
     APPROVED = "approved"
     ADJUSTED = "adjusted"
     REJECTED = "rejected"
+    CANCELLED = "cancelled"
 
 
 class OvertimeRequestEventType(str, enum.Enum):
@@ -32,6 +34,8 @@ class OvertimeRequestEventType(str, enum.Enum):
     APPROVED = "approved"
     ADJUSTED_AND_APPROVED = "adjusted_and_approved"
     REJECTED = "rejected"
+    EDITED = "edited"
+    CANCELLED = "cancelled"
 
 
 def _enum_values(enum_class: type[enum.Enum]) -> list[str]:
@@ -77,6 +81,14 @@ class OvertimeRequest(Base):
             "ix_overtime_requests_supervisor_status",
             "authorizing_supervisor_id",
             "status",
+        ),
+        ExcludeConstraint(
+            ("company_id", "="),
+            ("technician_id", "="),
+            (text("tsrange(work_date + entry_time, work_date + exit_time, '[)')"), "&&"),
+            where=text("status IN ('pending', 'approved', 'adjusted')"),
+            using="gist",
+            name="excl_overtime_requests_active_overlap",
         ),
     )
 

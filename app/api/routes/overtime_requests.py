@@ -1,7 +1,8 @@
 from datetime import date
+from typing import Literal
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, status as http_status
+from fastapi import APIRouter, Depends, Query, Response, status as http_status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.firebase import FirebaseUser, require_role
@@ -14,7 +15,9 @@ from app.schemas.overtime_requests import (
     OvertimeRejectRequest,
     OvertimeRequestCreate,
     OvertimeRequestDetail,
+    OvertimeRequestPage,
     OvertimeRequestSummary,
+    OvertimeRequestUpdate,
 )
 from app.services.overtime.request_service import OvertimeRequestService
 
@@ -66,6 +69,22 @@ async def list_my_overtime_requests(
     )
 
 
+@router.get("/requests/me/page", response_model=OvertimeRequestPage)
+async def page_my_overtime_requests(
+    status: OvertimeRequestStatus | None = Query(None),
+    date_from: date | None = Query(None),
+    date_to: date | None = Query(None),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    db: AsyncSession = Depends(get_db),
+    current_user: FirebaseUser = Depends(require_role("technician")),
+):
+    return await OvertimeRequestService(db).page_own_requests(
+        current_user, status=status, date_from=date_from, date_to=date_to,
+        page=page, page_size=page_size,
+    )
+
+
 @router.get("/requests/me/{request_id}", response_model=OvertimeRequestDetail)
 async def get_my_overtime_request(
     request_id: UUID,
@@ -73,6 +92,25 @@ async def get_my_overtime_request(
     current_user: FirebaseUser = Depends(require_role("technician")),
 ):
     return await OvertimeRequestService(db).get_own_request(current_user, request_id)
+
+
+@router.patch("/requests/me/{request_id}", response_model=OvertimeRequestDetail)
+async def update_my_overtime_request(
+    request_id: UUID,
+    payload: OvertimeRequestUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: FirebaseUser = Depends(require_role("technician")),
+):
+    return await OvertimeRequestService(db).update_own_request(current_user, request_id, payload)
+
+
+@router.post("/requests/me/{request_id}/cancel", response_model=OvertimeRequestDetail)
+async def cancel_my_overtime_request(
+    request_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: FirebaseUser = Depends(require_role("technician")),
+):
+    return await OvertimeRequestService(db).cancel_own_request(current_user, request_id)
 
 
 @router.get("/supervisor/requests", response_model=list[OvertimeRequestSummary])
@@ -89,6 +127,58 @@ async def list_supervisor_overtime_requests(
     return await OvertimeRequestService(db).list_assigned_requests(
         current_user, status=status, technician_id=technician_id,
         date_from=date_from, date_to=date_to, skip=skip, limit=limit
+    )
+
+
+@router.get("/supervisor/requests/page", response_model=OvertimeRequestPage)
+async def page_supervisor_overtime_requests(
+    status: OvertimeRequestStatus | None = Query(None),
+    technician_id: UUID | None = Query(None),
+    date_from: date | None = Query(None),
+    date_to: date | None = Query(None),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    db: AsyncSession = Depends(get_db),
+    current_user: FirebaseUser = Depends(require_role("supervisor")),
+):
+    return await OvertimeRequestService(db).page_assigned_requests(
+        current_user, status=status, technician_id=technician_id,
+        date_from=date_from, date_to=date_to, page=page, page_size=page_size,
+    )
+
+
+@router.get(
+    "/supervisor/requests/export",
+    response_class=Response,
+    responses={
+        200: {
+            "description": "Archivo binario PDF o XLSX según el formato solicitado",
+            "content": {
+                "application/pdf": {"schema": {"type": "string", "format": "binary"}},
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                    "schema": {"type": "string", "format": "binary"}
+                },
+            },
+        }
+    },
+)
+async def export_supervisor_overtime_requests(
+    format: Literal["pdf", "xlsx"] = Query(...),
+    status: OvertimeRequestStatus | None = Query(None),
+    technician_id: UUID | None = Query(None),
+    date_from: date | None = Query(None),
+    date_to: date | None = Query(None),
+    db: AsyncSession = Depends(get_db),
+    current_user: FirebaseUser = Depends(require_role("supervisor")),
+):
+    content, media_type, filename = await OvertimeRequestService(db).export_assigned_requests(
+        current_user, export_format=format, status=status, technician_id=technician_id,
+        date_from=date_from, date_to=date_to,
+    )
+    return Response(
+        content=content,
+        media_type=media_type,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 
 

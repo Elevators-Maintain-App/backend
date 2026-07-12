@@ -16,7 +16,7 @@ Inicializa el esquema de pruebas. La cadena histórica de Alembic no puede crear
 
 ```bash
 docker compose -f docker-compose.test.yml exec -T api-test python scripts/bootstrap_test_database.py
-docker compose -f docker-compose.test.yml exec -T api-test alembic stamp 7b8d4f2c1a90
+docker compose -f docker-compose.test.yml exec -T api-test alembic stamp e7a3c9d4f2b1
 docker compose -f docker-compose.test.yml exec -T api-test alembic current
 ```
 

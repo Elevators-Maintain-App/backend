@@ -75,6 +75,49 @@ Estado:
 
 ## Validation
 
+### `OT-ITER2-001` — Iteración backend de horas extra, Slices 1–6
+
+Evidencia en `db-test`:
+
+* Slice 1 preservado con restricción `excl_overtime_requests_active_overlap`;
+* Slice 2 agrega PATCH parcial, cancelación trazable y locks de fila;
+* Alembic `heads/current`: `e7a3c9d4f2b1 (head)`;
+* downgrade bloqueado ante auditoría nueva y ciclo limpio downgrade/upgrade: OK;
+* focalizadas: `62 passed`, `34 warnings`;
+* módulo: `94 passed`, `34 warnings`;
+* suite completa: `329 passed`, `36 warnings`;
+* cinco pruebas PostgreSQL de integridad/concurrencia: OK.
+* Slice 3 agrega `/page` para técnico/supervisor sin modificar arrays legacy;
+* rango Panamá, máximo 366 días, conteo SQL y orden estable validados;
+* focalizadas Slice 3: `70 passed`, `34 warnings`;
+* módulo acumulado: `108 passed`, `34 warnings`;
+* integración PostgreSQL acumulada: `6 passed`, `30 warnings`;
+* suite completa acumulada: `343 passed`, `36 warnings`.
+* Slice 4 agrega PDF binario directo para supervisor, sin paginación accidental;
+* límite de 2000, totales por técnico/general y resultado vacío validados;
+* renderer real WeasyPrint: `2 passed`, `30 warnings`;
+* focalizadas acumuladas: `78 passed`, `34 warnings`;
+* módulo acumulado: `116 passed`, `34 warnings`;
+* integración PostgreSQL acumulada: `6 passed`, `30 warnings`;
+* suite completa acumulada: `351 passed`, `36 warnings`.
+* Slice 5 agrega XLSX binario directo con tres hojas y tipos Excel nativos;
+* límite XLSX de 10000 previo a carga/render, defensa de fórmulas y PDF preservado;
+* dependencia directa reproducible `openpyxl>=3.1.2`;
+* renderer XLSX: `3 passed`, `30 warnings`;
+* focalizadas acumuladas: `83 passed`, `34 warnings`;
+* módulo acumulado: `123 passed`, `34 warnings`;
+* integración PostgreSQL acumulada: `6 passed`, `30 warnings`.
+* suite completa acumulada: `358 passed`, `36 warnings`, `0 failed`.
+* Slice 6 audita el diff, elimina carga de eventos en `/page` y alinea OpenAPI binario;
+* OpenAPI confirma 15 operaciones, PATCH, precedencia y `format=pdf|xlsx`;
+* ciclo limpio `e7a3c9d4f2b1 → c4f8a1d2e6b9 → e7a3c9d4f2b1`: OK en `db-test`;
+* focalizadas finales por capa: `113 passed`, `34 warnings`;
+* módulo overtime final: `124 passed`, `34 warnings`;
+* suite completa final: `359 passed`, `36 warnings`, `0 failed`;
+* handoff React Native creado en `docs/overtime-mobile-handoff-iteration-2.md`.
+
+Pendiente para `Done`: implementación mobile y validación manual integrada tras despliegue coordinado.
+
 ### `OT-001` — Validar backend de horas extra integrado en `main`
 
 Implementación confirmada:
