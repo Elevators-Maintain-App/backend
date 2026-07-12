@@ -23,6 +23,7 @@ async def db_session() -> AsyncSession:
             yield session
         finally:
             await session.rollback()
+            plan_ids = select(Plan.id).where(Plan.code.like("test-%"))
             await session.execute(
                 delete(CompanySubscription).where(
                     CompanySubscription.company_id.in_(
@@ -30,6 +31,7 @@ async def db_session() -> AsyncSession:
                     )
                 )
             )
+            await session.execute(delete(CompanySubscription).where(CompanySubscription.plan_id.in_(plan_ids)))
             await session.execute(
                 delete(CompanyUsage).where(
                     CompanyUsage.company_id.in_(

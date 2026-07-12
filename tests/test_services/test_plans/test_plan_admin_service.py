@@ -36,7 +36,6 @@ async def db_session() -> AsyncSession:
             await session.execute(delete(CompanySubscription).where(CompanySubscription.plan_id.in_(plan_ids)))
             await session.execute(delete(Plan).where(Plan.code.like("test-admin-service-%")))
             await session.execute(delete(Compania).where(Compania.documento == TEST_COMPANY_DOCUMENT))
-            await session.execute(delete(TipoDocumento).where(TipoDocumento.id == TEST_DOCUMENT_TYPE_ID))
             await session.commit()
 
 
