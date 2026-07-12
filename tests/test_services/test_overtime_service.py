@@ -89,6 +89,7 @@ class FakeRepository:
         self.users = {"uid": TECHNICIAN, "supervisor-uid": SUPERVISOR}
         self.project = PROJECT
         self.supervisor = SUPERVISOR
+        self.technicians = [TECHNICIAN]
         self.request = pending_request()
         self.events = []
         self.created_requests = []
@@ -112,6 +113,10 @@ class FakeRepository:
 
     async def list_active_supervisors(self, company_id):
         return [self.supervisor] if self.supervisor and self.supervisor.company_id == company_id else []
+
+    async def list_active_technicians(self, company_id):
+        self.list_kwargs = {"company_id": company_id}
+        return [user for user in self.technicians if user.company_id == company_id]
 
     async def get_active_project(self, company_id, project_id):
         if self.project and self.project.company_id == company_id and self.project.id == project_id:
@@ -546,6 +551,33 @@ async def test_catalogs_only_return_safe_same_company_fields():
     supervisors = await svc.list_supervisor_catalog(auth())
     assert projects[0].model_dump() == {"id": PROJECT_ID, "name": "Proyecto activo"}
     assert supervisors[0].model_dump() == {"id": SUPERVISOR_ID, "name": "Supervisor"}
+
+
+@pytest.mark.asyncio
+async def test_supervisor_technician_catalog_uses_internal_ids_and_resolved_company():
+    svc, repo, _ = service()
+    second = user(uuid4(), Rol.TECHNICIAN, uid="firebase-other", name="Álvaro")
+    repo.technicians = [second, TECHNICIAN]
+    result = await svc.list_technician_catalog_for_supervisor(auth("supervisor-uid"))
+    assert [item.model_dump() for item in result] == [
+        {"id": second.id, "name": "Álvaro"},
+        {"id": TECHNICIAN_ID, "name": "Técnico"},
+    ]
+    assert repo.list_kwargs == {"company_id": COMPANY_ID}
+    assert all(str(item.id) not in {user.uid for user in repo.technicians} for item in result)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "resolved_user",
+    [None, user(SUPERVISOR_ID, Rol.SUPERVISOR, active=False), TECHNICIAN],
+)
+async def test_supervisor_technician_catalog_rejects_missing_inactive_or_wrong_role(resolved_user):
+    svc, repo, _ = service()
+    repo.users["supervisor-uid"] = resolved_user
+    with pytest.raises(HTTPException) as exc:
+        await svc.list_technician_catalog_for_supervisor(auth("supervisor-uid"))
+    assert exc.value.status_code == 403
 
 
 @pytest.mark.asyncio

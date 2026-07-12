@@ -28,6 +28,7 @@ Las prioridades deben revisarse después de validar `main` y ejecutar la línea 
 ## Por confirmar
 
 - [ ] `PLAN-001` | `S` | Confirmar estado final de slices de planes en backend y web.
+- [ ] `OT-COMPAT-001` | `S` | Validar tras despliegue autorizado el catálogo PostgreSQL de técnicos para filtros overtime mobile.
 
 ## Reglas de mantenimiento
 

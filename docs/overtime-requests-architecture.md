@@ -99,6 +99,7 @@ Todos los endpoints usan Bearer token Firebase y el prefijo `/api/overtime`. El 
 | --- | --- | --- | --- |
 | GET | `/catalogs/projects` | `technician` | Proyectos activos de su compañía; devuelve solo `id`, `name`. |
 | GET | `/catalogs/supervisors` | `technician` | Supervisores activos de su compañía; devuelve solo `id`, `name`. |
+| GET | `/supervisor/catalogs/technicians` | `supervisor` | Técnicos activos de su compañía; devuelve solo UUID PostgreSQL `id` y `name`. |
 | POST | `/requests` | `technician` | Crea para sí mismo y genera `submitted`. |
 | GET | `/requests/me` | `technician` | Lista propia con filtros `status`, `date_from`, `date_to`, `skip`, `limit`. |
 | GET | `/requests/me/page` | `technician` | Lista propia paginada con rango efectivo y metadatos. |
@@ -133,6 +134,14 @@ Las respuestas resumidas incluyen jornada, proyecto, técnico, supervisor, minut
 Los listados usan `skip` desde 0 y `limit` entre 1 y 100 (default 20). Técnico: `work_date DESC, submitted_at DESC`. Supervisor: pendientes primero y luego el mismo orden descendente.
 
 ## Listados paginados y transición mobile
+
+El selector de técnico para supervisores usa exclusivamente
+`GET /api/overtime/supervisor/catalogs/technicians`. El catálogo se resuelve desde PostgreSQL,
+incluye todos los técnicos activos de la compañía del supervisor y excluye inactivos y otras
+compañías. Se ordena por nombre visible ascendente con UUID como desempate estable. Su `id` es
+`usuarios.id`, por lo que puede enviarse sin transformación como `technician_id` al listado paginado
+y a ambas exportaciones. El catálogo no se limita a técnicos con solicitudes visibles; un UUID sin
+solicitudes asignadas produce un resultado vacío sin ampliar la frontera del supervisor.
 
 Los endpoints array anteriores permanecen intactos para mobile de primera iteración. La nueva superficie `/page` usa `page` desde 1 y `page_size` entre 1 y 100 (default 20), un único `status`, `date_from` y `date_to`; supervisor acepta además `technician_id` dentro de sus solicitudes asignadas.
 

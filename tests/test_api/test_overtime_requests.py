@@ -55,6 +55,9 @@ class FakeOvertimeService:
     async def list_supervisor_catalog(self, current_user):
         return [{"id": SUPERVISOR_ID, "name": "Supervisor"}]
 
+    async def list_technician_catalog_for_supervisor(self, current_user):
+        return [{"id": REQUEST_ID, "name": "Técnico"}]
+
     async def create_request(self, current_user, payload):
         self.calls.append(("create", payload.model_dump()))
         return detail()
@@ -154,6 +157,18 @@ def test_technician_catalogs_expose_only_id_and_name(monkeypatch):
     assert client.get("/api/overtime/catalogs/supervisors").json() == [
         {"id": str(SUPERVISOR_ID), "name": "Supervisor"}
     ]
+
+
+def test_supervisor_technician_catalog_exposes_postgresql_uuid_and_exact_shape(monkeypatch):
+    client = TestClient(create_app(monkeypatch, "supervisor"))
+    response = client.get("/api/overtime/supervisor/catalogs/technicians")
+    assert response.status_code == 200
+    assert response.json() == [{"id": str(REQUEST_ID), "name": "Técnico"}]
+
+
+def test_supervisor_technician_catalog_rejects_technician_role(monkeypatch):
+    client = TestClient(create_app(monkeypatch, "technician", enforce_role=True))
+    assert client.get("/api/overtime/supervisor/catalogs/technicians").status_code == 403
 
 
 def test_create_contract_returns_201_and_rejects_calculated_fields(monkeypatch):
@@ -308,6 +323,7 @@ def test_openapi_exposes_consolidated_overtime_contract_and_binary_export(monkey
     expected = {
         ("get", "/api/overtime/catalogs/projects"),
         ("get", "/api/overtime/catalogs/supervisors"),
+        ("get", "/api/overtime/supervisor/catalogs/technicians"),
         ("post", "/api/overtime/requests"),
         ("get", "/api/overtime/requests/me"),
         ("get", "/api/overtime/requests/me/page"),
@@ -338,6 +354,16 @@ def test_openapi_exposes_consolidated_overtime_contract_and_binary_export(monkey
         "application/pdf",
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     }
+    catalog = schema["paths"]["/api/overtime/supervisor/catalogs/technicians"]["get"]
+    catalog_items = catalog["responses"]["200"]["content"]["application/json"]["schema"]
+    assert catalog_items == {
+        "items": {"$ref": "#/components/schemas/OvertimeCatalogItem"},
+        "type": "array",
+        "title": "Response List Overtime Technicians For Supervisor Api Overtime Supervisor Catalogs Technicians Get",
+    }
+    catalog_schema = schema["components"]["schemas"]["OvertimeCatalogItem"]
+    assert set(catalog_schema["properties"]) == {"id", "name"}
+    assert catalog_schema["properties"]["id"]["format"] == "uuid"
     patch = schema["paths"]["/api/overtime/requests/me/{request_id}"]["patch"]
     assert patch["requestBody"]["content"]["application/json"]["schema"]["$ref"].endswith(
         "/OvertimeRequestUpdate"

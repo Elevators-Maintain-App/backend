@@ -41,6 +41,17 @@ async def list_overtime_supervisors(
     return await OvertimeRequestService(db).list_supervisor_catalog(current_user)
 
 
+@router.get(
+    "/supervisor/catalogs/technicians",
+    response_model=list[OvertimeCatalogItem],
+)
+async def list_overtime_technicians_for_supervisor(
+    db: AsyncSession = Depends(get_db),
+    current_user: FirebaseUser = Depends(require_role("supervisor")),
+):
+    return await OvertimeRequestService(db).list_technician_catalog_for_supervisor(current_user)
+
+
 @router.post(
     "/requests",
     response_model=OvertimeRequestDetail,

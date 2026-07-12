@@ -5,6 +5,7 @@ import pytest
 
 from app.db.repositories.overtime_requests import OvertimeRequestRepository
 from app.db.models.overtime_requests import OvertimeRequestStatus
+from app.db.models.usuarios import Rol
 
 
 COMPANY_ID = UUID("11111111-1111-1111-1111-111111111111")
@@ -25,6 +26,9 @@ class EmptyResult:
     def scalar_one_or_none(self):
         return None
 
+    def all(self):
+        return []
+
 
 class RecordingDB:
     def __init__(self):
@@ -43,6 +47,21 @@ class CountResult:
 class PageRowsResult(EmptyResult):
     def all(self):
         return []
+
+
+@pytest.mark.asyncio
+async def test_active_technician_catalog_query_is_tenant_scoped_active_and_stably_ordered():
+    db = RecordingDB()
+    repository = OvertimeRequestRepository(db)
+    await repository.list_active_technicians(COMPANY_ID)
+    sql = str(db.statement)
+    params = db.statement.compile().params.values()
+    assert "usuarios.company_id" in sql
+    assert "usuarios.rol" in sql
+    assert "usuarios.is_active IS true" in sql
+    assert "ORDER BY usuarios.display_name ASC, usuarios.id ASC" in sql
+    assert COMPANY_ID in params
+    assert Rol.TECHNICIAN in params
 
 
 class RecordingPageDB:

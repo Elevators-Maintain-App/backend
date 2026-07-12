@@ -75,6 +75,13 @@ Los endpoints web deben usar `/api/web/*` por defecto o endpoints core protegido
 
 ### Solicitudes de horas extra
 
+Corrección contractual `OT-COMPAT-001` implementada en la rama
+`fix/overtime-supervisor-technician-catalog`: se agregó el catálogo supervisor de técnicos activos
+con UUID PostgreSQL para uso directo en filtros paginados y exportaciones. No modifica el LOV legacy
+ni requiere migración. Validación de la rama: focalizadas `95 passed`, módulo overtime `125 passed`,
+integración PostgreSQL `7 passed`, regresión PDF/XLSX `5 passed` y suite completa `367 passed`,
+`36 warnings`, `0 failed`. Falta la validación mobile posterior a un despliegue autorizado.
+
 La implementación backend fue integrada en `main` mediante:
 
 * `6cae4c2` — persistencia y fundamentos de cálculo;

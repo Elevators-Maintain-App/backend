@@ -86,6 +86,13 @@ class OvertimeRequestService:
         supervisors = await self.repository.list_active_supervisors(technician.company_id)
         return [OvertimeCatalogItem(id=user.id, name=user.display_name) for user in supervisors]
 
+    async def list_technician_catalog_for_supervisor(
+        self, current_user
+    ) -> list[OvertimeCatalogItem]:
+        supervisor = await self._current_db_user(current_user, Rol.SUPERVISOR)
+        technicians = await self.repository.list_active_technicians(supervisor.company_id)
+        return [OvertimeCatalogItem(id=user.id, name=user.display_name) for user in technicians]
+
     async def create_request(self, current_user, payload: OvertimeRequestCreate) -> OvertimeRequestDetail:
         technician = await self._current_db_user(current_user, Rol.TECHNICIAN)
         project = await self.repository.get_active_project(technician.company_id, payload.project_id)
