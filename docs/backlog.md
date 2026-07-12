@@ -24,12 +24,9 @@ Las prioridades deben revisarse después de validar `main` y ejecutar la línea 
 - [ ] `DEVOPS-002` | `M` | Agregar validaciones de web al pipeline o a un workflow independiente.
 - [ ] `ARCH-001` | `M` | Retirar gradualmente `create_all` del startup de desarrollo cuando Alembic sea reproducible.
 - [ ] `TEST-001` | `M` | Ampliar cobertura de permisos y aislamiento multiempresa en endpoints de mayor riesgo.
-- [ ] `OT-MOBILE-001` | `M` | Implementar los slices React Native definidos en `docs/overtime-mobile-handoff-iteration-2.md`.
-- [ ] `OT-VALIDATION-001` | `S` | Completar validación integrada backend/mobile después del despliegue coordinado.
 
 ## Por confirmar
 
-- [ ] `OT-001` | `S` | Confirmar suite completa, integración y despliegue de horas extra.
 - [ ] `PLAN-001` | `S` | Confirmar estado final de slices de planes en backend y web.
 
 ## Reglas de mantenimiento

@@ -86,8 +86,7 @@ Hay índices simples para compañía, técnico, supervisor autorizante, fecha, e
 
 ## Riesgos y siguientes fases
 
-- Integrar el contrato consolidado con React Native y validar los flujos manuales pendientes.
-- Coordinar migraciones, backend y distribución mobile; la segunda iteración aún no está desplegada.
+- Adoptar el contrato consolidado y validar los flujos manuales desde el repositorio React Native.
 - Evaluar idempotencia explícita para reintentos offline antes de introducir colas de mutaciones mobile.
 - Impedir mutaciones/borrados de eventos también a nivel de permisos de base de datos si el despliegue lo requiere.
 - Evaluar políticas de retención, privacidad y reporting.
@@ -168,3 +167,10 @@ Una única función serializa snapshots JSONB con UUID string, fecha/datetime IS
 ## Fuera de alcance actual
 
 React Native, reapertura, eliminación física, delegación, notificaciones, asistencia/GPS y jornadas nocturnas siguen fuera de alcance.
+
+## Estado operativo
+
+La segunda iteración backend está integrada en `main` y desplegada. Según la evidencia suministrada
+por el desarrollador, las migraciones `c4f8a1d2e6b9` y `e7a3c9d4f2b1` están aplicadas en producción,
+cuya revisión efectiva es `e7a3c9d4f2b1 (head)`. Los consumidores React Native pueden adoptar y
+validar este contrato desde su repositorio independiente.

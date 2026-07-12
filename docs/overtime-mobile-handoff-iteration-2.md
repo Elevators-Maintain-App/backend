@@ -2,17 +2,15 @@
 
 ## 1. Estado del backend
 
-La segunda iteración backend está implementada y probada localmente en la rama
-`feature/overtime-iteration-2-backend`. Los Slices 1–6 permanecen en el working tree, sin commit
-propio, merge, push ni deploy. No deben consumirse todavía como capacidades disponibles en
-producción.
-
-Migraciones pendientes de integración y despliegue coordinado:
+La segunda iteración backend está implementada, validada e integrada en `main` mediante `bf6fc5f`.
+El backend fue desplegado en GCP y está disponible en producción para pruebas completas desde
+React Native. Según la evidencia suministrada por el desarrollador, producción quedó en
+`e7a3c9d4f2b1 (head)` después de aplicar:
 
 - `c4f8a1d2e6b9`: restricción GiST contra solapamientos activos;
 - `e7a3c9d4f2b1`: estado `cancelled` y eventos `edited`/`cancelled`.
 
-La cabeza esperada y verificada es `e7a3c9d4f2b1`. La validación final reunió `359 passed`,
+La cabeza configurada y verificada localmente es `e7a3c9d4f2b1`. La validación final reunió `359 passed`,
 `36 warnings` y `0 failed`; la diferencia de una prueba frente al Slice 5 corresponde al contrato
 OpenAPI consolidado. La validación manual con React Native/Expo está pendiente.
 
@@ -365,15 +363,12 @@ Mobile 2–4 y backend disponible en entorno controlado.
 - Catálogos, creación, arrays legacy, detalle y tres acciones supervisor existentes.
 - Navegación, badges y parsing no fallan al aparecer enums nuevos.
 
-## 10. Secuencia coordinada de integración
+## 10. Secuencia de adopción mobile
 
-1. Cerrar y guardar backend en la rama siguiendo la autorización del desarrollador.
-2. Implementar mobile contra este contrato consolidado.
-3. Validar mobile con backend local o entorno controlado, nunca suponiendo producción actualizada.
-4. Autorizar commit/merge según el flujo del desarrollador.
-5. Desplegar migraciones y backend de forma coordinada con rollback preparado.
-6. Ejecutar smoke tests backend/mobile en el entorno desplegado.
-7. Distribuir y validar la versión mobile compatible.
-8. Corregir únicamente hallazgos puntuales y volver a validar.
+1. Implementar mobile contra este contrato consolidado desde el repositorio React Native.
+2. Ejecutar la matriz manual contra el backend ya disponible en producción.
+3. Registrar los resultados de frontend en el proyecto mobile.
+4. Distribuir y validar la versión mobile compatible según su propio flujo.
+5. Reportar y corregir únicamente hallazgos backend puntuales, y volver a validar.
 
 Este documento no autoriza commits, merges, migraciones remotas, deploy ni distribución mobile.

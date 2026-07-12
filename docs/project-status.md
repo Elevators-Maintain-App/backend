@@ -17,11 +17,10 @@ El backend se despliega en Google Cloud Run. El frontend web se configura y desp
 ## Estado Git validado
 
 * Rama base: `main`.
-* Commit base actual: `1c16546`; los Slices 1–6 todavía no tienen commit propio.
+* Commit actual: `bf6fc5f` (`feat(overtime): complete backend second iteration`).
 * `main` local sincronizada con `origin/main`.
 * No se identificaron commits remotos pendientes al momento de la revisión.
-* Rama de trabajo actual: `feature/overtime-iteration-2-backend`.
-* Los cambios locales acumulados corresponden a la segunda iteración backend de horas extra, pruebas y documentación relacionada.
+* Working tree limpio antes de esta actualización documental.
 
 ## Estado del backend
 
@@ -97,9 +96,9 @@ Estado actual:
 
 * backend integrado en `main`;
 * primera iteración desplegada y validada históricamente con `300 passed`, `36 warnings`, `0 failed`;
-* frontend mobile desarrollado en su repositorio independiente y pendiente de reconciliar con el contrato backend actual.
+* frontend mobile mantenido, desarrollado y validado en su repositorio independiente.
 
-Segunda iteración backend, Slices 1–6, en rama `feature/overtime-iteration-2-backend`:
+Segunda iteración backend, Slices 1–6, integrada en `main` mediante `bf6fc5f`:
 
 * validación previa de jornadas activas solapadas con `409` estable;
 * garantía PostgreSQL mediante restricción GiST parcial por compañía, técnico y rango semiabierto;
@@ -117,7 +116,7 @@ Segunda iteración backend, Slices 1–6, en rama `feature/overtime-iteration-2-
 * módulo acumulado: `94 passed`, `34 warnings`;
 * suite backend acumulada: `329 passed`, `36 warnings`, `0 failed`;
 * cinco pruebas PostgreSQL de solapamiento, liberación de franja y carreras: OK;
-* validación manual integrada diferida hasta completar mobile y despliegue coordinado.
+* validación integrada con React Native corresponde al repositorio mobile.
 * listados `/page` para técnico y supervisor con conteo SQL, rango efectivo y orden determinista;
 * endpoints array legacy preservados sin cambios de parámetros ni respuesta;
 * rango default de 31 fechas en Panamá y máximo inclusivo de 366 días;
@@ -150,7 +149,11 @@ Segunda iteración backend, Slices 1–6, en rama `feature/overtime-iteration-2-
 * módulo overtime final: `124 passed`, `34 warnings`;
 * suite backend final: `359 passed`, `36 warnings`, `0 failed`;
 * handoff mobile autocontenido: `docs/overtime-mobile-handoff-iteration-2.md`;
-* implementación, despliegue y validación manual React Native permanecen pendientes.
+* despliegue backend en GCP y migraciones de producción completados, según evidencia suministrada por el desarrollador;
+* producción reportada en `e7a3c9d4f2b1 (head)` después de aplicar `c4f8a1d2e6b9` y `e7a3c9d4f2b1`;
+* el preflight de solapamientos funcionó como estaba diseñado: datos de prueba incompatibles fueron saneados de forma controlada antes del reintento exitoso;
+* backend disponible para pruebas completas desde consumidores React Native;
+* la implementación y los resultados de validación React Native pertenecen a su repositorio independiente; cualquier defecto backend descubierto se atenderá como corrección puntual.
 
 ### Planes y suscripciones
 
@@ -199,7 +202,7 @@ Estado de validación:
 * typecheck web: pendiente;
 * lint web: pendiente;
 * build web: pendiente;
-* validación manual integrada: pendiente.
+* validación manual mobile: externa a este repositorio.
 
 ## Estado del despliegue
 
@@ -213,6 +216,14 @@ Estado de validación:
 * despliega en Cloud Run.
 
 El workflow actual no ejecuta pruebas antes del despliegue, aunque se denomina `CI - CD`.
+
+La segunda iteración backend de horas extra está integrada en `main` y desplegada en GCP. Según la
+evidencia de producción suministrada por el desarrollador, las migraciones se aplicaron correctamente
+y la revisión efectiva es `e7a3c9d4f2b1 (head)`. Esta sesión no accedió a producción; verificó
+localmente Git, código, migraciones, contratos y documentación.
+
+El siguiente punto backend es atender únicamente hallazgos reales de las pruebas integradas mobile o
+continuar con otro ítem priorizado del tablero.
 
 ### Frontend web
 

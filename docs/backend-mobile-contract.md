@@ -130,6 +130,9 @@ TODO documentacion: no cambiar estructura de `ChecklistSyncPayload`, firmas ni f
 
 ### Solicitudes de horas extra
 
+La superficie backend de la segunda iteración está integrada y disponible en producción. La
+implementación de UI, descarga y validación React Native pertenece al repositorio mobile.
+
 `POST /api/overtime/requests` conserva su payload y respuesta exitosa. Como ampliación compatible, puede devolver `409 Conflict` con `detail` `Ya existe una solicitud activa que se solapa con la fecha y el horario indicados.` cuando el técnico ya tiene una solicitud `pending`, `approved` o `adjusted` que intersecta la misma fecha y franja. Las franjas adyacentes se permiten y una solicitud `rejected` no bloquea.
 
 Se agregan `PATCH /api/overtime/requests/me/{request_id}` para edición parcial propia y `POST /api/overtime/requests/me/{request_id}/cancel` para cancelación sin payload. Ambas operaciones requieren una solicitud `pending`, usan el detalle existente como respuesta y pueden devolver `404` por falta de visibilidad o `409` por estado/solapamiento.
@@ -138,7 +141,7 @@ El contrato incorpora el estado `cancelled` y los eventos `edited` y `cancelled`
 
 Se agregan de forma aditiva `GET /api/overtime/requests/me/page` y `GET /api/overtime/supervisor/requests/page`. Devuelven `items`, `page`, `page_size`, `total`, `total_pages`, `date_from` y `date_to`; admiten un estado y rango de fechas, y supervisor puede filtrar por técnico sin ampliar visibilidad. Los endpoints array con `skip`/`limit` permanecen intactos y no están deprecados. Mobile actual puede seguir usándolos hasta migrar coordinadamente a `/page`.
 
-`GET /api/overtime/supervisor/requests/export` permite una futura descarga autenticada con Bearer y `format` obligatorio, exactamente `pdf` o `xlsx`. Acepta `date_from`, `date_to`, `status` y `technician_id`, y devuelve directamente una respuesta binaria, no JSON ni URL. PDF usa `application/pdf`, nombre `horas-extra_{date_from}_{date_to}.pdf` y máximo 2000 solicitudes. XLSX usa `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`, nombre `horas-extra_{date_from}_{date_to}.xlsx` y máximo 10000; contiene las hojas `Solicitudes`, `Resumen por técnico` y `Resumen general`. Ambos usan `Content-Disposition: attachment` y todo el resultado filtrado, no solo una página. Puede devolver `400` por rango, `403` por autorización, `413` por el límite propio del formato y `422` por formato/parámetros. La descarga y compartición desde React Native permanece pendiente.
+`GET /api/overtime/supervisor/requests/export` permite la descarga autenticada con Bearer y `format` obligatorio, exactamente `pdf` o `xlsx`. Acepta `date_from`, `date_to`, `status` y `technician_id`, y devuelve directamente una respuesta binaria, no JSON ni URL. PDF usa `application/pdf`, nombre `horas-extra_{date_from}_{date_to}.pdf` y máximo 2000 solicitudes. XLSX usa `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`, nombre `horas-extra_{date_from}_{date_to}.xlsx` y máximo 10000; contiene las hojas `Solicitudes`, `Resumen por técnico` y `Resumen general`. Ambos usan `Content-Disposition: attachment` y todo el resultado filtrado, no solo una página. Puede devolver `400` por rango, `403` por autorización, `413` por el límite propio del formato y `422` por formato/parámetros. La descarga y compartición desde React Native se implementa y valida en el repositorio mobile.
 
 ### Clientes, proyectos y unidades
 
