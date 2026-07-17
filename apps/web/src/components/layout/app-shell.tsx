@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
+import { adminNavItems } from "@/components/layout/admin-navbar";
 import { superAdminNavItems } from "@/components/layout/superadmin-navbar";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -23,6 +24,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         navItems={superAdminNavItems}
         homeHref="/dashboard/superadmin"
         sidebarStateKey="vertione:web:superadmin-sidebar-collapsed"
+      >
+        {children}
+      </DashboardShell>
+    ) : userProfile?.role === "admin" ? (
+      <DashboardShell
+        navItems={adminNavItems}
+        homeHref="/dashboard/admin"
+        sidebarStateKey="vertione:web:admin-sidebar-collapsed"
       >
         {children}
       </DashboardShell>

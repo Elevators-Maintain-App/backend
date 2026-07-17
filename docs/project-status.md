@@ -1,6 +1,6 @@
 # Estado actual del proyecto
 
-> Última actualización: 12 de julio de 2026.
+> Última actualización: 16 de julio de 2026.
 >
 > Este documento debe actualizarse al cerrar cada sesión relevante. Debe reflejar únicamente estados comprobados mediante Git, código, migraciones, pruebas o validación manual.
 
@@ -238,6 +238,30 @@ El frontend web se despliega de forma independiente en Vercel utilizando `apps/w
 
 El workflow backend no valida ni despliega automáticamente los cambios de `apps/web`.
 
+La interfaz administrativa de carga de plantillas de checklist está implementada en la rama
+`feature/web-admin-checklist-upload`:
+
+* ruta protegida `/dashboard/admin/checklists` con `RoleGuard` para `admin`;
+* navegación admin de escritorio y móvil mediante `DashboardShell`, sin enlaces para otros roles;
+* lectura local de un único JSON (límite UX de 1 MiB), validación Zod, previsualización responsive y confirmación antes del envío;
+* servicio y mutación React Query sin reintentos automáticos para `POST /api/checklists/templates`;
+* allowlist limitada exactamente a `/api/checklists/templates`, sin abrir otros endpoints core de checklists;
+* typecheck, lint y build web completados correctamente.
+
+La misma pantalla ahora lista el catálogo global mediante `GET /api/checklists/templates`, protegido
+para `admin`. El backend devuelve nombres opcionales de tipos con `LEFT OUTER JOIN`, carga los
+pasos sin N+1 mediante `selectinload`, conserva IDs cuando falta un catálogo y ordena plantillas y
+pasos de forma determinista. La web muestra estados de carga, vacío y error, pasos expandibles y
+bloquea una carga local cuando identifica una combinación ya ocupada; tras `201` o `409` invalida
+el listado para reflejar el estado del backend.
+
+Las focalizadas del listado (`5 passed`) y la regresión de contrato mobile checklist (`14 passed`)
+pasaron. La suite completa alcanzó `371 passed`, `1 failed`, `38 warnings`; el único fallo pertenece
+a una integración overtime preexistente cuya fecha fija (8 de julio) queda fuera de la semana actual
+del reloj de prueba. La creación real con un admin y la confirmación de errores `409`/`422` siguen
+pendientes de validación manual contra un backend autorizado. No se modificaron migraciones, mobile
+ni los archivos JSON/ZIP de trabajo no rastreados.
+
 ## Riesgos activos
 
 1. **Crítico — despliegue sin pruebas automáticas**
@@ -272,7 +296,21 @@ El workflow backend no valida ni despliega automáticamente los cambios de `apps
 
    Los cambios de `apps/web` no activan las validaciones del workflow actual.
 
+9. **Medio — unicidad de plantillas no reforzada en base de datos**
+
+   La combinación global `tipo_orden_id + tipo_unidad_id` se verifica en el servicio, pero la tabla
+   no tiene una constraint que la garantice ante creaciones concurrentes. Requiere la tarea `CHK-001`
+   y una migración planificada; no se abordó incidentalmente en esta interfaz.
+
 ## Próximo punto de inicio
+
+### Validación manual de listado y carga administrativa de checklists
+
+1. Iniciar sesión web con un usuario `admin`, revisar las plantillas existentes y expandir sus pasos.
+2. Seleccionar `docs/checklist_diagnostico_certificacion_ascensor_mrl_otis.json` y confirmar la previsualización de sus 22 pasos.
+3. Si su combinación existe, comprobar la identificación, el bloqueo del POST y el salto a la tarjeta correspondiente.
+4. Crear una combinación libre y confirmar que aparece al refrescar el listado; repetirla para comprobar el `409` legible.
+5. Validar JSON inválido, usuario de otro rol, estado vacío y comportamiento responsive.
 
 ### Handoff e implementación React Native
 
@@ -301,6 +339,11 @@ Después de confirmar una línea base verde:
 * Integración de planes y suscripciones: confirmada mediante historial Git y código.
 * Suite backend completa actual: `359 passed`, `36 warnings`, `0 failed`.
 * Estado real de Alembic en `db-test`: `e7a3c9d4f2b1 (head)`, downgrade protegido y ciclo limpio OK.
-* Typecheck, lint y build web: no ejecutados.
+* Typecheck web: OK (`npm run typecheck`).
+* Lint web: OK (`npm run lint`); Next.js informó la deprecación futura de `next lint`, sin errores.
+* Build web: OK (`npm run build`).
+* Focalizadas backend de listado checklist: `5 passed`, `36 warnings`.
+* Regresión móvil de checklist: `14 passed`, `36 warnings`.
+* Suite backend completa: `371 passed`, `1 failed`, `38 warnings`; fallo preexistente de overtime por semana calendario.
 * Despliegue actual en producción: no confirmado.
 * Validación manual: no ejecutada.

@@ -1,6 +1,6 @@
 # Tablero de trabajo
 
-> Última actualización: 12 de julio de 2026.
+> Última actualización: 16 de julio de 2026.
 >
 > El tablero fue reconciliado con `main` en el commit `a8ed5b5`. Cada tarea debe aparecer en un solo estado.
 
@@ -74,6 +74,21 @@ Estado:
 * pendiente commit en una rama documental.
 
 ## Validation
+
+### `WEB-002` — Carga administrativa de plantillas de checklist JSON
+
+Implementado en `feature/web-admin-checklist-upload`:
+
+* página protegida `/dashboard/admin/checklists` y navegación exclusiva de `admin` en escritorio y móvil;
+* listado global protegido `GET /api/checklists/templates`, con nombres opcionales de catálogos, pasos expandibles y estados loading/vacío/error;
+* lectura local, validación Zod, vista previa responsive de pasos, detección previa de combinación ocupada y confirmación explícita de carga;
+* creación y listado a través de servicio, query/mutación sin retry y allowlist de ruta exacta;
+* focalizadas checklist `5 passed`, regresión mobile checklist `14 passed`, typecheck, lint y build de `apps/web`: OK;
+* suite completa backend: `371 passed`, `1 failed`, `38 warnings`; fallo preexistente en integración overtime por fecha de prueba fuera de la semana actual.
+
+Pendiente:
+
+* validación manual autenticada de listado, creación `201`, conflicto `409`, rechazo `422`, permisos y responsive.
 
 ### `OT-COMPAT-001` — Catálogo compatible de técnicos para filtros overtime
 

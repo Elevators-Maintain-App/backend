@@ -38,6 +38,33 @@ class ChecklistTemplateOut2(BaseModel):
     class Config:
         from_attributes = True
 
+
+class ChecklistItemTemplateAdminOut(BaseModel):
+    id: UUID
+    step_number: int
+    titulo: str
+    instrucciones: str
+    evidencia_schema: Dict[str, Any]
+
+    class Config:
+        from_attributes = True
+
+
+class ChecklistTemplateAdminOut(BaseModel):
+    id: UUID
+    nombre: str
+    tipo_orden_id: int
+    tipo_orden_nombre: Optional[str]
+    tipo_unidad_id: int
+    tipo_unidad_nombre: Optional[str]
+    total_steps: int
+    created_at: Optional[datetime]
+    updated_at: Optional[datetime]
+    pasos: List[ChecklistItemTemplateAdminOut]
+
+    class Config:
+        from_attributes = True
+
 # ► Ejecución de checklist y sus items
 
 class ChecklistItemOut(BaseModel):
@@ -96,4 +123,3 @@ class ChecklistTemplateCreate(BaseModel):
     tipo_orden_id: int
     tipo_unidad_id: int
     pasos: List[ChecklistItemTemplateCreate]
-

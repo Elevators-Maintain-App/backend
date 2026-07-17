@@ -2,6 +2,7 @@ import axios from "axios";
 import { firebaseAuth } from "@/lib/firebase";
 
 const allowedApiPrefixes = ["/api/web/", "/api/admin/", "/api/subscription/"];
+const allowedApiPaths = ["/api/checklists/templates"];
 
 function assertAllowedApiPath(path: string) {
   const isAbsolute = /^https?:\/\//i.test(path);
@@ -9,7 +10,9 @@ function assertAllowedApiPath(path: string) {
     throw new Error("Use relative API paths so VertiOne Web can enforce API boundaries.");
   }
 
-  const isAllowed = allowedApiPrefixes.some((prefix) => path.startsWith(prefix));
+  const isAllowed =
+    allowedApiPaths.includes(path) ||
+    allowedApiPrefixes.some((prefix) => path.startsWith(prefix));
   if (!isAllowed) {
     throw new Error(
       `Blocked API path "${path}". VertiOne Web must use /api/web/* or explicitly approved protected core endpoints.`

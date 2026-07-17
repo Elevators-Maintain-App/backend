@@ -1,0 +1,139 @@
+{
+  "nombre": "Diagnóstico certificación anual - Ascensor MRL OTIS",
+  "tipo_orden_id": 101,
+  "tipo_unidad_id": 1,
+  "pasos": [
+    {
+      "step_number": 1,
+      "titulo": "Seguridad, alcance e identificación",
+      "instrucciones": "Diligenciar AST/ART, señalizar y preparar el área. Registrar marca, modelo, serial, capacidad, velocidad, número de paradas y estado inicial.",
+      "evidencia_schema": {"type": "photo_pair", "labels": ["Foto 1", "Foto 2"]}
+    },
+    {
+      "step_number": 2,
+      "titulo": "Operación general y calidad de viaje",
+      "instrucciones": "Realizar recorrido completo. Revisar llamadas, arranque, viaje, parada, nivelación, ruidos, vibración, indicadores y códigos de falla. Registrar resultados y piso de cada anomalía.",
+      "evidencia_schema": {"type": "photo_pair", "labels": ["Foto 1", "Foto 2"]}
+    },
+    {
+      "step_number": 3,
+      "titulo": "Cabina y COP",
+      "instrucciones": "Revisar estado de cabina, pasamanos, ventilación, placa de carga, piso, techo, botonera COP, botones, indicadores, alarma y señalización. Registrar elementos dañados o inoperantes.",
+      "evidencia_schema": {"type": "photo_pair", "labels": ["Foto 1", "Foto 2"]}
+    },
+    {
+      "step_number": 4,
+      "titulo": "Comunicación de emergencia",
+      "instrucciones": "Ejecutar prueba de comunicación. Registrar si funciona en ambos sentidos, en un solo sentido o no funciona; punto de atención contactado, calidad de audio, identificación de cabina y daños encontrados.",
+      "evidencia_schema": {"type": "photo_pair", "labels": ["Foto 1", "Foto 2"]}
+    },
+    {
+      "step_number": 5,
+      "titulo": "Luz de emergencia",
+      "instrucciones": "Ejecutar la prueba conforme al procedimiento OTIS. Verificar luz de emergencia de cabina y registrar si funciona, duración observada y condición de luminarias/batería.",
+      "evidencia_schema": {"type": "photo_pair", "labels": ["Foto 1", "Foto 2"]}
+    },
+    {
+      "step_number": 6,
+      "titulo": "Puerta de cabina y protección de acceso",
+      "instrucciones": "Revisar operador, distancia sill a sill maximo 35mm, todos los pisos con fascia, hojas, guiadores, suspensión, contactos, reapertura, cortina fotoeléctrica, cierre y holguras no mayores a 10mm. Confirmar que no arranque con puerta abierta ni abra fuera de zona.",
+      "evidencia_schema": {"type": "photo_pair", "labels": ["Foto 1", "Foto 2"]}
+    },
+    {
+      "step_number": 7,
+      "titulo": "Puertas y accesos de los 5 pisos",
+      "instrucciones": "Revisar cada puerta: hojas, marco, umbral, guiadores, suspensión, cerradura, enclavamiento, cierre y apertura con llave. Registrar resultado y hallazgos por piso.",
+      "evidencia_schema": {"type": "photo_pair", "labels": ["Foto 1", "Foto 2"]}
+    },
+    {
+      "step_number": 8,
+      "titulo": "Señalización y dispositivos de pasillo",
+      "instrucciones": "Revisar botoneras, indicadores, flechas, gong, identificación de piso y señalización. Registrar piso y elemento que no funcione.",
+      "evidencia_schema": {"type": "photo_pair", "labels": ["Foto 1", "Foto 2"]}
+    },
+    {
+      "step_number": 9,
+      "titulo": "Acceso y espacio de maquinaria MRL",
+      "instrucciones": "Revisar acceso seguro, cerraduras, identificación, iluminación, ventilación, limpieza, orden, ausencia de agua y estado general del espacio de maquinaria.",
+      "evidencia_schema": {"type": "photo_pair", "labels": ["Foto 1", "Foto 2"]}
+    },
+    {
+      "step_number": 10,
+      "titulo": "Controlador, alimentación y puesta a tierra",
+      "instrucciones": "Revisar gabinete, fijación, limpieza, terminales, contactores, variador, protecciones, baterías, etiquetas, diagrama, desconexión principal y puesta a tierra visible. Registrar recalentamiento, corrosión o modificaciones.",
+      "evidencia_schema": {"type": "photo_pair", "labels": ["Foto 1", "Foto 2"]}
+    },
+    {
+      "step_number": 11,
+      "titulo": "Máquina de tracción, poleas y freno",
+      "instrucciones": "Revisar máquina, fijaciones, guardas, poleas, canales, rodamientos, fugas, desgaste de freno.",
+      "evidencia_schema": {"type": "photo_pair", "labels": ["Foto 1", "Foto 2"]}
+    },
+    {
+      "step_number": 12,
+      "titulo": "Suspensión, terminales y compensación",
+      "instrucciones": "Revisar cables o cintas, tensión, desgaste, corrosión, contaminación, asentamiento en poleas, terminales, pasadores, resortes, placas igualadoras y compensación. Registrar condición y anomalías.",
+      "evidencia_schema": {"type": "photo_pair", "labels": ["Foto 1", "Foto 2"]}
+    },
+    {
+      "step_number": 13,
+      "titulo": "Techo de cabina y estación de inspección",
+      "instrucciones": "Revisar protecciones, etiquetas de zona segura, orden, iluminación, cable viajero, conexiones, operador de puertas y fijaciones. Probar parada, inspección y mandos de techo conforme al procedimiento seguro.",
+      "evidencia_schema": {"type": "photo_pair", "labels": ["Foto 1", "Foto 2"]}
+    },
+    {
+      "step_number": 14,
+      "titulo": "Hueco, guías y elementos móviles",
+      "instrucciones": "Revisar hueco, guías, soportes, pintura de soldaduras, fijaciones, lubricación, uniones, patines/rodaderas, límites visibles, sensores, selector y cable viajero. Registrar ubicación exacta de cada hallazgo.",
+      "evidencia_schema": {"type": "photo_pair", "labels": ["Foto 1", "Foto 2"]}
+    },
+    {
+      "step_number": 15,
+      "titulo": "Contrapeso y protecciones",
+      "instrucciones": "Revisar bastidor, pesas, retenciones, guiadores/rodaderas, suspensión, terminales, pantalla de contrapeso y posibles contactos o piezas flojas.",
+      "evidencia_schema": {"type": "photo_pair", "labels": ["Foto 1", "Foto 2"]}
+    },
+    {
+      "step_number": 16,
+      "titulo": "Prueba de gobernador",
+      "instrucciones": "Revisar gobernador, cable/cinta, polea tensora, guardas, placa, sellos y contactos. Ejecutar prueba de gobernador según procedimiento OTIS y registrar funcionamiento, actuación y hallazgos.",
+      "evidencia_schema": {"type": "photo_pair", "labels": ["Foto 1", "Foto 2"]}
+    },
+    {
+      "step_number": 17,
+      "titulo": "Seguridad de cabina y finales de recorrido",
+      "instrucciones": "Revisar dispositivo de seguridad de cabina, conexiones visibles, límites normales, límites finales, desaceleración y demás protecciones aplicables. Ejecutar únicamente las pruebas autorizadas por el procedimiento OTIS y registrar resultados.",
+      "evidencia_schema": {"type": "photo_pair", "labels": ["Foto 1", "Foto 2"]}
+    },
+    {
+      "step_number": 18,
+      "titulo": "Foso PIT, buffers y dispositivos de parada",
+      "instrucciones": "Revisar acceso, escalera, iluminación, parada de foso, limpieza, agua/aceite, drenaje, buffers, fijaciones, polea tensora, guardas y distancias visibles, zona segura marcada, malla divisoria si existe elevador contiguo. Registrar anomalías.",
+      "evidencia_schema": {"type": "photo_pair", "labels": ["Foto 1", "Foto 2"]}
+    },
+    {
+      "step_number": 19,
+      "titulo": "Operación de emergencia por incendio",
+      "instrucciones": "En coordinación con la administración, probar retorno/operación de emergencia para bomberos y sus fases aplicables. Registrar funciones probadas, resultado y cualquier condición anormal.",
+      "evidencia_schema": {"type": "photo_pair", "labels": ["Foto 1", "Foto 2"]}
+    },
+    {
+      "step_number": 20,
+      "titulo": "Prueba de rescate manual y/o automático",
+      "instrucciones": "Ejecutar la prueba aplicable conforme al procedimiento OTIS. Registrar tipo de rescate, resultado, funcionamiento de respaldo, fallas, condición de batería y fecha conocida de su último reemplazo.",
+      "evidencia_schema": {"type": "photo_pair", "labels": ["Foto 1", "Foto 2"]}
+    },
+    {
+      "step_number": 21,
+      "titulo": "Observaciones adicionales",
+      "instrucciones": "Registrar información, condición o comentario relevante que no esté cubierto en los pasos anteriores. Indicar ubicación y acción sugerida si aplica.",
+      "evidencia_schema": {"type": "optional_photo", "label": "Foto de observación"}
+    },
+    {
+      "step_number": 22,
+      "titulo": "Cierre y firmas de visita diagnóstica",
+      "instrucciones": "Confirmar que el equipo queda operativo y que finalizó la revisión. Solicitar firma del técnico y cliente final; registrar nombre y cargo de quien recibe.",
+      "evidencia_schema": {"type": "signatures", "labels": ["Firma técnico", "Firma cliente"]}
+    }
+  ]
+}

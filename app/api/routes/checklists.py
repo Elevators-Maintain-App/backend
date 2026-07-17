@@ -11,7 +11,7 @@ from app.db.models.ordenes_de_trabajo import OrdenDeTrabajo
 from app.schemas.checklists import (
     ChecklistTemplateOut, ChecklistOut,
     ChecklistItemUpdate, ChecklistTemplateCreate,
-    ChecklistTemplateOut2
+    ChecklistTemplateOut2, ChecklistTemplateAdminOut,
 )
 from app.services.checklists import ChecklistService
 from app.auth.firebase import require_role, get_current_firebase_user
@@ -22,6 +22,18 @@ from fastapi.responses import StreamingResponse
 import io
 
 router = APIRouter()
+
+
+@router.get(
+    "/templates",
+    response_model=List[ChecklistTemplateAdminOut],
+    summary="(admin) Listar plantillas de checklist con pasos",
+)
+async def list_templates(
+    user=Depends(require_role("admin")),
+    db: AsyncSession = Depends(get_db),
+):
+    return await ChecklistService(db).list_admin_templates()
 
 @router.get(
     "/{orden_id}/template",

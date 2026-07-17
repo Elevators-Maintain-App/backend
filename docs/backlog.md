@@ -18,6 +18,10 @@ Las prioridades deben revisarse después de validar `main` y ejecutar la línea 
 
 ## Prioridad media
 
+- [ ] `CHK-001` | `M` | Reforzar en PostgreSQL la unicidad global de `checklist_templates.tipo_orden_id + tipo_unidad_id`.
+  - Valor: evita creaciones concurrentes duplicadas que el preflight de servicio y web no puede impedir.
+  - Riesgo: requiere migración, detección de datos duplicados existentes, plan de corrección y rollback.
+  - Criterio: constraint única aplicada tras preflight de datos y pruebas de concurrencia en `db-test`.
 - [ ] `DOC-001` | `S` | Actualizar `README.md` con identidad, comandos y despliegues reales.
 - [ ] `DOC-002` | `S` | Marcar roadmaps de planes como implementados, parciales o históricos.
 - [ ] `WEB-001` | `S` | Validar y corregir el comando `npm run lint` para la versión efectiva de Next.js.

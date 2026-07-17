@@ -20,6 +20,8 @@ from app.db.models.checklists import (
 )
 from app.db.models.ordenes_de_trabajo import OrdenDeTrabajo
 from app.db.models.unidades import Unidad
+from app.db.models.enums.tipos_orden import TipoOrden
+from app.db.models.enums.tipos_unidad import TipoUnidad
 from app.schemas.checklists import (
     ChecklistItemOut,
     ChecklistOut,
@@ -27,6 +29,8 @@ from app.schemas.checklists import (
     ChecklistItemTemplateOut,
     ChecklistTemplateOut,
     ChecklistTemplateOut2,
+    ChecklistTemplateAdminOut,
+    ChecklistItemTemplateAdminOut,
 )
 from app.schemas.checklists_sync import ChecklistSyncPayload
 
@@ -63,6 +67,54 @@ class ChecklistService:
         self.db = db
 
     # ---------- Templates ----------
+
+    async def list_admin_templates(self) -> list[ChecklistTemplateAdminOut]:
+        """Lista el catálogo global de plantillas con sus nombres y pasos."""
+        stmt = (
+            select(
+                ChecklistTemplate,
+                TipoOrden.nombre.label("tipo_orden_nombre"),
+                TipoUnidad.nombre.label("tipo_unidad_nombre"),
+            )
+            .outerjoin(TipoOrden, TipoOrden.id == ChecklistTemplate.tipo_orden_id)
+            .outerjoin(TipoUnidad, TipoUnidad.id == ChecklistTemplate.tipo_unidad_id)
+            .options(selectinload(ChecklistTemplate.pasos))
+            .order_by(
+                TipoOrden.nombre.asc().nulls_last(),
+                TipoUnidad.nombre.asc().nulls_last(),
+                ChecklistTemplate.nombre.asc(),
+                ChecklistTemplate.id.asc(),
+            )
+        )
+        rows = (await self.db.execute(stmt)).all()
+
+        return [
+            ChecklistTemplateAdminOut(
+                id=template.id,
+                nombre=template.nombre,
+                tipo_orden_id=template.tipo_orden_id,
+                tipo_orden_nombre=tipo_orden_nombre,
+                tipo_unidad_id=template.tipo_unidad_id,
+                tipo_unidad_nombre=tipo_unidad_nombre,
+                total_steps=len(template.pasos),
+                created_at=template.created_at,
+                updated_at=template.updated_at,
+                pasos=[
+                    ChecklistItemTemplateAdminOut(
+                        id=paso.id,
+                        step_number=paso.step_number,
+                        titulo=paso.titulo,
+                        instrucciones=paso.instrucciones,
+                        evidencia_schema=paso.evidencia_schema,
+                    )
+                    for paso in sorted(
+                        template.pasos,
+                        key=lambda paso: (paso.step_number, str(paso.id)),
+                    )
+                ],
+            )
+            for template, tipo_orden_nombre, tipo_unidad_nombre in rows
+        ]
 
     async def get_template_for_order(self, orden_id: UUID) -> ChecklistTemplateOut:
         """

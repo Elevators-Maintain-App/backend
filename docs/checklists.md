@@ -179,3 +179,21 @@
 | 8    | Captura de firmas                     | Firma del técnico y cliente para cerrar la intervención.                                                                                      | Firma técnico + Firma cliente                          |                     |
 
 ---
+
+## Carga administrativa de plantillas JSON
+
+La web permite a usuarios con rol `admin` cargar una plantilla en `/dashboard/admin/checklists`.
+El navegador lee y valida localmente un objeto JSON con `nombre`, `tipo_orden_id`,
+`tipo_unidad_id` y `pasos`; cada paso requiere `step_number` mayor que cero, `titulo`,
+`instrucciones` y un objeto `evidencia_schema`. Tras la previsualización, envía el objeto como
+`application/json` a `POST /api/checklists/templates`. El backend conserva la autorización y la
+validación definitiva, incluida la restricción de una plantilla por combinación de tipo de orden y unidad.
+
+El mismo módulo consulta `GET /api/checklists/templates`, también protegido para `admin`, para
+mostrar el catálogo global de plantillas antes de cargar otra. La respuesta incluye los IDs, nombres
+opcionales de tipo de orden/unidad, timestamps y pasos ordenados. La ausencia de un catálogo no
+oculta la plantilla: el nombre se devuelve como `null` y el cliente muestra su ID. El endpoint no
+aplica compañía porque las plantillas actuales son globales por combinación.
+
+La unicidad de `tipo_orden_id + tipo_unidad_id` se valida hoy en el servicio, pero no cuenta con
+una constraint de base de datos; su endurecimiento requiere una migración separada (`CHK-001`).
