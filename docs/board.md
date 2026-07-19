@@ -84,7 +84,7 @@ Implementado en `feature/web-admin-checklist-upload`:
 * lectura local, validación Zod, vista previa responsive de pasos, detección previa de combinación ocupada y confirmación explícita de carga;
 * creación y listado a través de servicio, query/mutación sin retry y allowlist de ruta exacta;
 * focalizadas checklist `5 passed`, regresión mobile checklist `14 passed`, typecheck, lint y build de `apps/web`: OK;
-* suite completa backend: `371 passed`, `1 failed`, `38 warnings`; fallo preexistente en integración overtime por fecha de prueba fuera de la semana actual.
+* suite completa backend posterior: `378 passed`, `38 warnings`; integración overtime estabilizada con reloj determinista inyectado.
 
 Pendiente:
 
@@ -150,7 +150,7 @@ Completado localmente:
 * modelo alineado con relación ORM pasiva, endpoint DELETE sin borrados manuales y conflicto de integridad controlado como `409`;
 * cobertura de eliminación con y sin eventos, aislamiento de compañía, rechazo por rol e inspección de la FK;
 * downgrade inspeccionado sin política `ON DELETE` y upgrade inspeccionado con `CASCADE` en `db-test`;
-* focalizadas: `13 passed`, `32 warnings`. Suite completa: `377 passed`, `1 failed`, `38 warnings`; fallo no relacionado de horas extra por fecha fija fuera de la semana vigente.
+* focalizadas: `13 passed`, `32 warnings`. Suite completa posterior: `378 passed`, `38 warnings`; la integración de horas extra quedó determinista mediante reloj inyectado.
 
 Pendiente externo: validación mobile tras un despliegue autorizado.
 

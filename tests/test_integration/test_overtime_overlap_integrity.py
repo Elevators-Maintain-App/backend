@@ -1,5 +1,5 @@
 import asyncio
-from datetime import date, datetime, time, timezone
+from datetime import date, datetime, time, timedelta, timezone
 from types import SimpleNamespace
 from uuid import uuid4
 
@@ -185,14 +185,25 @@ async def test_edit_and_cancel_serialize_with_coherent_event_order():
     edit_session = AsyncSessionLocal()
     cancel_session = AsyncSessionLocal()
     auth = SimpleNamespace(uid=technician_uid)
+    fixed_now = datetime(2026, 7, 8, 12, tzinfo=timezone.utc)
+    clock_calls = 0
+
+    def fixed_clock() -> datetime:
+        nonlocal clock_calls
+        current = fixed_now + timedelta(microseconds=clock_calls)
+        clock_calls += 1
+        return current
+
     try:
-        edited = await OvertimeRequestService(edit_session).update_own_request(
+        edited = await OvertimeRequestService(edit_session, clock=fixed_clock).update_own_request(
             auth, request_id, OvertimeRequestUpdate(activity="Actividad editada")
         )
         assert edited.status == OvertimeRequestStatus.PENDING
 
         cancel_attempt = asyncio.create_task(
-            OvertimeRequestService(cancel_session).cancel_own_request(auth, request_id)
+            OvertimeRequestService(cancel_session, clock=fixed_clock).cancel_own_request(
+                auth, request_id
+            )
         )
         await asyncio.sleep(0)
         await edit_session.commit()

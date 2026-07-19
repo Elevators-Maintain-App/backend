@@ -223,7 +223,7 @@ Estado de validación:
 * build web: pendiente;
 * validación manual mobile: externa a este repositorio.
 * corrección `ORDEN-DELETE-001`: focalizadas de modelo/servicio `13 passed`, `32 warnings`; ciclo `downgrade e7a3c9d4f2b1 → upgrade head` e inspección de FK OK.
-* suite backend actual: `377 passed`, `1 failed`, `38 warnings`; el fallo preexistente/data-dependiente es `tests/test_integration/test_overtime_overlap_integrity.py::test_edit_and_cancel_serialize_with_coherent_event_order`, por la fecha fija `2026-07-08` fuera de la semana vigente. No está relacionado con órdenes ni PDF.
+* suite backend actual: `378 passed`, `38 warnings`; la integración overtime anteriormente dependiente del calendario usa ahora un reloj determinista inyectado, con base UTC dentro de la semana de la solicitud y marcas distintas por mutación.
 
 ## Estado del despliegue
 
@@ -270,9 +270,8 @@ bloquea una carga local cuando identifica una combinación ya ocupada; tras `201
 el listado para reflejar el estado del backend.
 
 Las focalizadas del listado (`5 passed`) y la regresión de contrato mobile checklist (`14 passed`)
-pasaron. La suite completa alcanzó `371 passed`, `1 failed`, `38 warnings`; el único fallo pertenece
-a una integración overtime preexistente cuya fecha fija (8 de julio) queda fuera de la semana actual
-del reloj de prueba. La creación real con un admin y la confirmación de errores `409`/`422` siguen
+pasaron. La suite completa posterior alcanzó `378 passed`, `38 warnings`; la integración overtime
+preexistente se estabilizó mediante un reloj determinista inyectado. La creación real con un admin y la confirmación de errores `409`/`422` siguen
 pendientes de validación manual contra un backend autorizado. No se modificaron migraciones, mobile
 ni los archivos JSON/ZIP de trabajo no rastreados.
 
@@ -358,6 +357,6 @@ Después de confirmar una línea base verde:
 * Build web: OK (`npm run build`).
 * Focalizadas backend de listado checklist: `5 passed`, `36 warnings`.
 * Regresión móvil de checklist: `14 passed`, `36 warnings`.
-* Suite backend completa: `371 passed`, `1 failed`, `38 warnings`; fallo preexistente de overtime por semana calendario.
+* Suite backend completa posterior: `378 passed`, `38 warnings`; integración overtime estabilizada con reloj determinista inyectado.
 * Despliegue actual en producción: no confirmado.
 * Validación manual: no ejecutada.
