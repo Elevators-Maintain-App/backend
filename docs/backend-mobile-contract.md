@@ -99,7 +99,7 @@ TODO documentacion: tratar `/api/dashboard/usuarios`, `/api/dashboard/estadistic
 | GET | `/api/ordenes-trabajo/{orden_id}` | Usuario Firebase; detalle compartido. |
 | POST | `/api/ordenes-trabajo` | Creacion actual; devuelve UUID. |
 | PATCH | `/api/ordenes-trabajo/{orden_id}` | Edicion actual. |
-| DELETE | `/api/ordenes-trabajo/{orden_id}` | Eliminacion actual. |
+| DELETE | `/api/ordenes-trabajo/{orden_id}` | Eliminación actual, `204` sin body. Al eliminar el checklist de la orden, PostgreSQL elimina sus eventos PDF vinculados; no cambia request ni response. |
 
 TODO documentacion: `app/services/ordenes_de_trabajo.py` es el dueno activo legacy de estas rutas. No migrar a `app/services/orden_trabajo/orden_trabajo_servicio.py` sin pruebas de contrato.
 

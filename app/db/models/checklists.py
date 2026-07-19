@@ -65,6 +65,11 @@ class Checklist(Base):
         "OrdenDeTrabajo",
         back_populates="checklists"
     )
+    pdf_report_generation_events = relationship(
+        "PdfReportGenerationEvent",
+        back_populates="checklist",
+        passive_deletes=True,
+    )
 
 class ChecklistItem(Base):
     __tablename__ = 'checklist_items'

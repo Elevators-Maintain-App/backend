@@ -410,7 +410,15 @@ class OrdenDeTrabajoService:
              raise HTTPException(status_code=403, detail="Rol no autorizado para eliminar")
 
         # 3) Eliminar
-        await orden_de_trabajo_crud.remove(self.db, id=orden_id)
+        try:
+            await orden_de_trabajo_crud.remove(self.db, id=orden_id)
+        except IntegrityError as exc:
+            await self.db.rollback()
+            logger.exception("Error de integridad al eliminar orden de trabajo %s", orden_id)
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="No fue posible eliminar la orden de trabajo porque tiene datos relacionados.",
+            ) from exc
         return None
 
     # — Crear (admin) —

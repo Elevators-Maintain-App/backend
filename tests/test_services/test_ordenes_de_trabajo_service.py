@@ -9,6 +9,7 @@ from fastapi import HTTPException
 from sqlalchemy.exc import IntegrityError
 
 from app.schemas.ordenes_de_trabajo import OrdenDeTrabajoCreate
+from app.db.models.usuarios import Rol
 from app.services.ordenes_de_trabajo import OrdenDeTrabajoService
 
 
@@ -201,3 +202,35 @@ async def test_create_reraises_other_integrity_errors(mock_db_session, service_d
 
     assert mock_db_session.rollback.await_count == 1
     assert mock_db_session.commit.await_count == 1
+
+
+@pytest.mark.asyncio
+async def test_delete_translates_unexpected_integrity_errors_to_conflict(
+    mock_db_session, monkeypatch
+):
+    from app.services import ordenes_de_trabajo as service_module
+
+    order = SimpleNamespace(
+        id=UUID("55555555-5555-5555-5555-555555555555"),
+        company_id=COMPANY_ID,
+        supervisor_id="supervisor-1",
+    )
+
+    async def fake_get(db, order_id):
+        return order
+
+    async def fail_remove(db, id):
+        raise make_other_integrity_error()
+
+    monkeypatch.setattr(service_module.orden_de_trabajo_crud, "get", fake_get)
+    monkeypatch.setattr(service_module.orden_de_trabajo_crud, "remove", fail_remove)
+    user = SimpleNamespace(uid="supervisor-1", company_id=COMPANY_ID, rol=Rol.SUPERVISOR)
+
+    with pytest.raises(HTTPException) as exc_info:
+        await OrdenDeTrabajoService(mock_db_session).delete(order.id, user)
+
+    assert exc_info.value.status_code == 409
+    assert exc_info.value.detail == (
+        "No fue posible eliminar la orden de trabajo porque tiene datos relacionados."
+    )
+    mock_db_session.rollback.assert_awaited_once()

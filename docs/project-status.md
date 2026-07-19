@@ -1,6 +1,6 @@
 # Estado actual del proyecto
 
-> Última actualización: 16 de julio de 2026.
+> Última actualización: 18 de julio de 2026.
 >
 > Este documento debe actualizarse al cerrar cada sesión relevante. Debe reflejar únicamente estados comprobados mediante Git, código, migraciones, pruebas o validación manual.
 
@@ -50,6 +50,18 @@ docker compose -f docker-compose.test.yml exec -T api-test alembic heads
 ```
 
 La cadena histórica de migraciones todavía no permite reconstruir de forma confiable una base completamente vacía. En pruebas se utiliza temporalmente `create_all + stamp`, exclusivamente dentro de la base efímera `db-test`.
+
+### Corrección de eliminación de órdenes con eventos PDF
+
+La corrección `ORDEN-DELETE-001` queda preparada para integración local:
+
+* migración `f8d2a4c6e1b0` sobre `e7a3c9d4f2b1` establece `ON DELETE CASCADE` en `pdf_report_generation_events.checklist_id`;
+* el modelo mantiene una relación pasiva `Checklist → PdfReportGenerationEvent`, para que PostgreSQL sea la autoridad de la cascada;
+* `DELETE /api/ordenes-trabajo/{orden_id}` conserva contrato `204` y permisos; convierte integridad residual en `409` después de rollback;
+* se validaron eliminación con eventos y sin eventos, aislamiento de compañía y denegación al técnico;
+* el downgrade restaura la FK previa sin acción `ON DELETE` y el upgrade vuelve a `CASCADE`; la única cabeza local es `f8d2a4c6e1b0`.
+
+Revisión de FKs hijas: `ChecklistItem` y `OrdenTrabajoSeguimiento` se eliminan mediante las relaciones ORM ya existentes de checklist/orden; `EvidenciaMultimedia` también depende de la cascada ORM de orden. `PdfReportGenerationEvent.orden_id` permanece restrictiva para eventos sin `checklist_id`; esos casos no forman parte de esta corrección y reciben el `409` controlado del DELETE.
 
 ## Estado del frontend web
 
@@ -210,6 +222,8 @@ Estado de validación:
 * lint web: pendiente;
 * build web: pendiente;
 * validación manual mobile: externa a este repositorio.
+* corrección `ORDEN-DELETE-001`: focalizadas de modelo/servicio `13 passed`, `32 warnings`; ciclo `downgrade e7a3c9d4f2b1 → upgrade head` e inspección de FK OK.
+* suite backend actual: `377 passed`, `1 failed`, `38 warnings`; el fallo preexistente/data-dependiente es `tests/test_integration/test_overtime_overlap_integrity.py::test_edit_and_cancel_serialize_with_coherent_event_order`, por la fecha fija `2026-07-08` fuera de la semana vigente. No está relacionado con órdenes ni PDF.
 
 ## Estado del despliegue
 

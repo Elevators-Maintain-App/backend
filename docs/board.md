@@ -142,6 +142,18 @@ No debe resolverse mediante un cambio masivo.
 
 ## Done
 
+### `ORDEN-DELETE-001` — Corregir eliminación de órdenes con eventos PDF
+
+Completado localmente:
+
+* migración reversible `f8d2a4c6e1b0` desde `e7a3c9d4f2b1`, con un único head y `ON DELETE CASCADE` en `pdf_report_generation_events.checklist_id`;
+* modelo alineado con relación ORM pasiva, endpoint DELETE sin borrados manuales y conflicto de integridad controlado como `409`;
+* cobertura de eliminación con y sin eventos, aislamiento de compañía, rechazo por rol e inspección de la FK;
+* downgrade inspeccionado sin política `ON DELETE` y upgrade inspeccionado con `CASCADE` en `db-test`;
+* focalizadas: `13 passed`, `32 warnings`. Suite completa: `377 passed`, `1 failed`, `38 warnings`; fallo no relacionado de horas extra por fecha fija fuera de la semana vigente.
+
+Pendiente externo: validación mobile tras un despliegue autorizado.
+
 ### `OT-ITER2-001` — Iteración backend de horas extra, Slices 1–6
 
 Completado:
